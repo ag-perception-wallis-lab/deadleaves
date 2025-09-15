@@ -34,6 +34,8 @@ class DeadLeavesModel:
         - param_distributions (dict[str, dict[str, dict[str, float]]]):
             Shape parameters and their distributions and distribution parameter values.
         - size (tuple[int,int]): Width and hight of the area to be partitioned.
+        - position_mask (tensor): Boolean tensor containing allowed leaf positions to create 
+            images with different shapes.
         - n_sample (optional, int): Number of leaves to sample. If None the sampling
             will stop when the full area is partitioned. Defaults to None.
 
@@ -64,10 +66,17 @@ class DeadLeavesModel:
         shape: Literal["circular", "ellipsoid", "rectangular", "polygon"],
         param_distributions: dict[str, dict[str, dict[str, float]]],
         size: tuple[int, int],
+        position_mask: torch.Tensor | None = None,
         n_sample: int | None = None,
     ) -> None:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.size = size
+        if position_mask is not None:
+            if position_mask.shape != size:
+                raise ValueError("Position mask needs to match image size.")
+            self.position_mask = position_mask
+        else:
+            self.position_mask = torch.ones(self.size, dtype=int, device = self.device)
         self.n_sample = n_sample
         self.shape = shape
         self.param_distributions = param_distributions
@@ -139,11 +148,11 @@ class DeadLeavesModel:
         partition = torch.zeros(self.size, device=self.device)
         leaf_idx = 1
 
-        while torch.any(partition == 0):
+        while torch.any((partition == 0) & (self.position_mask == 1)):
             params = self.sample_parameters()
             leaf_mask = self.generate_leaf_mask(params)
             mask = leaf_mask & (partition == 0)
-            if mask.sum() > 0:
+            if (mask.sum() > 0) & self.position_mask[params['x_pos'].to(int),params['y_pos'].to(int)]:
                 partition[mask] = leaf_idx
                 leaves_params.append(params)
                 leaf_idx += 1
@@ -271,6 +280,10 @@ class DeadLeavesImage:
             Color parameters and their distribution setup.
         - texture_param_distributions (dict[str, dict[str, dict[str, float]]]):
             Texture parameters and their distribution setup.
+        - background_color (tensor): For images which are not fully covered 
+            (due to a position mask or sparse sampling) one can set a RGB background color. 
+            If None the color and texture will be sampled from the distributions.
+            Defaults to None.
 
         - device:
         - size (tuple[int,int]): Image size.
@@ -303,11 +316,13 @@ class DeadLeavesImage:
         partition: torch.Tensor,
         color_param_distributions: dict[str, dict[str, dict[str, float]]],
         texture_param_distributions: dict[str, dict[str, dict[str, float]]],
+        background_color: torch.Tensor | None = None
     ):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.size = partition.shape
         self.color_param_distributions = color_param_distributions
         self.texture_param_distributions = texture_param_distributions
+        self.background_color = background_color
         self.leaves = leaves
         self.partition = partition
         colors = {
@@ -356,8 +371,9 @@ class DeadLeavesImage:
             colors = self.sample_colors()
             texture = self.sample_texture()
             for leaf_idx in range(len(self.leaves)):
-                image[self.partition == leaf_idx] = colors[leaf_idx]
-            image = torch.clip(image + texture, 0, 1)
+                image[self.partition == leaf_idx] = torch.clip(colors[leaf_idx] + texture[self.partition == leaf_idx], 0, 1)
+                if (leaf_idx == 0) & (self.background_color is not None):
+                    image[self.partition == leaf_idx] = self.background_color
             return image
 
     def _sample_grayscale_colors(self) -> torch.Tensor:
