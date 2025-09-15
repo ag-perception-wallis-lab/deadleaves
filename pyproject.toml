@@ -1,0 +1,21 @@
+[project]
+name = "dead-leaves"
+version = "0.1.0"
+authors = [{ name = "Swantje Mahncke", email = "swantje.mahncke@tu-darmstadt.de" }]
+description = "A package to generate dead leaves images."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas>=2.3.2",
+    "torch>=2.8.0",
+    "torchquad>=0.5.0",
+    "torchvision>=0.23.0",
+]
+
+[tool.setuptools.packages.find]
+where   = ["."]
+include = ["dead_leaves*"]
+exclude = ["examples*", "test*"]
+
+[dependency-groups]
+dev = ["pytest>=8.4.2"]
