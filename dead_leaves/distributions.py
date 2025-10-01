@@ -16,6 +16,12 @@ class BaseDistribution(Distribution):
         - ppf: Percent point function, i.e. approximation of
             inverse cumulative function.
         - sample: Draw sample(s) from the distribution.
+
+    Raises:
+            NotImplementedError: Class contains empty methods for
+                - initialization (__init__)
+                - probability density function (pdf)
+                - inverse cumulative function (icdf)
     """
 
     def __init__(self, *args, **kwargs) -> None:
