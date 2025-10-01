@@ -63,10 +63,17 @@ class PowerLaw(BaseDistribution):
     Args:
         - x_min (float): Minimal allowed value.
         - x_max (float): Maximal allowed value.
-        - k (float): Power law exponent. Defaults to 3.
+        - k (float, optional): Power law exponent. Defaults to 3.
+
+    Raises:
+            ValueError: Boundaries must construct a non-empty positive domain.
     """
 
     def __init__(self, x_min: float, x_max: float, k: float = 3) -> None:
+        if x_min >= x_max:
+            raise ValueError("Minimal x value must be smaller than maximal x value.")
+        if x_min <= 0:
+            raise ValueError("Minimal x value must be greater 0.")
         self.x_min = x_min
         self.x_max = x_max
         self.k = k
