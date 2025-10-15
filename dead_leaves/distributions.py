@@ -2,7 +2,9 @@ import torch
 import os
 import re
 from torch.distributions.distribution import Distribution
-from torchquad import Gaussian
+from torch.distributions import constraints
+from torch.distributions.utils import broadcast_all
+from torchquad import Trapezoid
 from pathlib import Path
 
 
@@ -17,9 +19,6 @@ class BaseDistribution(Distribution):
             inverse cumulative function.
         - sample: Draw sample(s) from the distribution.
     """
-
-    def __init__(self, *args, **kwargs) -> None:
-        pass
 
     def pdf(self, x: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError
@@ -63,19 +62,29 @@ class PowerLaw(BaseDistribution):
     Args:
         - x_min (float): Minimal allowed value.
         - x_max (float): Maximal allowed value.
-        - k (float): Power law exponent. Defaults to 3.
+        - k (float, optional): Power law exponent. Defaults to 3.
     """
 
+    @property
+    def arg_constraints(self):
+        return {
+            "k": constraints.positive,
+            "x_min": constraints.positive,
+            "x_max": constraints.greater_than(self.x_min),
+        }
+
     def __init__(self, x_min: float, x_max: float, k: float = 3) -> None:
-        self.x_min = x_min
-        self.x_max = x_max
-        self.k = k
+        self.x_min, self.x_max, self.k = broadcast_all(x_min, x_max, k)
         self.scale_factor = self.x_min ** (1 - self.k) - self.x_max ** (1 - self.k)
+        super().__init__(validate_args=True)
+
+    @constraints.dependent_property(is_discrete=False, event_dim=0)
+    def support(self):
+        return constraints.interval(self.x_min, self.x_max)
 
     def pdf(self, x: torch.Tensor) -> torch.Tensor:
-        x_range_cond = (x <= self.x_max) & (x >= self.x_min)
         d = torch.where(
-            x_range_cond,
+            self.support.check(x),
             (self.k - 1) / (self.scale_factor * (x**self.k)),
             0,
         )
@@ -85,9 +94,8 @@ class PowerLaw(BaseDistribution):
         if not torch.is_floating_point(x):
             x = x.float()
         p = torch.where(x <= self.x_min, 0, 1)
-        x_range_cond = (x <= self.x_max) & (x >= self.x_min)
         p = torch.where(
-            x_range_cond,
+            self.support.check(x),
             (self.x_min ** (1 - self.k) - x ** (1 - self.k)) / self.scale_factor,
             p,
         )
@@ -106,20 +114,26 @@ class Cosine(BaseDistribution):
             Defaults to 0.5.
         - frequency (float): Frequency of cosine. Defaults to 4,
             i.e. peaks at the cardinals.
+
+    Raises:
+            ValueError: Invalid amplitude values.
     """
 
+    @property
+    def support(self):
+        return constraints.interval(-torch.pi, torch.pi)
+
+    @property
+    def arg_constraints(self):
+        return {"amplitude": constraints.interval(0, 1)}
+
     def __init__(self, amplitude: float = 0.5, frequency: float = 4) -> None:
-        if not (0.0 <= amplitude <= 1.0):
-            raise ValueError("Amplitude must be between 0.0 and 1.0")
         self.amplitude = amplitude
         self.frequency = frequency
 
-    arg_constraints = {}
-
     def pdf(self, x: torch.Tensor) -> torch.Tensor:
-        x_range_cond = (x <= torch.pi) & (x >= -torch.pi)
         d = torch.where(
-            x_range_cond,
+            self.support.check(x),
             0.5 * (1 + self.amplitude * torch.cos(self.frequency * x)) / torch.pi,
             0,
         )
@@ -127,9 +141,8 @@ class Cosine(BaseDistribution):
 
     def cdf(self, x: torch.Tensor) -> torch.Tensor:
         p = torch.where(x <= -torch.pi, 0, 1)
-        x_range_cond = (x <= torch.pi) & (x >= -torch.pi)
         p = torch.where(
-            x_range_cond,
+            self.support.check(x),
             0.5
             + 0.5
             * (x + (self.amplitude / self.frequency) * torch.sin(self.frequency * x))
@@ -177,7 +190,7 @@ class ExpCosine(BaseDistribution):
                 + 0.5
             )
 
-        integral = Gaussian().integrate(
+        integral = Trapezoid().integrate(
             f, dim=1, integration_domain=[[-torch.pi, torch.pi]]
         )
         d = torch.where(x_range_cond, f(x) / integral, 0)
