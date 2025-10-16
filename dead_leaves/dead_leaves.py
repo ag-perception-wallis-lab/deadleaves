@@ -163,6 +163,7 @@ class DeadLeavesModel:
                 break
 
         leaves = pd.DataFrame(leaves_params, columns=self.params)
+        leaves["leaf_idx"] = torch.tensor(range(leaf_idx - 1)) + 1
         return leaves, partition
 
     def _circular_leaf_mask(self, params: dict[str, torch.Tensor]) -> torch.Tensor:
@@ -373,12 +374,12 @@ class DeadLeavesImage:
             image = torch.zeros(self.size + (3,), device=self.device)
             colors = self.sample_colors()
             texture = self.sample_texture()
-            for leaf_idx in range(len(self.leaves)):
+            for leaf_idx in self.leaves.leaf_idx:
                 image[self.partition == leaf_idx] = torch.clip(
-                    colors[leaf_idx] + texture[self.partition == leaf_idx], 0, 1
+                    colors[leaf_idx - 1] + texture[self.partition == leaf_idx], 0, 1
                 )
-                if (leaf_idx == 0) & (self.background_color is not None):
-                    image[self.partition == leaf_idx] = self.background_color
+            if self.background_color is not None:
+                image[self.partition == 0] = self.background_color
             return image
 
     def _sample_grayscale_colors(self) -> torch.Tensor:
