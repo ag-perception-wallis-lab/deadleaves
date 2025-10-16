@@ -66,9 +66,9 @@ class DeadLeavesModel:
         shape: Literal["circular", "ellipsoid", "rectangular", "polygon"],
         param_distributions: dict[str, dict[str, dict[str, float]]],
         size: tuple[int, int],
-        device: Literal["cuda", "mps", "cpu"] | None = None,
         position_mask: torch.Tensor | None = None,
         n_sample: int | None = None,
+        device: Literal["cuda", "mps", "cpu"] | None = None,
     ) -> None:
         self.device = torch.device(device) if device else choose_compute_backend()
         self.size = size
@@ -320,8 +320,9 @@ class DeadLeavesImage:
         color_param_distributions: dict[str, dict[str, dict[str, float]]],
         texture_param_distributions: dict[str, dict[str, dict[str, float]]],
         background_color: torch.Tensor | None = None,
+        device: Literal["cuda", "mps", "cpu"] | None = None,
     ):
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(device) if device else choose_compute_backend()
         self.size = partition.shape
         self.color_param_distributions = color_param_distributions
         self.texture_param_distributions = texture_param_distributions
