@@ -9,6 +9,7 @@ import pandas as pd
 import PIL.Image
 from pathlib import Path
 from torchvision.transforms.functional import pil_to_tensor
+from functools import partial
 
 import warnings
 
@@ -331,8 +332,8 @@ class DeadLeavesImage:
         self.leaves = leaves
         self.partition = partition
         colors = {
-            frozenset(["R", "G", "B"]): self._sample_RGB_colors,
-            frozenset(["H", "S", "V"]): self._sample_HSV_colors,
+            frozenset(["R", "G", "B"]): self._sample_3d_colors,
+            frozenset(["H", "S", "V"]): partial(self._sample_3d_colors, hsv_to_rgb),
             frozenset({"gray"}): self._sample_grayscale_colors,
             frozenset({"source"}): self._sample_colors_from_images,
         }
@@ -356,6 +357,11 @@ class DeadLeavesImage:
                 dist_class = dist_kw[dist_name]
                 hyper_params_dict = dist_dict[dist_name]
                 hyper_params = list(hyper_params_dict.values())
+                for idx, hyper_param in enumerate(hyper_params):
+                    if isinstance(hyper_param, dict):
+                        hyper_params[idx] = torch.tensor(
+                            hyper_param["fn"](self.leaves[hyper_param["from"]])
+                        )
                 self.color_distributions[param] = dist_class(*hyper_params)
             self.texture_distributions = {}
             for param, dist_dict in self.texture_param_distributions.items():
@@ -391,33 +397,37 @@ class DeadLeavesImage:
         """
         with self.device:
             for dist in self.color_distributions.values():
-                colors = dist.sample((len(self.leaves), 1))
+                if len(dist.batch_shape) == 0:
+                    colors = dist.sample((len(self.leaves), 1))
+                else:
+                    colors = dist.sample().expand(1, -1).permute(1, 0)
         return colors.expand(-1, 3)
 
-    def _sample_RGB_colors(self) -> torch.Tensor:
-        """Sample a RGB color for each leaf.
+    def _sample_3d_colors(self, convert_fn=None) -> torch.Tensor:
+        """Sample color for each leaf from some 3d color space.
+
+        Args:
+            convert_fn (callable, optional): Function to transform from sampling
+                color space to RGB. Defaults to None.
 
         Returns:
-            torch.Tensor: Color values.
+            torch.Tensor: Color values in RGB.
         """
         with self.device:
             colors = {}
             for param, dist in self.color_distributions.items():
-                colors[param] = dist.sample((len(self.leaves),))
-            return torch.stack(tuple(colors.values()), dim=1)
-
-    def _sample_HSV_colors(self) -> torch.Tensor:
-        """Sample a HSV color for each leaf.
-
-        Returns:
-            torch.Tensor: Color values.
-        """
-        with self.device:
-            colors = {}
-            for param, dist in self.color_distributions.items():
-                colors[param] = dist.sample((len(self.leaves),))
+                if len(dist.batch_shape) == 0:
+                    colors[param] = dist.sample((len(self.leaves),))
+                else:
+                    colors[param] = dist.sample()
             color_tensor = torch.stack(tuple(colors.values()), dim=1)
-        return torch.Tensor(hsv_to_rgb(color_tensor.cpu())).to(self.device)
+            self.leaves[list(self.color_distributions.keys())] = color_tensor.cpu()
+
+            if convert_fn:
+                color_tensor = torch.Tensor(convert_fn(color_tensor.cpu())).to(
+                    self.device
+                )
+        return color_tensor
 
     def _sample_colors_from_images(self) -> torch.Tensor:
         """From a random image sample a pixel value for each leaf.
