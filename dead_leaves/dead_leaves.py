@@ -34,7 +34,7 @@ class DeadLeavesModel:
         - shape (str): Shape of leaves.
         - param_distributions (dict[str, dict[str, dict[str, float]]]):
             Shape parameters and their distributions and distribution parameter values.
-        - size (tuple[int,int]): Width and hight of the area to be partitioned.
+        - size (tuple[int,int]): Hight (y, M) and width (x, N) of the area to be partitioned.
         - position_mask (tensor): Boolean tensor containing allowed leaf positions to create
             images with different shapes.
         - n_sample (optional, int): Number of leaves to sample. If None the sampling
@@ -82,9 +82,9 @@ class DeadLeavesModel:
         self.shape = shape
         self.param_distributions = param_distributions
         self.X, self.Y = torch.meshgrid(
-            torch.arange(self.size[0], device=self.device),
             torch.arange(self.size[1], device=self.device),
-            indexing="ij",
+            torch.arange(self.size[0], device=self.device),
+            indexing="xy",
         )
         leaf_mask = {
             "circular": self._circular_leaf_mask,
@@ -115,8 +115,8 @@ class DeadLeavesModel:
                 f"{self.shape_kw[self.shape]} but received {self.params}"
             )
         self.distributions = {
-            "x_pos": torch.distributions.uniform.Uniform(0, self.size[0]),
-            "y_pos": torch.distributions.uniform.Uniform(0, self.size[1]),
+            "x_pos": torch.distributions.uniform.Uniform(0, self.size[1]),
+            "y_pos": torch.distributions.uniform.Uniform(0, self.size[0]),
         }
         for param, dist_dict in self.param_distributions.items():
             dist_name = list(dist_dict.keys())[0]
@@ -154,7 +154,7 @@ class DeadLeavesModel:
             leaf_mask = self.generate_leaf_mask(params)
             mask = leaf_mask & (partition == 0)
             if (mask.sum() > 0) & self.position_mask[
-                params["x_pos"].to(int), params["y_pos"].to(int)
+                params["y_pos"].to(int), params["x_pos"].to(int)
             ]:
                 partition[mask] = leaf_idx
                 leaves_params.append(params)
@@ -478,7 +478,7 @@ class DeadLeavesImage:
             image (torch.Tensor): Image to show.
         """
         fig, ax = plt.subplots(frameon=False)
-        ax.imshow(image.cpu().numpy(), origin="lower", vmax=1, vmin=0)
+        ax.imshow(image.cpu().numpy(), vmax=1, vmin=0)
         fig.tight_layout()
         ax.axis("off")
 
