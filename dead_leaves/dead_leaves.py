@@ -289,7 +289,7 @@ class DeadLeavesImage:
             If None the color and texture will be sampled from the distributions.
             Defaults to None.
 
-        - device:
+        - device: Torch device to use, either cuda or cpu.
         - size (tuple[int,int]): Image size.
         - sample_colors (callable): Function to sample colors.
         - sample_texture (callable): Function to sample texture.
