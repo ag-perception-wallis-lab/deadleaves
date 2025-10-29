@@ -67,26 +67,26 @@ class PowerLaw(BaseDistribution):
     """Distribution with density that follows the power law
 
     Args:
-        - x_min (float): Minimal allowed value.
-        - x_max (float): Maximal allowed value.
+        - low (float): Minimal allowed value.
+        - high (float): Maximal allowed value.
         - k (float, optional): Power law exponent. Defaults to 3.
 
     Raises:
             ValueError: Boundaries must construct a non-empty positive domain.
     """
 
-    def __init__(self, x_min: float, x_max: float, k: float = 3) -> None:
-        if x_min >= x_max:
+    def __init__(self, low: float, high: float, k: float = 3) -> None:
+        if low >= high:
             raise ValueError("Minimal x value must be smaller than maximal x value.")
-        if x_min <= 0:
+        if low <= 0:
             raise ValueError("Minimal x value must be greater 0.")
-        self.x_min = x_min
-        self.x_max = x_max
+        self.low = low
+        self.high = high
         self.k = k
-        self.scale_factor = self.x_min ** (1 - self.k) - self.x_max ** (1 - self.k)
+        self.scale_factor = self.low ** (1 - self.k) - self.high ** (1 - self.k)
 
     def pdf(self, x: torch.Tensor) -> torch.Tensor:
-        x_range_cond = (x <= self.x_max) & (x >= self.x_min)
+        x_range_cond = (x <= self.high) & (x >= self.low)
         d = torch.where(
             x_range_cond,
             (self.k - 1) / (self.scale_factor * (x**self.k)),
@@ -97,17 +97,17 @@ class PowerLaw(BaseDistribution):
     def cdf(self, x: torch.Tensor) -> torch.Tensor:
         if not torch.is_floating_point(x):
             x = x.float()
-        p = torch.where(x <= self.x_min, 0, 1)
-        x_range_cond = (x <= self.x_max) & (x >= self.x_min)
+        p = torch.where(x <= self.low, 0, 1)
+        x_range_cond = (x <= self.high) & (x >= self.low)
         p = torch.where(
             x_range_cond,
-            (self.x_min ** (1 - self.k) - x ** (1 - self.k)) / self.scale_factor,
+            (self.low ** (1 - self.k) - x ** (1 - self.k)) / self.scale_factor,
             p,
         )
         return p
 
     def icdf(self, p: torch.Tensor) -> torch.Tensor:
-        x = (self.x_min ** (1 - self.k) - p * self.scale_factor) ** (1 / (1 - self.k))
+        x = (self.low ** (1 - self.k) - p * self.scale_factor) ** (1 / (1 - self.k))
         return x
 
 
