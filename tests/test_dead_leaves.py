@@ -6,28 +6,28 @@ from dead_leaves import DeadLeavesImage, DeadLeavesModel
 test_shape_params = [
     (
         "circular",
-        {"area": {"powerlaw": {"min": 100.0, "max": 10000.0, "k": 1.5}}},
+        {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
     )
 ]
 test_size_params = [(100, 100), (10, 20)]
 test_color_params = [
     {
-        "H": {"normal": {"mean": 0.5, "std": 0.2}},
-        "S": {"normal": {"mean": 0.5, "std": 0.2}},
-        "V": {"normal": {"mean": 0.5, "std": 0.2}},
+        "H": {"normal": {"loc": 0.5, "scale": 0.2}},
+        "S": {"normal": {"loc": 0.5, "scale": 0.2}},
+        "V": {"normal": {"loc": 0.5, "scale": 0.2}},
     },
     {
-        "R": {"normal": {"mean": 0.5, "std": 0.7}},
-        "G": {"normal": {"mean": 0.5, "std": 0.7}},
-        "B": {"normal": {"mean": 0.5, "std": 0.7}},
+        "R": {"normal": {"loc": 0.5, "scale": 0.7}},
+        "G": {"normal": {"loc": 0.5, "scale": 0.7}},
+        "B": {"normal": {"loc": 0.5, "scale": 0.7}},
     },
 ]
 test_texture_params = [
-    {"gray": {"normal": {"mean": 0, "std": 0.1}}},
+    {"gray": {"normal": {"loc": 0, "scale": 0.1}}},
     {
-        "H": {"normal": {"mean": 0, "std": 0.1}},
-        "S": {"normal": {"mean": 0, "std": 0.1}},
-        "V": {"normal": {"mean": 0, "std": 0.1}},
+        "H": {"normal": {"loc": 0, "scale": 0.1}},
+        "S": {"normal": {"loc": 0, "scale": 0.1}},
+        "V": {"normal": {"loc": 0, "scale": 0.1}},
     },
 ]
 test_seeds = list(range(20))

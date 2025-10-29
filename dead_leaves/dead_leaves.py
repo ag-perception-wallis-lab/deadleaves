@@ -121,9 +121,8 @@ class DeadLeavesModel:
         for param, dist_dict in self.param_distributions.items():
             dist_name = list(dist_dict.keys())[0]
             dist_class = dist_kw[dist_name]
-            hyper_params_dict = dist_dict[dist_name]
-            hyper_params = list(hyper_params_dict.values())
-            self.distributions[param] = dist_class(*hyper_params)
+            hyper_params = dist_dict[dist_name]
+            self.distributions[param] = dist_class(**hyper_params)
         self.params = list(self.distributions.keys())
 
     def sample_parameters(self) -> dict[str, torch.Tensor]:
@@ -363,16 +362,14 @@ class DeadLeavesImage:
             for param, dist_dict in self.color_param_distributions.items():
                 dist_name = list(dist_dict.keys())[0]
                 dist_class = dist_kw[dist_name]
-                hyper_params_dict = dist_dict[dist_name]
-                hyper_params = list(hyper_params_dict.values())
-                self.color_distributions[param] = dist_class(*hyper_params)
+                hyper_params = dist_dict[dist_name]
+                self.color_distributions[param] = dist_class(**hyper_params)
             self.texture_distributions = {}
             for param, dist_dict in self.texture_param_distributions.items():
                 dist_name = list(dist_dict.keys())[0]
                 dist_class = dist_kw[dist_name]
-                hyper_params_dict = dist_dict[dist_name]
-                hyper_params = list(hyper_params_dict.values())
-                self.texture_distributions[param] = dist_class(*hyper_params)
+                hyper_params = dist_dict[dist_name]
+                self.texture_distributions[param] = dist_class(**hyper_params)
 
     def sample_image(self) -> torch.Tensor:
         """Generate a dead leaves image from the model.
