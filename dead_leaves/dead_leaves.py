@@ -146,7 +146,7 @@ class DeadLeavesModel:
                 parameters, as well as the partition.
         """
         leaves_params = []
-        partition = torch.zeros(self.size, device=self.device)
+        partition = torch.zeros(self.size, device=self.device, dtype=int)
         leaf_idx = 1
 
         while torch.any((partition == 0) & (self.position_mask == 1)):
