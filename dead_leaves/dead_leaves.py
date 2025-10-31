@@ -363,7 +363,7 @@ class DeadLeavesImage:
             for param, dist_dict in self.color_param_distributions.items():
                 dist_name = list(dist_dict.keys())[0]
                 dist_class = dist_kw[dist_name]
-                hyper_params = dist_dict[dist_name]
+                hyper_params = dist_dict[dist_name].copy()
                 for idx, hyper_param in hyper_params.items():
                     if isinstance(hyper_param, dict):
                         hyper_params[idx] = torch.tensor(
@@ -374,7 +374,7 @@ class DeadLeavesImage:
             for param, dist_dict in self.texture_param_distributions.items():
                 dist_name = list(dist_dict.keys())[0]
                 dist_class = dist_kw[dist_name]
-                hyper_params = dist_dict[dist_name]
+                hyper_params = dist_dict[dist_name].copy()
                 self.texture_distributions[param] = dist_class(**hyper_params)
 
     def sample_image(self) -> torch.Tensor:
