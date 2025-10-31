@@ -121,8 +121,11 @@ class DeadLeavesModel:
         for param, dist_dict in self.param_distributions.items():
             dist_name = list(dist_dict.keys())[0]
             dist_class = dist_kw[dist_name]
-            hyper_params = dist_dict[dist_name]
-            self.distributions[param] = dist_class(**hyper_params)
+            hyper_params = dist_dict[dist_name].copy()
+            if any([isinstance(p, dict) for p in hyper_params.values()]):
+                self.distributions[param] = "resolve during sampling"
+            else:
+                self.distributions[param] = dist_class(**hyper_params)
         self.params = list(self.distributions.keys())
 
     def sample_parameters(self) -> dict[str, torch.Tensor]:
@@ -134,6 +137,17 @@ class DeadLeavesModel:
         with self.device:
             samples = {}
             for param, dist in self.distributions.items():
+                if dist == "resolve during sampling":
+                    dist_dict = self.param_distributions[param]
+                    dist_name = list(dist_dict.keys())[0]
+                    dist_class = dist_kw[dist_name]
+                    hyper_params = dist_dict[dist_name].copy()
+                    for idx, hyper_param in hyper_params.items():
+                        if isinstance(hyper_param, dict):
+                            hyper_params[idx] = torch.tensor(
+                                hyper_param["fn"](samples[hyper_param["from"]])
+                            )
+                    dist = dist_class(**hyper_params)
                 samples[param] = dist.sample()
             return samples
 
