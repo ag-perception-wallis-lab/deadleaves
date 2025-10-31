@@ -9,7 +9,6 @@ import pandas as pd
 import PIL.Image
 from pathlib import Path
 from torchvision.transforms.functional import pil_to_tensor
-from functools import partial
 
 import warnings
 
@@ -365,7 +364,7 @@ class DeadLeavesImage:
                 dist_name = list(dist_dict.keys())[0]
                 dist_class = dist_kw[dist_name]
                 hyper_params = dist_dict[dist_name]
-                for idx, hyper_param in enumerate(hyper_params):
+                for idx, hyper_param in hyper_params.items():
                     if isinstance(hyper_param, dict):
                         hyper_params[idx] = torch.tensor(
                             hyper_param["fn"](self.leaves[hyper_param["from"]])
