@@ -102,6 +102,33 @@ class DeadLeavesModel:
         "polygon": ["area", "n_vertices"],
     }
 
+    def resolve_dependencies(self) -> list[str]:
+        """Resolve model parameter dependencies.
+
+        Raises:
+            ValueError: Error on circular or unresolvable dependencies.
+
+        Returns:
+            list[str]: Sorted list of parameters.
+        """
+        dependencies = {param: set() for param in self.param_distributions}
+        for param, dist in self.param_distributions.items():
+            dist_params = next(iter(dist.values()))
+            for dist_param in dist_params.values():
+                if isinstance(dist_param, dict) and "from" in dist_param:
+                    dependencies[param].add(dist_param["from"])
+
+        resolved, ordered_params = set(), ["x_pos", "y_pos"]
+        while dependencies:
+            ready = [param for param, dep in dependencies.items() if dep <= resolved]
+            if not ready:
+                raise ValueError("Circular or unresolved dependencies detected")
+            ordered_params.extend(ready)
+            resolved.update(ready)
+            for param in ready:
+                dependencies.pop(param)
+        return ordered_params
+
     def model(self) -> None:
         """Generate list of model parameters and distribution instances to sample from.
 
@@ -136,7 +163,9 @@ class DeadLeavesModel:
         """
         with self.device:
             samples = {}
-            for param, dist in self.distributions.items():
+            params = self.resolve_dependencies()
+            for param in params:
+                dist = self.distributions[param]
                 if dist == "resolve during sampling":
                     dist_dict = self.param_distributions[param]
                     dist_name = list(dist_dict.keys())[0]
