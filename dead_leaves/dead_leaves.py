@@ -459,7 +459,7 @@ class DeadLeavesImage:
         """Sample a 3d color for each leaf.
 
         Returns:
-            torch.Tensor: Color values in RGB.
+            torch.Tensor: Color values.
         """
         with self.device:
             colors = {}
@@ -492,6 +492,14 @@ class DeadLeavesImage:
             return color_tensor.permute(1, 0)
 
     def _transform_colors_to_texture_space(self, colors: torch.Tensor) -> torch.Tensor:
+        """Transform leaf colors to texture color space.
+
+        Args:
+            colors (torch.Tensor): Tensor of leaf colors in color space.
+
+        Returns:
+            torch.Tensor: Tensor of leaf colors in texture color space.
+        """
         transformation_fns = {
             (("H", "S", "V"), ("R", "G", "B")): lambda x: hsv_to_rgb(
                 torch.clip(x, 0, 1)
