@@ -24,6 +24,8 @@ class BaseDistribution(Distribution):
                 - inverse cumulative function (icdf)
     """
 
+    _batch_shape = torch.Size()
+
     def __init__(self, *args, **kwargs) -> None:
         pass
 
@@ -204,6 +206,8 @@ class Constant(Distribution):
         - value: Constant value to be return in each sampling.
     """
 
+    _batch_shape = torch.Size()
+
     def __init__(self, value: float) -> None:
         self.value = value
 
@@ -217,6 +221,8 @@ class Image(Distribution):
     Args:
         - dir: Path to image data set directory.
     """
+
+    _batch_shape = torch.Size()
 
     def __init__(self, dir: Path) -> None:
         self.dir = dir
