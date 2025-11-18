@@ -282,7 +282,8 @@ class DeadLeavesImage:
         - color_param_distributions (dict[str, dict[str, dict[str, float]]]):
             Color parameters and their distribution setup.
         - texture_param_distributions (dict[str, dict[str, dict[str, float]]]):
-            Texture parameters and their distribution setup.
+            Texture parameters and their distribution setup. Defaults to constant 0,
+            i.e. no texture.
         - background_color (tensor): For images which are not fully covered
             (due to a position mask or sparse sampling) one can set a RGB background color.
             If None the color and texture will be sampled from the distributions.
@@ -318,7 +319,9 @@ class DeadLeavesImage:
         leaves: pd.DataFrame,
         partition: torch.Tensor,
         color_param_distributions: dict[str, dict[str, dict[str, float]]],
-        texture_param_distributions: dict[str, dict[str, dict[str, float]]],
+        texture_param_distributions: dict[str, dict[str, dict[str, float]]] = {
+            "gray": {"constant": {"value": 0}}
+        },
         background_color: torch.Tensor | None = None,
     ):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
