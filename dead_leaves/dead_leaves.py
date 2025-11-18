@@ -372,7 +372,10 @@ class DeadLeavesImage:
                 dist_name = list(dist_dict.keys())[0]
                 dist_class = dist_kw[dist_name]
                 hyper_params = dist_dict[dist_name]
-                self.texture_distributions[param] = dist_class(**hyper_params)
+                if any([isinstance(p, dict) for p in hyper_params.values()]):
+                    self.texture_distributions[param] = "resolve during sampling"
+                else:
+                    self.texture_distributions[param] = dist_class(**hyper_params)
 
     def sample_image(self) -> torch.Tensor:
         """Generate a dead leaves image from the model.
@@ -465,8 +468,37 @@ class DeadLeavesImage:
         """
         with self.device:
             for dist in self.texture_distributions.values():
-                texture = dist.sample(self.size)
-        return texture.repeat(3, 1, 1).permute(1, 2, 0)
+                if dist == "resolve during sampling":
+                    texture = torch.zeros(self.partition.size())
+                    dist_name, hyper_params = next(
+                        iter(self.texture_param_distributions["gray"].items())
+                    )
+                    dist_class = dist_kw[dist_name]
+                    for key, hyper_param in hyper_params.items():
+                        if isinstance(hyper_param, dict):
+                            hyper_param_dist_name, hyper_hyper_params = next(
+                                iter(hyper_param.items())
+                            )
+                            hyper_param_dist_class = dist_kw[hyper_param_dist_name]
+                            hyper_params[key] = hyper_param_dist_class(
+                                **hyper_hyper_params
+                            ).sample((len(self.leaves),))
+                    for leaf_idx in self.leaves.leaf_idx:
+                        leaf_hyper_params = {
+                            key: (
+                                value[leaf_idx - 1]
+                                if isinstance(value, torch.Tensor)
+                                else value
+                            )
+                            for key, value in hyper_params.items()
+                        }
+                        leaf_texture = dist_class(**leaf_hyper_params).sample(self.size)
+                        mask = self.partition == leaf_idx
+                        texture[mask] = leaf_texture[mask]
+                else:
+                    texture = dist.sample(self.size)
+
+        return texture.unsqueeze(-1).expand(-1, -1, 3)
 
     def _sample_3d_texture(self) -> torch.Tensor:
         """Sample a 3d texture for each pixel.
