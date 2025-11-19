@@ -1,5 +1,5 @@
 from .distributions import PowerLaw, Constant, Cosine, ExpCosine, Image
-from .utils import choose_compute_backend
+from .utils import choose_compute_backend, bounding_box
 from typing import Literal
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -336,6 +336,7 @@ class DeadLeavesImage:
             ("H", "S", "V"): ("H", "S", "V"),
             ("gray",): ("gray"),
             ("source",): ("source"),
+            ("alpha", "source"): ("source"),
         }
         self.color_space = color_spaces[
             tuple(sorted(list(self.color_param_distributions.keys())))
@@ -353,6 +354,7 @@ class DeadLeavesImage:
             ("R", "G", "B"): self._sample_3d_texture,
             ("H", "S", "V"): self._sample_3d_texture,
             ("gray"): self._sample_grayscale_texture,
+            ("source"): self._sample_texture_patch,
         }
         self.sample_colors = colors[self.color_space]
         self.sample_texture = textures[self.texture_space]
@@ -429,7 +431,7 @@ class DeadLeavesImage:
         """
         with self.device:
             for _, dist in self.color_distributions.items():
-                image_path = dist.sample()
+                image_path = dist.sample()[0]
             image = pil_to_tensor(PIL.Image.open(image_path)) / 255
             image_vector = image.reshape((3, -1))
             idx = torch.multinomial(
@@ -511,6 +513,31 @@ class DeadLeavesImage:
             for param, dist in self.texture_distributions.items():
                 texture[param] = dist.sample(self.size)
             return torch.stack([texture[param] for param in self.texture_space], dim=2)
+
+    def _sample_texture_patch(self) -> torch.Tensor:
+        with self.device:
+            texture = torch.zeros(self.partition.shape)
+            texture_params = {}
+            for param, dist in self.texture_distributions.items():
+                texture_params[param] = dist.sample((len(self.leaves),))
+            for leaf_idx in self.leaves.leaf_idx:
+                top, left, bottom, right = bounding_box(self.partition, leaf_idx)
+                width = right - left
+                height = bottom - top
+                texture_patch_path = texture_params["source"][leaf_idx - 1]
+                texture_patch = (
+                    pil_to_tensor(
+                        PIL.Image.open(texture_patch_path).resize((width, height))
+                    )
+                    / 255
+                )
+                leaf_mask = self.partition == leaf_idx
+                texture_mask = torch.zeros(self.partition.shape)
+                texture_mask[top:bottom, left:right] = texture_patch
+                texture += (
+                    leaf_mask * texture_params["alpha"][leaf_idx - 1] * texture_mask
+                )
+        return texture.unsqueeze(-1).expand(-1, -1, 3)
 
     def show(self, image: torch.Tensor) -> None:
         """Show selected image.
