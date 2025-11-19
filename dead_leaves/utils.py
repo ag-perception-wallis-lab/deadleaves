@@ -29,7 +29,8 @@ def bounding_box(
         leaf_idx (int): Index of relevant leaf
 
     Returns:
-        tuple[int, int, int, int] | None: Boundary indices of bounding box.
+        tuple[int, int, int, int] | None: Top, left, bottom, right boundary indices
+            of bounding box.
     """
     Y, X = (partition == leaf_idx).nonzero(as_tuple=True)
 
