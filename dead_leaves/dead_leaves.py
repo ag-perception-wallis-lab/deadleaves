@@ -114,9 +114,14 @@ class DeadLeavesModel:
                 f"Model with {self.shape} shapes expects parameters: "
                 f"{self.shape_kw[self.shape]} but received {self.params}"
             )
+        sampling_box = bounding_box(self.position_mask, 1)
         self.distributions = {
-            "x_pos": torch.distributions.uniform.Uniform(0, self.size[1]),
-            "y_pos": torch.distributions.uniform.Uniform(0, self.size[0]),
+            "x_pos": torch.distributions.uniform.Uniform(
+                sampling_box[1], sampling_box[3]
+            ),
+            "y_pos": torch.distributions.uniform.Uniform(
+                sampling_box[0], sampling_box[2]
+            ),
         }
         for param, dist_dict in self.param_distributions.items():
             dist_name = list(dist_dict.keys())[0]
