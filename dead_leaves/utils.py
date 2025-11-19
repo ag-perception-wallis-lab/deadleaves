@@ -17,3 +17,19 @@ def choose_compute_backend() -> torch.device:
         return torch.device("cuda")
 
     return torch.device("cpu")
+
+
+def bounding_box(
+    partition: torch.Tensor, leaf_idx: int
+) -> tuple[int, int, int, int] | None:
+    Y, X = (partition == leaf_idx).nonzero(as_tuple=True)
+
+    if len(Y) == 0:
+        return None
+
+    top = Y.min().item()
+    bottom = Y.max().item() + 1
+    left = X.min().item()
+    right = X.max().item() + 1
+
+    return top, left, bottom, right
