@@ -309,6 +309,8 @@ class DeadLeavesImage:
             additive texture value.
         - _sample_RGB_texture: For each pixel sample a RGB additive texture value.
         - _sample_HSV_texture: For each pixel sample a HSV additive texture value.
+        - _sample_texture_patch: For each leaf sample a texture patch from a folder of
+            patches which is then blended into color.
         - show: Plot generated image.
         - save: Save image to directory.
         - animate: Generate animation of dead leaves sampling process.
@@ -515,6 +517,12 @@ class DeadLeavesImage:
             return torch.stack([texture[param] for param in self.texture_space], dim=2)
 
     def _sample_texture_patch(self) -> torch.Tensor:
+        """Sample leaf-wise grayscale texture from a folder of texture patches.
+        Texture patches will be blended into color based on a leaf-wise alpha value.
+
+        Returns:
+            torch.Tensor: Texture values.
+        """
         with self.device:
             texture = torch.zeros(self.partition.shape)
             texture_params = {}

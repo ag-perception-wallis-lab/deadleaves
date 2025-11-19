@@ -22,6 +22,15 @@ def choose_compute_backend() -> torch.device:
 def bounding_box(
     partition: torch.Tensor, leaf_idx: int
 ) -> tuple[int, int, int, int] | None:
+    """Generate boundaries for bounding box for leaf index in partition
+
+    Args:
+        partition (torch.Tensor): Partition to use for bounding box
+        leaf_idx (int): Index of relevant leaf
+
+    Returns:
+        tuple[int, int, int, int] | None: Boundary indices of bounding box.
+    """
     Y, X = (partition == leaf_idx).nonzero(as_tuple=True)
 
     if len(Y) == 0:
