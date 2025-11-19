@@ -230,8 +230,10 @@ class Image(Distribution):
         ]
         self.n_files = len(self.files)
 
-    def sample(self, n=1) -> Path:
+    arg_constraints = {}
+
+    def sample(self, n=(1,)) -> Path:
         idx = torch.multinomial(
-            torch.ones(self.n_files), num_samples=n, replacement=True
+            torch.ones(self.n_files), num_samples=n[0], replacement=True
         )
-        return self.files[idx]
+        return [self.files[i] for i in idx]

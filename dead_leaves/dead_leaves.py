@@ -1,5 +1,5 @@
 from .distributions import PowerLaw, Constant, Cosine, ExpCosine, Image
-from .utils import choose_compute_backend
+from .utils import choose_compute_backend, bounding_box
 from typing import Literal
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -114,9 +114,14 @@ class DeadLeavesModel:
                 f"Model with {self.shape} shapes expects parameters: "
                 f"{self.shape_kw[self.shape]} but received {self.params}"
             )
+        sampling_box = bounding_box(self.position_mask, 1)
         self.distributions = {
-            "x_pos": torch.distributions.uniform.Uniform(0, self.size[1]),
-            "y_pos": torch.distributions.uniform.Uniform(0, self.size[0]),
+            "x_pos": torch.distributions.uniform.Uniform(
+                sampling_box[1], sampling_box[3]
+            ),
+            "y_pos": torch.distributions.uniform.Uniform(
+                sampling_box[0], sampling_box[2]
+            ),
         }
         for param, dist_dict in self.param_distributions.items():
             dist_name = list(dist_dict.keys())[0]
@@ -282,7 +287,8 @@ class DeadLeavesImage:
         - color_param_distributions (dict[str, dict[str, dict[str, float]]]):
             Color parameters and their distribution setup.
         - texture_param_distributions (dict[str, dict[str, dict[str, float]]]):
-            Texture parameters and their distribution setup.
+            Texture parameters and their distribution setup. Defaults to constant 0,
+            i.e. no texture.
         - background_color (tensor): For images which are not fully covered
             (due to a position mask or sparse sampling) one can set a RGB background color.
             If None the color and texture will be sampled from the distributions.
@@ -308,6 +314,8 @@ class DeadLeavesImage:
             additive texture value.
         - _sample_RGB_texture: For each pixel sample a RGB additive texture value.
         - _sample_HSV_texture: For each pixel sample a HSV additive texture value.
+        - _sample_texture_patch: For each leaf sample a texture patch from a folder of
+            patches which is then blended into color.
         - show: Plot generated image.
         - save: Save image to directory.
         - animate: Generate animation of dead leaves sampling process.
@@ -318,7 +326,9 @@ class DeadLeavesImage:
         leaves: pd.DataFrame,
         partition: torch.Tensor,
         color_param_distributions: dict[str, dict[str, dict[str, float]]],
-        texture_param_distributions: dict[str, dict[str, dict[str, float]]],
+        texture_param_distributions: dict[str, dict[str, dict[str, float]]] = {
+            "gray": {"constant": {"value": 0}}
+        },
         background_color: torch.Tensor | None = None,
     ):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -333,6 +343,7 @@ class DeadLeavesImage:
             ("H", "S", "V"): ("H", "S", "V"),
             ("gray",): ("gray"),
             ("source",): ("source"),
+            ("alpha", "source"): ("source"),
         }
         self.color_space = color_spaces[
             tuple(sorted(list(self.color_param_distributions.keys())))
@@ -350,6 +361,7 @@ class DeadLeavesImage:
             ("R", "G", "B"): self._sample_3d_texture,
             ("H", "S", "V"): self._sample_3d_texture,
             ("gray"): self._sample_grayscale_texture,
+            ("source"): self._sample_texture_patch,
         }
         self.sample_colors = colors[self.color_space]
         self.sample_texture = textures[self.texture_space]
@@ -369,7 +381,10 @@ class DeadLeavesImage:
                 dist_name = list(dist_dict.keys())[0]
                 dist_class = dist_kw[dist_name]
                 hyper_params = dist_dict[dist_name]
-                self.texture_distributions[param] = dist_class(**hyper_params)
+                if any([isinstance(p, dict) for p in hyper_params.values()]):
+                    self.texture_distributions[param] = "resolve during sampling"
+                else:
+                    self.texture_distributions[param] = dist_class(**hyper_params)
 
     def sample_image(self) -> torch.Tensor:
         """Generate a dead leaves image from the model.
@@ -423,7 +438,7 @@ class DeadLeavesImage:
         """
         with self.device:
             for _, dist in self.color_distributions.items():
-                image_path = dist.sample()
+                image_path = dist.sample()[0]
             image = pil_to_tensor(PIL.Image.open(image_path)) / 255
             image_vector = image.reshape((3, -1))
             idx = torch.multinomial(
@@ -462,8 +477,37 @@ class DeadLeavesImage:
         """
         with self.device:
             for dist in self.texture_distributions.values():
-                texture = dist.sample(self.size)
-        return texture.repeat(3, 1, 1).permute(1, 2, 0)
+                if dist == "resolve during sampling":
+                    texture = torch.zeros(self.partition.size())
+                    dist_name, hyper_params = next(
+                        iter(self.texture_param_distributions["gray"].items())
+                    )
+                    dist_class = dist_kw[dist_name]
+                    for key, hyper_param in hyper_params.items():
+                        if isinstance(hyper_param, dict):
+                            hyper_param_dist_name, hyper_hyper_params = next(
+                                iter(hyper_param.items())
+                            )
+                            hyper_param_dist_class = dist_kw[hyper_param_dist_name]
+                            hyper_params[key] = hyper_param_dist_class(
+                                **hyper_hyper_params
+                            ).sample((len(self.leaves),))
+                    for leaf_idx in self.leaves.leaf_idx:
+                        leaf_hyper_params = {
+                            key: (
+                                value[leaf_idx - 1]
+                                if isinstance(value, torch.Tensor)
+                                else value
+                            )
+                            for key, value in hyper_params.items()
+                        }
+                        leaf_texture = dist_class(**leaf_hyper_params).sample(self.size)
+                        mask = self.partition == leaf_idx
+                        texture[mask] = leaf_texture[mask]
+                else:
+                    texture = dist.sample(self.size)
+
+        return texture.unsqueeze(-1).expand(-1, -1, 3)
 
     def _sample_3d_texture(self) -> torch.Tensor:
         """Sample a 3d texture for each pixel.
@@ -476,6 +520,37 @@ class DeadLeavesImage:
             for param, dist in self.texture_distributions.items():
                 texture[param] = dist.sample(self.size)
             return torch.stack([texture[param] for param in self.texture_space], dim=2)
+
+    def _sample_texture_patch(self) -> torch.Tensor:
+        """Sample leaf-wise grayscale texture from a folder of texture patches.
+        Texture patches will be blended into color based on a leaf-wise alpha value.
+
+        Returns:
+            torch.Tensor: Texture values.
+        """
+        with self.device:
+            texture = torch.zeros(self.partition.shape)
+            texture_params = {}
+            for param, dist in self.texture_distributions.items():
+                texture_params[param] = dist.sample((len(self.leaves),))
+            for leaf_idx in self.leaves.leaf_idx:
+                top, left, bottom, right = bounding_box(self.partition, leaf_idx)
+                width = right - left
+                height = bottom - top
+                texture_patch_path = texture_params["source"][leaf_idx - 1]
+                texture_patch = (
+                    pil_to_tensor(
+                        PIL.Image.open(texture_patch_path).resize((width, height))
+                    )
+                    / 255
+                )
+                leaf_mask = self.partition == leaf_idx
+                texture_mask = torch.zeros(self.partition.shape)
+                texture_mask[top:bottom, left:right] = texture_patch
+                texture += (
+                    leaf_mask * texture_params["alpha"][leaf_idx - 1] * texture_mask
+                )
+        return texture.unsqueeze(-1).expand(-1, -1, 3)
 
     def show(self, image: torch.Tensor) -> None:
         """Show selected image.
