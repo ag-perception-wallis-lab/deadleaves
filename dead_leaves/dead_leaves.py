@@ -3,7 +3,7 @@ from .utils import choose_compute_backend
 from typing import Literal
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from matplotlib.colors import hsv_to_rgb
+from matplotlib.colors import hsv_to_rgb, rgb_to_hsv
 import torch
 import pandas as pd
 import PIL.Image
@@ -34,7 +34,7 @@ class DeadLeavesModel:
         - shape (str): Shape of leaves.
         - param_distributions (dict[str, dict[str, dict[str, float]]]):
             Shape parameters and their distributions and distribution parameter values.
-        - size (tuple[int,int]): Width and hight of the area to be partitioned.
+        - size (tuple[int,int]): Hight (y, M) and width (x, N) of the area to be partitioned.
         - position_mask (tensor): Boolean tensor containing allowed leaf positions to create
             images with different shapes.
         - n_sample (optional, int): Number of leaves to sample. If None the sampling
@@ -82,9 +82,9 @@ class DeadLeavesModel:
         self.shape = shape
         self.param_distributions = param_distributions
         self.X, self.Y = torch.meshgrid(
-            torch.arange(self.size[0], device=self.device),
             torch.arange(self.size[1], device=self.device),
-            indexing="ij",
+            torch.arange(self.size[0], device=self.device),
+            indexing="xy",
         )
         leaf_mask = {
             "circular": self._circular_leaf_mask,
@@ -115,15 +115,14 @@ class DeadLeavesModel:
                 f"{self.shape_kw[self.shape]} but received {self.params}"
             )
         self.distributions = {
-            "x_pos": torch.distributions.uniform.Uniform(0, self.size[0]),
-            "y_pos": torch.distributions.uniform.Uniform(0, self.size[1]),
+            "x_pos": torch.distributions.uniform.Uniform(0, self.size[1]),
+            "y_pos": torch.distributions.uniform.Uniform(0, self.size[0]),
         }
         for param, dist_dict in self.param_distributions.items():
             dist_name = list(dist_dict.keys())[0]
             dist_class = dist_kw[dist_name]
-            hyper_params_dict = dist_dict[dist_name]
-            hyper_params = list(hyper_params_dict.values())
-            self.distributions[param] = dist_class(*hyper_params)
+            hyper_params = dist_dict[dist_name]
+            self.distributions[param] = dist_class(**hyper_params)
         self.params = list(self.distributions.keys())
 
     def sample_parameters(self) -> dict[str, torch.Tensor]:
@@ -146,7 +145,7 @@ class DeadLeavesModel:
                 parameters, as well as the partition.
         """
         leaves_params = []
-        partition = torch.zeros(self.size, device=self.device)
+        partition = torch.zeros(self.size, device=self.device, dtype=int)
         leaf_idx = 1
 
         while torch.any((partition == 0) & (self.position_mask == 1)):
@@ -154,7 +153,7 @@ class DeadLeavesModel:
             leaf_mask = self.generate_leaf_mask(params)
             mask = leaf_mask & (partition == 0)
             if (mask.sum() > 0) & self.position_mask[
-                params["x_pos"].to(int), params["y_pos"].to(int)
+                params["y_pos"].to(int), params["x_pos"].to(int)
             ]:
                 partition[mask] = leaf_idx
                 leaves_params.append(params)
@@ -163,6 +162,7 @@ class DeadLeavesModel:
                 break
 
         leaves = pd.DataFrame(leaves_params, columns=self.params)
+        leaves["leaf_idx"] = torch.tensor(range(leaf_idx - 1)) + 1
         return leaves, partition
 
     def _circular_leaf_mask(self, params: dict[str, torch.Tensor]) -> torch.Tensor:
@@ -288,7 +288,7 @@ class DeadLeavesImage:
             If None the color and texture will be sampled from the distributions.
             Defaults to None.
 
-        - device:
+        - device: Torch device to use, either cuda or cpu.
         - size (tuple[int,int]): Image size.
         - sample_colors (callable): Function to sample colors.
         - sample_texture (callable): Function to sample texture.
@@ -328,21 +328,31 @@ class DeadLeavesImage:
         self.background_color = background_color
         self.leaves = leaves
         self.partition = partition
+        color_spaces = {
+            ("B", "G", "R"): ("R", "G", "B"),
+            ("H", "S", "V"): ("H", "S", "V"),
+            ("gray",): ("gray"),
+            ("source",): ("source"),
+        }
+        self.color_space = color_spaces[
+            tuple(sorted(list(self.color_param_distributions.keys())))
+        ]
+        self.texture_space = color_spaces[
+            tuple(sorted(list(self.texture_param_distributions.keys())))
+        ]
         colors = {
-            frozenset(["R", "G", "B"]): self._sample_RGB_colors,
-            frozenset(["H", "S", "V"]): self._sample_HSV_colors,
-            frozenset({"gray"}): self._sample_grayscale_colors,
-            frozenset({"source"}): self._sample_colors_from_images,
+            ("R", "G", "B"): self._sample_3d_colors,
+            ("H", "S", "V"): self._sample_3d_colors,
+            ("gray"): self._sample_grayscale_colors,
+            ("source"): self._sample_colors_from_images,
         }
         textures = {
-            frozenset(["R", "G", "B"]): self._sample_RGB_texture,
-            frozenset(["H", "S", "V"]): self._sample_HSV_texture,
-            frozenset({"gray"}): self._sample_grayscale_texture,
+            ("R", "G", "B"): self._sample_3d_texture,
+            ("H", "S", "V"): self._sample_3d_texture,
+            ("gray"): self._sample_grayscale_texture,
         }
-        self.sample_colors = colors[frozenset(self.color_param_distributions.keys())]
-        self.sample_texture = textures[
-            frozenset(self.texture_param_distributions.keys())
-        ]
+        self.sample_colors = colors[self.color_space]
+        self.sample_texture = textures[self.texture_space]
         self.model()
 
     def model(self) -> None:
@@ -352,16 +362,14 @@ class DeadLeavesImage:
             for param, dist_dict in self.color_param_distributions.items():
                 dist_name = list(dist_dict.keys())[0]
                 dist_class = dist_kw[dist_name]
-                hyper_params_dict = dist_dict[dist_name]
-                hyper_params = list(hyper_params_dict.values())
-                self.color_distributions[param] = dist_class(*hyper_params)
+                hyper_params = dist_dict[dist_name]
+                self.color_distributions[param] = dist_class(**hyper_params)
             self.texture_distributions = {}
             for param, dist_dict in self.texture_param_distributions.items():
                 dist_name = list(dist_dict.keys())[0]
                 dist_class = dist_kw[dist_name]
-                hyper_params_dict = dist_dict[dist_name]
-                hyper_params = list(hyper_params_dict.values())
-                self.texture_distributions[param] = dist_class(*hyper_params)
+                hyper_params = dist_dict[dist_name]
+                self.texture_distributions[param] = dist_class(**hyper_params)
 
     def sample_image(self) -> torch.Tensor:
         """Generate a dead leaves image from the model.
@@ -372,13 +380,16 @@ class DeadLeavesImage:
         with self.device:
             image = torch.zeros(self.size + (3,), device=self.device)
             colors = self.sample_colors()
+            colors = self._transform_colors_to_texture_space(colors)
             texture = self.sample_texture()
-            for leaf_idx in range(len(self.leaves)):
+            for leaf_idx in self.leaves.leaf_idx:
                 image[self.partition == leaf_idx] = torch.clip(
-                    colors[leaf_idx] + texture[self.partition == leaf_idx], 0, 1
+                    colors[leaf_idx - 1] + texture[self.partition == leaf_idx], 0, 1
                 )
-                if (leaf_idx == 0) & (self.background_color is not None):
-                    image[self.partition == leaf_idx] = self.background_color
+            if self.background_color is not None:
+                image[self.partition == 0] = self.background_color
+            if self.texture_space == ("H", "S", "V"):
+                image = torch.Tensor(hsv_to_rgb(image.cpu())).to(self.device)
             return image
 
     def _sample_grayscale_colors(self) -> torch.Tensor:
@@ -392,8 +403,8 @@ class DeadLeavesImage:
                 colors = dist.sample((len(self.leaves), 1))
         return colors.expand(-1, 3)
 
-    def _sample_RGB_colors(self) -> torch.Tensor:
-        """Sample a RGB color for each leaf.
+    def _sample_3d_colors(self) -> torch.Tensor:
+        """Sample a 3d color for each leaf.
 
         Returns:
             torch.Tensor: Color values.
@@ -402,20 +413,7 @@ class DeadLeavesImage:
             colors = {}
             for param, dist in self.color_distributions.items():
                 colors[param] = dist.sample((len(self.leaves),))
-            return torch.stack(tuple(colors.values()), dim=1)
-
-    def _sample_HSV_colors(self) -> torch.Tensor:
-        """Sample a HSV color for each leaf.
-
-        Returns:
-            torch.Tensor: Color values.
-        """
-        with self.device:
-            colors = {}
-            for param, dist in self.color_distributions.items():
-                colors[param] = dist.sample((len(self.leaves),))
-            color_tensor = torch.stack(tuple(colors.values()), dim=1)
-        return torch.Tensor(hsv_to_rgb(color_tensor.cpu())).to(self.device)
+            return torch.stack([colors[param] for param in self.color_space], dim=1)
 
     def _sample_colors_from_images(self) -> torch.Tensor:
         """From a random image sample a pixel value for each leaf.
@@ -434,6 +432,28 @@ class DeadLeavesImage:
             color_tensor = image_vector[:, idx]
             return color_tensor.permute(1, 0)
 
+    def _transform_colors_to_texture_space(self, colors: torch.Tensor) -> torch.Tensor:
+        transformation_fns = {
+            (("H", "S", "V"), ("R", "G", "B")): lambda x: hsv_to_rgb(
+                torch.clip(x, 0, 1)
+            ),
+            (("R", "G", "B"), ("H", "S", "V")): lambda x: rgb_to_hsv(
+                torch.clip(x, 0, 1)
+            ),
+            (("H", "S", "V"), ("gray")): lambda x: hsv_to_rgb(torch.clip(x, 0, 1)),
+            (("R", "G", "B"), ("gray")): lambda x: x,
+            (("source"), ("R", "G", "B")): lambda x: x,
+            (("source"), ("H", "S", "V")): lambda x: rgb_to_hsv(torch.clip(x, 0, 1)),
+            (("source"), ("gray")): lambda x: x,
+        }
+
+        if self.color_space == self.texture_space:
+            return colors
+        else:
+            return torch.Tensor(
+                transformation_fns[(self.color_space, self.texture_space)](colors.cpu())
+            ).to(self.device)
+
     def _sample_grayscale_texture(self) -> torch.Tensor:
         """Sample grayscale texture for each pixel.
 
@@ -445,8 +465,8 @@ class DeadLeavesImage:
                 texture = dist.sample(self.size)
         return texture.repeat(3, 1, 1).permute(1, 2, 0)
 
-    def _sample_RGB_texture(self) -> torch.Tensor:
-        """Sample a RGB texture for each pixel.
+    def _sample_3d_texture(self) -> torch.Tensor:
+        """Sample a 3d texture for each pixel.
 
         Returns:
             torch.Tensor: Texture values.
@@ -455,20 +475,7 @@ class DeadLeavesImage:
             texture = {}
             for param, dist in self.texture_distributions.items():
                 texture[param] = dist.sample(self.size)
-            return torch.stack(tuple(texture.values()), dim=2)
-
-    def _sample_HSV_texture(self) -> torch.Tensor:
-        """Sample a HSV texture for each pixel.
-
-        Returns:
-            torch.Tensor: Texture values.
-        """
-        with self.device:
-            texture = {}
-            for param, dist in self.texture_distributions.items():
-                texture[param] = dist.sample(self.size)
-            texture_tensor = torch.stack(tuple(texture.values()), dim=2)
-        return torch.Tensor(hsv_to_rgb(texture_tensor.cpu())).to(self.device)
+            return torch.stack([texture[param] for param in self.texture_space], dim=2)
 
     def show(self, image: torch.Tensor) -> None:
         """Show selected image.
@@ -477,7 +484,7 @@ class DeadLeavesImage:
             image (torch.Tensor): Image to show.
         """
         fig, ax = plt.subplots(frameon=False)
-        ax.imshow(image.cpu().numpy(), origin="lower", vmax=1, vmin=0)
+        ax.imshow(image.cpu().numpy(), vmax=1, vmin=0)
         fig.tight_layout()
         ax.axis("off")
 
