@@ -12,12 +12,12 @@ class BaseDistribution(Distribution):
     """Base class for custom distributions
 
     Methods:
-        - pdf: Probability density function.
-        - cdf: (Approximation of) cumulative density function.
-        - icdf: Inverse cumulative density function.
-        - ppf: Percent point function, i.e. approximation of
+        pdf: Probability density function.
+        cdf: (Approximation of) cumulative density function.
+        icdf: Inverse cumulative density function.
+        ppf: Percent point function, i.e. approximation of
             inverse cumulative function.
-        - sample: Draw sample(s) from the distribution.
+        sample: Draw sample(s) from the distribution.
 
     Raises:
             NotImplementedError: Class contains empty methods for
@@ -77,12 +77,9 @@ class PowerLaw(BaseDistribution):
     """Distribution with density that follows the power law
 
     Args:
-        - low (float): Minimal allowed value.
-        - high (float): Maximal allowed value.
-        - k (float, optional): Power law exponent. Defaults to 3.
-
-    Raises:
-        ValueError: Boundaries must construct a non-empty positive domain.
+        low (float): Minimal allowed value.
+        high (float): Maximal allowed value.
+        k (float, optional): Power law exponent. Defaults to 3.
     """
 
     @property
@@ -130,13 +127,10 @@ class Cosine(BaseDistribution):
     """Distribution with density that follows that cosine
 
     Args:
-        - amplitude (float): Amplitude of cosine. Value must be between 0.0 and 1.0.
+        amplitude (float): Amplitude of cosine. Value must be between 0.0 and 1.0.
             Defaults to 0.5.
-        - frequency (float): Frequency of cosine. Defaults to 4,
+        frequency (int): Frequency of cosine. Defaults to 4,
             i.e. peaks at the cardinals.
-
-    Raises:
-            ValueError: Invalid amplitude values.
     """
 
     @property
@@ -179,11 +173,13 @@ class ExpCosine(BaseDistribution):
     """Distribution with cosine density with exponential peaks.
 
     Args:
-        - amplitude (float): Amplitude of density function. Value must be non-negative.
-            Defaults to 2.
-        - frequency (float): Frequency of cosine. Defaults to 4.
-        - exponential_constant (float): Growth constant of exponential component.
-            Larger values generate stronger peaks. Defaults to 3.
+        amplitude (float): Amplitude of density function. Value must be positive.
+            Defaults to 1.
+        frequency (int): Frequency of cosine. Defaults to 4,
+            i.e. peaks at the cardinals.
+        exponential_constant (float): Growth constant of exponential component.
+            Larger values generate stronger peaks. Negative values invert the peaks.
+            Defaults to 3.
     """
 
     def __init__(
@@ -224,7 +220,7 @@ class Constant(Distribution):
     """Distribution class which return a constant value.
 
     Args:
-        - value: Constant value to be return in each sampling.
+        value (float): Constant value to be return in each sampling.
     """
 
     def __init__(self, value: float) -> None:
@@ -238,10 +234,10 @@ class Image(Distribution):
     """Distribution to sample images uniformly from an image data set.
 
     Args:
-        - dir: Path to image data set directory.
+        dir (Path | str): Path to image data set directory.
     """
 
-    def __init__(self, dir: Path) -> None:
+    def __init__(self, dir: Path | str) -> None:
         self.dir = dir
         self.files = []
         for root, _, files in os.walk(self.dir):
