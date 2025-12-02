@@ -94,10 +94,6 @@ class PowerLaw(BaseDistribution):
         }
 
     def __init__(self, low: float, high: float, k: float = 3) -> None:
-        if low >= high:
-            raise ValueError("Minimal x value must be smaller than maximal x value.")
-        if low <= 0:
-            raise ValueError("Minimal x value must be greater 0.")
         self.low, self.high, self.k = broadcast_all(low, high, k)
         self.scale_factor = self.low ** (1 - self.k) - self.high ** (1 - self.k)
         super().__init__(validate_args=True)
