@@ -277,6 +277,11 @@ class Image(Distribution):
         return constraints.real
 
     def __init__(self, dir: Path | str) -> None:
+        if not isinstance(dir, (str, Path)):
+            raise TypeError("dir must be a string or Path object.")
+        if not Path(dir).exists():
+            raise FileNotFoundError(f"Directory {dir} does not exist.")
+
         self.dir = dir
         self.files = []
         for root, _, files in os.walk(self.dir):
@@ -286,6 +291,10 @@ class Image(Distribution):
             for file in self.files
             if re.search(r"\.(png|jpg|gif|tiff|jpeg)$", file)
         ]
+
+        if len(self.files) == 0:
+            raise ValueError(f"No image files found in directory {self.dir}")
+
         self.n_files = len(self.files)
 
     def sample(self, n=1) -> Path:
