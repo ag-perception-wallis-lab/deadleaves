@@ -206,22 +206,18 @@ class ExpCosine(BaseDistribution):
         super().__init__(validate_args=True)
 
     def pdf(self, x: torch.Tensor) -> torch.Tensor:
-        x_range_cond = (x <= torch.pi) & (x >= -torch.pi)
-
         def f(x):
-            return (
-                self.amplitude
-                * torch.exp(
-                    -self.exponential_constant
-                    * torch.sqrt(1 - torch.cos(self.frequency * x))
-                )
-                + 0.5
+            return self.amplitude * torch.exp(
+                -self.exponential_constant
+                * torch.sqrt(1 - torch.cos(self.frequency * x))
             )
 
         integral = Trapezoid().integrate(
-            f, dim=1, integration_domain=[[-torch.pi, torch.pi]]
+            f,
+            dim=1,
+            integration_domain=[[self.support.lower_bound, self.support.upper_bound]],
         )
-        d = torch.where(x_range_cond, f(x) / integral, 0)
+        d = torch.where(self.support.check(x), f(x) / integral, 0)
         return d
 
 
