@@ -182,6 +182,18 @@ class ExpCosine(BaseDistribution):
             Defaults to 3.
     """
 
+    @property
+    def support(self):
+        return constraints.interval(-torch.pi, torch.pi)
+
+    @property
+    def arg_constraints(self):
+        return {
+            "amplitude": constraints.positive,
+            "frequency": constraints.positive_integer,
+            "exponential_constant": constraints.positive,
+        }
+
     def __init__(
         self,
         amplitude: float = 2,
@@ -223,6 +235,14 @@ class Constant(Distribution):
         value (float): Constant value to be return in each sampling.
     """
 
+    @property
+    def arg_constraints(self):
+        return {"value": constraints.real}
+
+    @property
+    def support(self):
+        return constraints.real
+
     def __init__(self, value: float) -> None:
         self.value = value
 
@@ -236,6 +256,14 @@ class Image(Distribution):
     Args:
         dir (Path | str): Path to image data set directory.
     """
+
+    @property
+    def arg_constraints(self):
+        return {"dir": constraints.dependent}
+
+    @property
+    def support(self):
+        return constraints.real
 
     def __init__(self, dir: Path | str) -> None:
         self.dir = dir
