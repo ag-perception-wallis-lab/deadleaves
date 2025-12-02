@@ -249,6 +249,17 @@ class Constant(Distribution):
     def sample(self, n=1) -> torch.Tensor:
         return self.value * torch.ones(n)
 
+    def pdf(self, x: torch.Tensor) -> torch.Tensor:
+        return torch.where(x == self.value, torch.tensor(1.0), torch.tensor(0.0))
+
+    def cdf(self, x: torch.Tensor) -> torch.Tensor:
+        return torch.where(
+            torch.tensor(x < self.value), torch.tensor(0.0), torch.tensor(1.0)
+        )
+
+    def icdf(self, p: torch.Tensor) -> torch.Tensor:
+        return self.value * torch.ones_like(p)
+
 
 class Image(Distribution):
     """Distribution to sample images uniformly from an image data set.
