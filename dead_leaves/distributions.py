@@ -196,17 +196,14 @@ class ExpCosine(BaseDistribution):
 
     def __init__(
         self,
-        amplitude: float = 2,
-        frequency: float = 4,
+        amplitude: float = 1,
+        frequency: int = 4,
         exponential_constant: float = 3,
     ) -> None:
-        if amplitude < 0:
-            raise ValueError("Amplitude must be non-negative.")
-        self.amplitude = amplitude
-        self.frequency = frequency
-        self.exponential_constant = exponential_constant
-
-    arg_constraints = {}
+        self.amplitude, self.frequency, self.exponential_constant = broadcast_all(
+            amplitude, frequency, exponential_constant
+        )
+        super().__init__(validate_args=True)
 
     def pdf(self, x: torch.Tensor) -> torch.Tensor:
         x_range_cond = (x <= torch.pi) & (x >= -torch.pi)
