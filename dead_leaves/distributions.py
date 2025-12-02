@@ -30,7 +30,9 @@ class BaseDistribution(Distribution):
         raise NotImplementedError
 
     def cdf(self, x: torch.Tensor) -> torch.Tensor:
-        x_grid = torch.linspace(-torch.pi, torch.pi, steps=10000)
+        x_grid = torch.linspace(
+            self.support.lower_bound, self.support.upper_bound, steps=10000
+        )
         pdf_values = self.pdf(x_grid)
         idx = torch.searchsorted(x_grid, x, right=True)
         idx = torch.clamp(idx, 1, len(x_grid) - 1)
@@ -38,14 +40,23 @@ class BaseDistribution(Distribution):
         cdf_values = torch.cumsum(pdf_values, dim=0)
         cdf_values = cdf_values - cdf_values[0]
         cdf_values = cdf_values / cdf_values[-1]
+        bin_means = 0.5 * (cdf_values[idx - 1] + cdf_values[idx])
+        p = torch.where(x <= self.support.lower_bound, 0, 1)
+        p = torch.where(
+            self.support.check(x),
+            bin_means,
+            p,
+        )
 
-        return 0.5 * (cdf_values[idx - 1] + cdf_values[idx])
+        return p
 
     def icdf(self, p: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError
 
     def ppf(self, p: torch.Tensor) -> torch.Tensor:
-        x_grid = torch.linspace(-torch.pi, torch.pi, steps=10000)
+        x_grid = torch.linspace(
+            self.support.lower_bound, self.support.upper_bound, steps=10000
+        )
         cdf_values = self.cdf(x_grid)
 
         idx = torch.searchsorted(cdf_values, p, right=True)
