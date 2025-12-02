@@ -145,11 +145,14 @@ class Cosine(BaseDistribution):
 
     @property
     def arg_constraints(self):
-        return {"amplitude": constraints.interval(0, 1)}
+        return {
+            "amplitude": constraints.interval(0, 1),
+            "frequency": constraints.positive_integer,
+        }
 
-    def __init__(self, amplitude: float = 0.5, frequency: float = 4) -> None:
-        self.amplitude = amplitude
-        self.frequency = frequency
+    def __init__(self, amplitude: float = 0.5, frequency: int = 4) -> None:
+        self.amplitude, self.frequency = broadcast_all(amplitude, frequency)
+        super().__init__(validate_args=True)
 
     def pdf(self, x: torch.Tensor) -> torch.Tensor:
         d = torch.where(
