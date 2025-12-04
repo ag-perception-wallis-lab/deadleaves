@@ -66,9 +66,9 @@ class DeadLeavesModel:
         shape: Literal["circular", "ellipsoid", "rectangular", "polygon"],
         param_distributions: dict[str, dict[str, dict[str, float]]],
         size: tuple[int, int],
-        device: Literal["cuda", "mps", "cpu"] | None = None,
         position_mask: torch.Tensor | None = None,
         n_sample: int | None = None,
+        device: Literal["cuda", "mps", "cpu"] | None = None,
     ) -> None:
         self.device = torch.device(device) if device else choose_compute_backend()
         self.size = size
@@ -102,6 +102,33 @@ class DeadLeavesModel:
         "polygon": ["area", "n_vertices"],
     }
 
+    def resolve_dependencies(self) -> list[str]:
+        """Resolve model parameter dependencies.
+
+        Raises:
+            ValueError: Error on circular or unresolvable dependencies.
+
+        Returns:
+            list[str]: Sorted list of parameters.
+        """
+        dependencies = {param: set() for param in self.param_distributions}
+        for param, dist in self.param_distributions.items():
+            dist_params = next(iter(dist.values()))
+            for dist_param in dist_params.values():
+                if isinstance(dist_param, dict) and "from" in dist_param:
+                    dependencies[param].add(dist_param["from"])
+
+        resolved, ordered_params = set(), ["x_pos", "y_pos"]
+        while dependencies:
+            ready = [param for param, dep in dependencies.items() if dep <= resolved]
+            if not ready:
+                raise ValueError("Circular or unresolved dependencies detected")
+            ordered_params.extend(ready)
+            resolved.update(ready)
+            for param in ready:
+                dependencies.pop(param)
+        return ordered_params
+
     def model(self) -> None:
         """Generate list of model parameters and distribution instances to sample from.
 
@@ -126,8 +153,11 @@ class DeadLeavesModel:
         for param, dist_dict in self.param_distributions.items():
             dist_name = list(dist_dict.keys())[0]
             dist_class = dist_kw[dist_name]
-            hyper_params = dist_dict[dist_name]
-            self.distributions[param] = dist_class(**hyper_params)
+            hyper_params = dist_dict[dist_name].copy()
+            if any([isinstance(p, dict) for p in hyper_params.values()]):
+                self.distributions[param] = "resolve during sampling"
+            else:
+                self.distributions[param] = dist_class(**hyper_params)
         self.params = list(self.distributions.keys())
 
     def sample_parameters(self) -> dict[str, torch.Tensor]:
@@ -138,7 +168,20 @@ class DeadLeavesModel:
         """
         with self.device:
             samples = {}
-            for param, dist in self.distributions.items():
+            params = self.resolve_dependencies()
+            for param in params:
+                dist = self.distributions[param]
+                if dist == "resolve during sampling":
+                    dist_dict = self.param_distributions[param]
+                    dist_name = list(dist_dict.keys())[0]
+                    dist_class = dist_kw[dist_name]
+                    hyper_params = dist_dict[dist_name].copy()
+                    for idx, hyper_param in hyper_params.items():
+                        if isinstance(hyper_param, dict):
+                            hyper_params[idx] = torch.tensor(
+                                hyper_param["fn"](samples[hyper_param["from"]])
+                            )
+                    dist = dist_class(**hyper_params)
                 samples[param] = dist.sample()
             return samples
 
@@ -330,8 +373,9 @@ class DeadLeavesImage:
             "gray": {"constant": {"value": 0}}
         },
         background_color: torch.Tensor | None = None,
+        device: Literal["cuda", "mps", "cpu"] | None = None,
     ):
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(device) if device else choose_compute_backend()
         self.size = partition.shape
         self.color_param_distributions = color_param_distributions
         self.texture_param_distributions = texture_param_distributions
@@ -374,13 +418,18 @@ class DeadLeavesImage:
             for param, dist_dict in self.color_param_distributions.items():
                 dist_name = list(dist_dict.keys())[0]
                 dist_class = dist_kw[dist_name]
-                hyper_params = dist_dict[dist_name]
+                hyper_params = dist_dict[dist_name].copy()
+                for idx, hyper_param in hyper_params.items():
+                    if isinstance(hyper_param, dict):
+                        hyper_params[idx] = torch.tensor(
+                            hyper_param["fn"](self.leaves[hyper_param["from"]])
+                        )
                 self.color_distributions[param] = dist_class(**hyper_params)
             self.texture_distributions = {}
             for param, dist_dict in self.texture_param_distributions.items():
                 dist_name = list(dist_dict.keys())[0]
                 dist_class = dist_kw[dist_name]
-                hyper_params = dist_dict[dist_name]
+                hyper_params = dist_dict[dist_name].copy()
                 if any([isinstance(p, dict) for p in hyper_params.values()]):
                     self.texture_distributions[param] = "resolve during sampling"
                 else:
@@ -415,7 +464,10 @@ class DeadLeavesImage:
         """
         with self.device:
             for dist in self.color_distributions.values():
-                colors = dist.sample((len(self.leaves), 1))
+                if len(dist.batch_shape) == 0:
+                    colors = dist.sample((len(self.leaves), 1))
+                else:
+                    colors = dist.sample().expand(1, -1).permute(1, 0)
         return colors.expand(-1, 3)
 
     def _sample_3d_colors(self) -> torch.Tensor:
@@ -427,8 +479,15 @@ class DeadLeavesImage:
         with self.device:
             colors = {}
             for param, dist in self.color_distributions.items():
-                colors[param] = dist.sample((len(self.leaves),))
-            return torch.stack([colors[param] for param in self.color_space], dim=1)
+                if len(dist.batch_shape) == 0:
+                    colors[param] = dist.sample((len(self.leaves),))
+                else:
+                    colors[param] = dist.sample()
+            color_tensor = torch.stack(
+                [colors[param] for param in self.color_space], dim=1
+            )
+            self.leaves[list(self.color_distributions.keys())] = color_tensor.cpu()
+        return color_tensor
 
     def _sample_colors_from_images(self) -> torch.Tensor:
         """From a random image sample a pixel value for each leaf.
@@ -448,6 +507,14 @@ class DeadLeavesImage:
             return color_tensor.permute(1, 0)
 
     def _transform_colors_to_texture_space(self, colors: torch.Tensor) -> torch.Tensor:
+        """Transform leaf colors to texture color space.
+
+        Args:
+            colors (torch.Tensor): Tensor of leaf colors in color space.
+
+        Returns:
+            torch.Tensor: Tensor of leaf colors in texture color space.
+        """
         transformation_fns = {
             (("H", "S", "V"), ("R", "G", "B")): lambda x: hsv_to_rgb(
                 torch.clip(x, 0, 1)
