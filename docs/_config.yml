@@ -1,0 +1,24 @@
+title: Dead Leaves
+author: Swantje Mahncke
+execute:
+  execute_notebooks: force
+
+# repository:
+#   repository_provider: custom
+#   url: https://git.rwth-aachen.de/ag-perception-tuda/research/dead_leaves
+#   path_to_book: docs
+
+# html:
+#   use_repository_button: true
+
+sphinx:
+  extra_extensions:
+    - autoapi.extension
+    - sphinx.ext.napoleon
+
+  config:
+    autoapi_dirs: ['../dead_leaves']
+    autoapi_root: 'reference/'
+    autoapi_keep_files: True
+
+  napoleon_google_docstring: True

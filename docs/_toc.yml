@@ -1,0 +1,21 @@
+format: jb-book
+root: index
+
+parts:
+  - caption: Getting started
+    chapters:
+    - file: getting_started/installation
+    - file: getting_started/quickstart
+  - caption: Parameterization
+    chapters:
+    - file: parameterization/index
+    - file: parameterization/shapes
+    - file: parameterization/colors
+    - file: parameterization/textures
+    - file: parameterization/distributions
+  - caption: Reference
+    chapters:
+    - file: reference/index
+  - caption: Development
+    chapters:
+    - file: development/contributing
