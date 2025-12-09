@@ -1,6 +1,6 @@
 from .distributions import PowerLaw, Constant, Cosine, ExpCosine, Image
 from .utils import choose_compute_backend, bounding_box
-from typing import Literal
+from typing import Literal, Callable
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.colors import hsv_to_rgb, rgb_to_hsv
@@ -28,35 +28,24 @@ dist_kw = {
 
 
 class DeadLeavesModel:
-    """Setup a dead leaves model
+    """
+    Setup a dead leaves model.
 
-    Args:
-        shape (str): Shape of leaves.
-        param_distributions (dict[str, dict[str, dict[str, float]]]):
-            Shape parameters and their distributions and distribution parameter values.
-        size (tuple[int,int]): Hight (y, M) and width (x, N) of the area to be partitioned.
-        position_mask (tensor): Boolean tensor containing allowed leaf positions to create
-            images with different shapes.
-        n_sample (optional, int): Number of leaves to sample. If None the sampling
-            will stop when the full area is partitioned. Defaults to None.
-        device: Torch device to use, either cuda or cpu.
-
-    Attributes:
-        shape (str): Shape of leaves.
-        param_distributions (dict[str, dict[str, dict[str, float]]]):
-            Shape parameters and their distributions and distribution parameter values.
-        size (tuple[int,int]): Hight (y, M) and width (x, N) of the area to be partitioned.
-        position_mask (tensor): Boolean tensor containing allowed leaf positions to create
-            images with different shapes.
-        n_sample (optional, int): Number of leaves to sample. If None the sampling
-            will stop when the full area is partitioned. Defaults to None.
-        device: Torch device to use, either cuda or cpu.
-        X, Y (tensor):
-        generate_leaf_mask (callable): Function to generate mask of given shape
-            from parameters.
-        params (list[str]): List of shape parameters.
-        distributions (dict[str, Distribution]): Leaf parameters and
-            their distributions.
+    Parameters
+    ----------
+    shape : Literal["circular", "ellipsoid", "rectangular", "polygon"]
+        Shape of leaves.
+    param_distributions : dict[str, dict[str, [dict[str,float]]]
+        Shape parameters and their distributions and distribution parameter values.
+    size : tuple[int, int]
+        Height (y, M) and width (x, N) of the area to be partitioned.
+    position_mask : torch.Tensor, optional
+        Boolean tensor containing allowed leaf positions to create images with different shapes.
+    n_sample : int, optional
+        Number of leaves to sample. If None, the sampling will stop when the full area is partitioned.
+        Default is None.
+    device : Literal["cuda", "mps", "cpu"]
+        Torch device to use, either 'cuda' or 'cpu'.
     """
 
     def __init__(
@@ -68,17 +57,28 @@ class DeadLeavesModel:
         n_sample: int | None = None,
         device: Literal["cuda", "mps", "cpu"] | None = None,
     ) -> None:
-        self.device = torch.device(device) if device else choose_compute_backend()
-        self.size = size
+        self.device: torch.device = (
+            torch.device(device) if device else choose_compute_backend()
+        )
+        self.size: tuple[int, int] = size
         if position_mask is not None:
             if position_mask.shape != size:
                 raise ValueError("Position mask needs to match image size.")
-            self.position_mask = position_mask
+            self.position_mask: torch.Tensor = position_mask
         else:
-            self.position_mask = torch.ones(self.size, dtype=int, device=self.device)
-        self.n_sample = n_sample
-        self.shape = shape
-        self.param_distributions = param_distributions
+            self.position_mask: torch.Tensor = torch.ones(
+                self.size, dtype=int, device=self.device
+            )
+        self.n_sample: int | None = n_sample  # number of leaves to sample
+        self.shape: (
+            Literal["circular"]
+            | Literal["ellipsoid"]
+            | Literal["rectangular"]
+            | Literal["polygon"]
+        ) = shape
+        self.param_distributions: dict[str, dict[str, dict[str, float]]] = (
+            param_distributions
+        )
         self.X, self.Y = torch.meshgrid(
             torch.arange(self.size[1], device=self.device),
             torch.arange(self.size[0], device=self.device),
@@ -90,10 +90,10 @@ class DeadLeavesModel:
             "rectangular": self._rectangular_leaf_mask,
             "polygon": self._regular_polygon_leaf_mask,
         }
-        self.generate_leaf_mask = leaf_mask[shape]
+        self.generate_leaf_mask: Callable = leaf_mask[shape]
         self.model()
 
-    shape_kw = {
+    shape_kw: dict[str, list[str]] = {
         "circular": ["area"],
         "ellipsoid": ["area", "aspect_ratio", "orientation"],
         "rectangular": ["area", "aspect_ratio", "orientation"],
@@ -162,7 +162,7 @@ class DeadLeavesModel:
         """Draw a sample from the model distributions.
 
         Returns:
-            dict[str, tensor]: Sample for each model parameter.
+            dict[str, torch.Tensor]: Sample for each model parameter.
         """
         with self.device:
             samples = {}
@@ -176,9 +176,19 @@ class DeadLeavesModel:
                     hyper_params = dist_dict[dist_name].copy()
                     for idx, hyper_param in hyper_params.items():
                         if isinstance(hyper_param, dict):
-                            hyper_params[idx] = torch.tensor(
-                                hyper_param["fn"](samples[hyper_param["from"]])
-                            )
+                            if isinstance(hyper_param["from"], str):
+                                hyper_params[idx] = torch.tensor(
+                                    hyper_param["fn"](samples[hyper_param["from"]])
+                                )
+                            else:
+                                hyper_params[idx] = torch.tensor(
+                                    hyper_param["fn"](
+                                        {
+                                            key: samples[key]
+                                            for key in hyper_param["from"]
+                                        }
+                                    )
+                                )
                     dist = dist_class(**hyper_params)
                 samples[param] = dist.sample()
             return samples
@@ -187,8 +197,7 @@ class DeadLeavesModel:
         """Generate a dead leaves partition from the model.
 
         Returns:
-            tuple[pd.DataFrame, torch.Tensor]: Dataframe of resulting leaves and their
-                parameters, as well as the partition.
+            tuple[pd.DataFrame, torch.Tensor]: Dataframe of resulting leaves and their parameters, as well as the partition.
         """
         leaves_params = []
         partition = torch.zeros(self.size, device=self.device, dtype=int)
@@ -215,7 +224,7 @@ class DeadLeavesModel:
         """Generate mask of circle from given area and x-y-position on tensor.
 
         Args:
-            params (dict[str, tensor]): Value for each parameter.
+            params (dict[str, torch.Tensor]): Value for each parameter.
 
         Returns:
             torch.Tensor: Leaf mask.
@@ -231,7 +240,7 @@ class DeadLeavesModel:
         and x-y-position on tensor.
 
         Args:
-            params (dict[str, tensor]): Value for each parameter.
+            params (dict[str, torch.Tensor]): Value for each parameter.
 
         Returns:
             torch.Tensor: Leaf mask.
@@ -252,7 +261,7 @@ class DeadLeavesModel:
         and x-y-position on tensor.
 
         Args:
-            params (dict[str, tensor]): Value for each parameter.
+            params (dict[str, torch.Tensor]): Value for each parameter.
 
         Returns:
             torch.Tensor: Leaf mask.
@@ -273,7 +282,7 @@ class DeadLeavesModel:
         and x-y-position on tensor.
 
         Args:
-            params (dict[str, tensor]): Value for each parameter.
+            params (dict[str, torch.Tensor]): Value for each parameter.
 
         Returns:
             torch.Tensor: Leaf mask.
@@ -631,7 +640,7 @@ class DeadLeavesImage:
 
         plt.show()
 
-    def save(self, image: torch.Tensor, save_to: Path) -> None:
+    def save(self, image: torch.Tensor, save_to: Path | str) -> None:
         """Save image to path.
 
         Args:
