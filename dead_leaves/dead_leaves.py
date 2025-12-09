@@ -114,9 +114,9 @@ class DeadLeavesModel:
             dist_params = next(iter(dist.values()))
             for dist_param in dist_params.values():
                 if isinstance(dist_param, dict) and "from" in dist_param:
-                    dependencies[param].add(dist_param["from"])
+                    dependencies[param].union(set(dist_param["from"]))
 
-        resolved, ordered_params = set(), ["x_pos", "y_pos"]
+        resolved, ordered_params = set(["x_pos", "y_pos"]), ["x_pos", "y_pos"]
         while dependencies:
             ready = [param for param, dep in dependencies.items() if dep <= resolved]
             if not ready:
