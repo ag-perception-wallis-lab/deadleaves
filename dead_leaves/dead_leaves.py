@@ -31,34 +31,32 @@ class DeadLeavesModel:
     """Setup a dead leaves model
 
     Args:
-        - shape (str): Shape of leaves.
-        - param_distributions (dict[str, dict[str, dict[str, float]]]):
+        shape (str): Shape of leaves.
+        param_distributions (dict[str, dict[str, dict[str, float]]]):
             Shape parameters and their distributions and distribution parameter values.
-        - size (tuple[int,int]): Hight (y, M) and width (x, N) of the area to be partitioned.
-        - position_mask (tensor): Boolean tensor containing allowed leaf positions to create
+        size (tuple[int,int]): Hight (y, M) and width (x, N) of the area to be partitioned.
+        position_mask (tensor): Boolean tensor containing allowed leaf positions to create
             images with different shapes.
-        - n_sample (optional, int): Number of leaves to sample. If None the sampling
+        n_sample (optional, int): Number of leaves to sample. If None the sampling
             will stop when the full area is partitioned. Defaults to None.
-        - device: Torch device to use, either cuda or cpu.
-        - X, Y (tensor):
-        - generate_leaf_mask (callable): Function to generate mask of given shape
-            from parameters.
-        - params (list[str]): List of shape parameters.
-        - distributions (dict[str, Distribution]): Leaf parameters and
-            their distributions.
+        device: Torch device to use, either cuda or cpu.
 
-    Methods:
-        - model: Generate self.params and self.distributions based on initialization.
-        - sample_parameters: Sample values from self.distributions.
-        - sample_partition: Generate dead leaves partition by iteratively sampling
-            leaves based on the model.
-        - _circular_leaf_mask: Generate circular leaf mask from position, and area.
-        - _rectangular_leaf_mask: Generate rectangular leaf mask from position, area,
-            orientation, and aspect ratio.
-        - _ellipsoid_leaf_mask: Generate ellipsoidal leaf mask from position, area,
-            orientation, and aspect ratio.
-        - _regular_polygon_leaf_mask: Generate regular polygon leaf mask from position,
-            area, and number of vertices.
+    Attributes:
+        shape (str): Shape of leaves.
+        param_distributions (dict[str, dict[str, dict[str, float]]]):
+            Shape parameters and their distributions and distribution parameter values.
+        size (tuple[int,int]): Hight (y, M) and width (x, N) of the area to be partitioned.
+        position_mask (tensor): Boolean tensor containing allowed leaf positions to create
+            images with different shapes.
+        n_sample (optional, int): Number of leaves to sample. If None the sampling
+            will stop when the full area is partitioned. Defaults to None.
+        device: Torch device to use, either cuda or cpu.
+        X, Y (tensor):
+        generate_leaf_mask (callable): Function to generate mask of given shape
+            from parameters.
+        params (list[str]): List of shape parameters.
+        distributions (dict[str, Distribution]): Leaf parameters and
+            their distributions.
     """
 
     def __init__(
@@ -325,43 +323,44 @@ class DeadLeavesImage:
     """Setup color and texture model for a dead leaves partition.
 
     Args:
-        - leaves (DataFrame): Dataframe of leaves and their parameters.
-        - partition (tensor): Partition of the image area.
-        - color_param_distributions (dict[str, dict[str, dict[str, float]]]):
+        leaves (DataFrame): Dataframe of leaves and their parameters.
+        partition (tensor): Partition of the image area.
+        color_param_distributions (dict[str, dict[str, dict[str, float]]]):
             Color parameters and their distribution setup.
-        - texture_param_distributions (dict[str, dict[str, dict[str, float]]]):
+        texture_param_distributions (dict[str, dict[str, dict[str, float]]]):
             Texture parameters and their distribution setup. Defaults to constant 0,
             i.e. no texture.
-        - background_color (tensor): For images which are not fully covered
+        background_color (tensor): For images which are not fully covered
             (due to a position mask or sparse sampling) one can set a RGB background color.
             If None the color and texture will be sampled from the distributions.
             Defaults to None.
 
-        - device: Torch device to use, either cuda or cpu.
-        - size (tuple[int,int]): Image size.
-        - sample_colors (callable): Function to sample colors.
-        - sample_texture (callable): Function to sample texture.
-        - color_distributions (dict[str, Distribution]): Distribution of colors.
-        - texture_distributions (dict[str, Distribution]): Distribution of texture.
+    Attributes:
+        device: Torch device to use, either cuda or cpu.
+        size (tuple[int,int]): Image size.
+        sample_colors (callable): Function to sample colors.
+        sample_texture (callable): Function to sample texture.
+        color_distributions (dict[str, Distribution]): Distribution of colors.
+        texture_distributions (dict[str, Distribution]): Distribution of texture.
 
     Methods:
-        - model: Generate color_distributions and texture_distributions
+        model: Generate color_distributions and texture_distributions
             based on initialization.
-        - sample_image: Sample color and texture for each leaf in the partition.
-        - _sample_grayscale_colors: For each leaf sample a one-dimensional color.
-        - _sample_RGB_colors: For each leaf sample a RGB color.
-        - _sample_HSV_colors: For each leaf sample a HSV color.
-        - _sample_colors_from_images: For each leaf sample a pixel color from a fixed
+        sample_image: Sample color and texture for each leaf in the partition.
+        _sample_grayscale_colors: For each leaf sample a one-dimensional color.
+        _sample_RGB_colors: For each leaf sample a RGB color.
+        _sample_HSV_colors: For each leaf sample a HSV color.
+        _sample_colors_from_images: For each leaf sample a pixel color from a fixed
             but random image.
-        - _sample_grayscale_texture: For each pixel sample a one-dimensional
+        _sample_grayscale_texture: For each pixel sample a one-dimensional
             additive texture value.
-        - _sample_RGB_texture: For each pixel sample a RGB additive texture value.
-        - _sample_HSV_texture: For each pixel sample a HSV additive texture value.
-        - _sample_texture_patch: For each leaf sample a texture patch from a folder of
+        _sample_RGB_texture: For each pixel sample a RGB additive texture value.
+        _sample_HSV_texture: For each pixel sample a HSV additive texture value.
+        _sample_texture_patch: For each leaf sample a texture patch from a folder of
             patches which is then blended into color.
-        - show: Plot generated image.
-        - save: Save image to directory.
-        - animate: Generate animation of dead leaves sampling process.
+        show: Plot generated image.
+        save: Save image to directory.
+        animate: Generate animation of dead leaves sampling process.
     """
 
     def __init__(
