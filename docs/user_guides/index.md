@@ -6,5 +6,7 @@
 shapes
 colors
 textures
+partial_sampling
 distributions
+dependencies
 ```

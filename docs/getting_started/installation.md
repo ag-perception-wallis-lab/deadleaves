@@ -21,6 +21,6 @@ The dependencies should be automatically installed (at least using `pip`). `dead
 - [Torchvision](https://docs.pytorch.org/vision/stable/index.html)
 - [Pandas](https://pandas.pydata.org/)
 
-:::{note}
+```{note}
 If possible we advise to setup [CUDA](https://developer.nvidia.com/cuda-downloads) for GPU use. On CPU sampling a single high-resolution image may take multiple minutes.
-:::
+```
