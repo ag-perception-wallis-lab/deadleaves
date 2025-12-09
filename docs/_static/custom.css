@@ -1,0 +1,16 @@
+/* Make Sphinx-Gallery thumbnails expand to fill the width */
+/* .sphx-glr-thumbcontainer { */
+/* width: 100% !important; */
+/* Take full row width */
+/* max-width: none !important; */
+/* Remove hard-coded max width */
+/* } */
+
+.sphx-glr-thumbcontainer img {
+    width: 100% !important;
+    /* Image fills container */
+    height: auto !important;
+    /* Maintain aspect ratio */
+    object-fit: cover !important;
+    /* Crop nicely if needed */
+}
