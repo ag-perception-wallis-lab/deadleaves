@@ -16,7 +16,14 @@ root_doc = "index"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["myst_nb", "sphinx.ext.autodoc"]
+extensions = [
+    "myst_nb",  # execute code-cells in markdown files
+    "sphinx.ext.autodoc",
+    "sphinx.ext.mathjax",  # support LaTeX
+    "sphinx_gallery.gen_gallery",  # sphinx gallery
+    "autoapi.extension",  # automatic api reference from docstrings
+    "sphinx_design",  # allow sphinx style in markdown files
+]
 
 source_suffix = {
     ".rst": "restructuredtext",
@@ -25,10 +32,31 @@ source_suffix = {
 }
 
 templates_path = ["_templates"]
-exclude_patterns = ["docs/_build"]  # avoid recursive rebuilding on change
+exclude_patterns = ["_build"]  # avoid recursive rebuilding on change
 
 # MyST-NB
-nb_execution_mode = "force"
+nb_execution_mode = "force"  # always rerun notebooks
+
+myst_enable_extensions = ["dollarmath", "colon_fence"]
+
+# LaTeX
+latex_engine = "lualatex"
+
+# Sphinx Gallery
+sphinx_gallery_conf = {
+    "examples_dirs": "../examples/gallery",  # path to example scripts
+    "gallery_dirs": "gallery",  # path to where to save gallery generated output
+}
+
+# Auto API
+autoapi_dirs = ["../dead_leaves"]  # path to package
+autoapi_root = "reference"  # path to where to save the auto api generated output
+autoapi_keep_files = True
+
+import os
+
+if os.environ.get("SPHINX_AUTOBUILD") == "1":
+    autoapi_generate_api_docs = False
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -36,6 +64,7 @@ nb_execution_mode = "force"
 
 html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
+html_css_files = ["custom.css"]
 html_theme_options = {
     "collapse_navigation": True,
     "header_links_before_dropdown": 6,
@@ -46,3 +75,8 @@ html_theme_options = {
     "navbar_persistent": [],
 }
 html_title = f"{project} v{release} Manual"
+
+# import sys
+# import os
+
+# sys.path.insert(0, os.path.abspath("../dead_leaves"))
