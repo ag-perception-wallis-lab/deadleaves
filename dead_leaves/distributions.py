@@ -148,7 +148,6 @@ class PowerLaw(BaseDistribution):
         self._validate_args()
 
     @property
-    @constraints.dependent_property(is_discrete=False, event_dim=0)
     def support(self):
         return constraints.interval(self.low, self.high)
 
