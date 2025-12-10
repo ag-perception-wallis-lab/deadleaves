@@ -14,7 +14,7 @@ import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
-dist_kw = {
+dist_kw: dict[str, torch.distributions.distribution.Distribution] = {
     "beta": torch.distributions.beta.Beta,
     "uniform": torch.distributions.uniform.Uniform,
     "normal": torch.distributions.normal.Normal,
@@ -31,21 +31,22 @@ class DeadLeavesModel:
     """
     Setup a dead leaves model.
 
-    Parameters
-    ----------
-    shape : Literal["circular", "ellipsoid", "rectangular", "polygon"]
-        Shape of leaves.
-    param_distributions : dict[str, dict[str, [dict[str,float]]]
-        Shape parameters and their distributions and distribution parameter values.
-    size : tuple[int, int]
-        Height (y, M) and width (x, N) of the area to be partitioned.
-    position_mask : torch.Tensor, optional
-        Boolean tensor containing allowed leaf positions to create images with different shapes.
-    n_sample : int, optional
-        Number of leaves to sample. If None, the sampling will stop when the full area is partitioned.
-        Default is None.
-    device : Literal["cuda", "mps", "cpu"]
-        Torch device to use, either 'cuda' or 'cpu'.
+    Args:
+        shape (Literal["circular", "ellipsoid", "rectangular", "polygon"]):
+            Shape of leaves.
+        param_distributions (dict[str, dict[str, [dict[str,float]]]):
+            Shape parameters and their distributions and distribution parameter values.
+        size (tuple[int, int]):
+            Height (y, M) and width (x, N) of the area to be partitioned.
+        position_mask (torch.Tensor, optional):
+            Boolean tensor containing allowed leaf positions to create images with
+            different shapes.
+        n_sample (int, optional):
+            Number of leaves to sample. If None, the sampling will stop when the full
+            area is partitioned.
+            Default is None.
+        device (Literal["cuda", "mps", "cpu"]):
+            Torch device to use, either 'cuda' or 'cpu'.
     """
 
     def __init__(
@@ -104,10 +105,12 @@ class DeadLeavesModel:
         """Resolve model parameter dependencies.
 
         Raises:
-            ValueError: Error on circular or unresolvable dependencies.
+            ValueError:
+                Error on circular or unresolvable dependencies.
 
         Returns:
-            list[str]: Sorted list of parameters.
+            list[str]:
+                Sorted list of parameters.
         """
         dependencies = {param: set() for param in self.param_distributions}
         for param, dist in self.param_distributions.items():
@@ -131,7 +134,8 @@ class DeadLeavesModel:
         """Generate list of model parameters and distribution instances to sample from.
 
         Raises:
-            ValueError: Provided parameters don't match provided shape.
+            ValueError:
+                Provided parameters don't match provided shape.
         """
         self.params = list(self.param_distributions.keys())
         if set(self.params) != set(self.shape_kw[self.shape]):
@@ -162,7 +166,8 @@ class DeadLeavesModel:
         """Draw a sample from the model distributions.
 
         Returns:
-            dict[str, torch.Tensor]: Sample for each model parameter.
+            dict[str, torch.Tensor]:
+                Sample for each model parameter.
         """
         with self.device:
             samples = {}
@@ -197,7 +202,9 @@ class DeadLeavesModel:
         """Generate a dead leaves partition from the model.
 
         Returns:
-            tuple[pd.DataFrame, torch.Tensor]: Dataframe of resulting leaves and their parameters, as well as the partition.
+            tuple[pd.DataFrame, torch.Tensor]:
+                Dataframe of resulting leaves and their parameters,
+                as well as the partition.
         """
         leaves_params = []
         partition = torch.zeros(self.size, device=self.device, dtype=int)
@@ -224,10 +231,12 @@ class DeadLeavesModel:
         """Generate mask of circle from given area and x-y-position on tensor.
 
         Args:
-            params (dict[str, torch.Tensor]): Value for each parameter.
+            params (dict[str, torch.Tensor]):
+                Value for each parameter.
 
         Returns:
-            torch.Tensor: Leaf mask.
+            torch.Tensor:
+                Leaf mask.
         """
         dist_from_center = torch.sqrt(
             (self.X - params["x_pos"]) ** 2 + (self.Y - params["y_pos"]) ** 2
@@ -235,15 +244,17 @@ class DeadLeavesModel:
         mask = dist_from_center <= torch.sqrt(params["area"] / torch.pi)
         return mask
 
-    def _rectangular_leaf_mask(self, params: dict) -> torch.Tensor:
+    def _rectangular_leaf_mask(self, params: dict[str, torch.Tensor]) -> torch.Tensor:
         """Generate mask of rectangle from given area, aspect ratio, orientation,
         and x-y-position on tensor.
 
         Args:
-            params (dict[str, torch.Tensor]): Value for each parameter.
+            params (dict[str, torch.Tensor]):
+                Value for each parameter.
 
         Returns:
-            torch.Tensor: Leaf mask.
+            torch.Tensor:
+                Leaf mask.
         """
         height = torch.sqrt(params["area"] / params["aspect_ratio"])
         width = height * params["aspect_ratio"]
@@ -256,15 +267,17 @@ class DeadLeavesModel:
         mask = (torch.abs(X) <= width / 2) & (torch.abs(Y) <= height / 2)
         return mask
 
-    def _ellipsoid_leaf_mask(self, params: dict) -> torch.Tensor:
+    def _ellipsoid_leaf_mask(self, params: dict[str, torch.Tensor]) -> torch.Tensor:
         """Generate mask of ellipsoid from given area, aspect ratio, orientation,
         and x-y-position on tensor.
 
         Args:
-            params (dict[str, torch.Tensor]): Value for each parameter.
+            params (dict[str, torch.Tensor]):
+                Value for each parameter.
 
         Returns:
-            torch.Tensor: Leaf mask.
+            torch.Tensor:
+                Leaf mask.
         """
         a = torch.sqrt((params["area"] * params["aspect_ratio"]) / torch.pi)
         b = torch.sqrt(params["area"] / (torch.pi * params["aspect_ratio"]))
@@ -277,15 +290,19 @@ class DeadLeavesModel:
         mask = (X / a) ** 2 + (Y / b) ** 2 <= 1
         return mask
 
-    def _regular_polygon_leaf_mask(self, params: dict) -> torch.Tensor:
+    def _regular_polygon_leaf_mask(
+        self, params: dict[str, torch.Tensor]
+    ) -> torch.Tensor:
         """Generate mask of regular polygon from given area, number of vertices
         and x-y-position on tensor.
 
         Args:
-            params (dict[str, torch.Tensor]): Value for each parameter.
+            params (dict[str, torch.Tensor]):
+                Value for each parameter.
 
         Returns:
-            torch.Tensor: Leaf mask.
+            torch.Tensor:
+                Leaf mask.
         """
         radius = torch.sqrt(
             2
@@ -332,44 +349,19 @@ class DeadLeavesImage:
     """Setup color and texture model for a dead leaves partition.
 
     Args:
-        leaves (DataFrame): Dataframe of leaves and their parameters.
-        partition (tensor): Partition of the image area.
-        color_param_distributions (dict[str, dict[str, dict[str, float]]]):
+        leaves (pd.DataFrame):
+            Dataframe of leaves and their parameters.
+        partition (torch.Tensor):
+            Partition of the image area.
+        color_param_distributions (dict[str, dict[str, dict[str, float]]])
             Color parameters and their distribution setup.
-        texture_param_distributions (dict[str, dict[str, dict[str, float]]]):
+        texture_param_distributions (dict[str, dict[str, dict[str, float]]], optional):
             Texture parameters and their distribution setup. Defaults to constant 0,
             i.e. no texture.
-        background_color (tensor): For images which are not fully covered
-            (due to a position mask or sparse sampling) one can set a RGB background color.
-            If None the color and texture will be sampled from the distributions.
-            Defaults to None.
-
-    Attributes:
-        device: Torch device to use, either cuda or cpu.
-        size (tuple[int,int]): Image size.
-        sample_colors (callable): Function to sample colors.
-        sample_texture (callable): Function to sample texture.
-        color_distributions (dict[str, Distribution]): Distribution of colors.
-        texture_distributions (dict[str, Distribution]): Distribution of texture.
-
-    Methods:
-        model: Generate color_distributions and texture_distributions
-            based on initialization.
-        sample_image: Sample color and texture for each leaf in the partition.
-        _sample_grayscale_colors: For each leaf sample a one-dimensional color.
-        _sample_RGB_colors: For each leaf sample a RGB color.
-        _sample_HSV_colors: For each leaf sample a HSV color.
-        _sample_colors_from_images: For each leaf sample a pixel color from a fixed
-            but random image.
-        _sample_grayscale_texture: For each pixel sample a one-dimensional
-            additive texture value.
-        _sample_RGB_texture: For each pixel sample a RGB additive texture value.
-        _sample_HSV_texture: For each pixel sample a HSV additive texture value.
-        _sample_texture_patch: For each leaf sample a texture patch from a folder of
-            patches which is then blended into color.
-        show: Plot generated image.
-        save: Save image to directory.
-        animate: Generate animation of dead leaves sampling process.
+        background_color (torch.Tensor, optional):
+            For images which are not fully covered (due to a position mask or sparse
+            sampling) one can set a RGB background color. If None the back ground will
+            be black. Defaults to None.
     """
 
     def __init__(
@@ -383,13 +375,19 @@ class DeadLeavesImage:
         background_color: torch.Tensor | None = None,
         device: Literal["cuda", "mps", "cpu"] | None = None,
     ):
-        self.device = torch.device(device) if device else choose_compute_backend()
-        self.size = partition.shape
-        self.color_param_distributions = color_param_distributions
-        self.texture_param_distributions = texture_param_distributions
-        self.background_color = background_color
-        self.leaves = leaves
-        self.partition = partition
+        self.device: torch.device = (
+            torch.device(device) if device else choose_compute_backend()
+        )
+        self.size: torch.Size = partition.shape
+        self.color_param_distributions: dict[str, dict[str, dict[str, float]]] = (
+            color_param_distributions
+        )
+        self.texture_param_distributions: dict[str, dict[str, dict[str, float]]] = (
+            texture_param_distributions
+        )
+        self.background_color: torch.Tensor | None = background_color
+        self.leaves: pd.DataFrame = leaves
+        self.partition: torch.Tensor = partition
         color_spaces = {
             ("B", "G", "R"): ("R", "G", "B"),
             ("H", "S", "V"): ("H", "S", "V"),
@@ -415,12 +413,12 @@ class DeadLeavesImage:
             ("gray"): self._sample_grayscale_texture,
             ("source"): self._sample_texture_patch,
         }
-        self.sample_colors = colors[self.color_space]
-        self.sample_texture = textures[self.texture_space]
+        self.sample_colors: Callable = colors[self.color_space]
+        self.sample_texture: Callable = textures[self.texture_space]
         self.model()
 
     def model(self) -> None:
-        """Generate distribution instances to sample from"""
+        """Generate distribution instances to sample from."""
         with self.device:
             self.color_distributions = {}
             for param, dist_dict in self.color_param_distributions.items():
@@ -447,7 +445,8 @@ class DeadLeavesImage:
         """Generate a dead leaves image from the model.
 
         Returns:
-            torch.Tensor: Dead leaves image tensor.
+            torch.Tensor:
+                Dead leaves image tensor.
         """
         with self.device:
             image = torch.zeros(self.size + (3,), device=self.device)
@@ -468,7 +467,8 @@ class DeadLeavesImage:
         """Sample a grayscale color for each leaf.
 
         Returns:
-            torch.Tensor: Color values.
+            torch.Tensor:
+                Color values.
         """
         with self.device:
             for dist in self.color_distributions.values():
@@ -482,7 +482,8 @@ class DeadLeavesImage:
         """Sample a 3d color for each leaf.
 
         Returns:
-            torch.Tensor: Color values.
+            torch.Tensor:
+                Color values.
         """
         with self.device:
             colors = {}
@@ -501,7 +502,8 @@ class DeadLeavesImage:
         """From a random image sample a pixel value for each leaf.
 
         Returns:
-            torch.Tensor: Color values.
+            torch.Tensor:
+                Color values.
         """
         with self.device:
             for _, dist in self.color_distributions.items():
@@ -518,10 +520,12 @@ class DeadLeavesImage:
         """Transform leaf colors to texture color space.
 
         Args:
-            colors (torch.Tensor): Tensor of leaf colors in color space.
+            colors (torch.Tensor):
+                Tensor of leaf colors in color space.
 
         Returns:
-            torch.Tensor: Tensor of leaf colors in texture color space.
+            torch.Tensor:
+                Tensor of leaf colors in texture color space.
         """
         transformation_fns = {
             (("H", "S", "V"), ("R", "G", "B")): lambda x: hsv_to_rgb(
@@ -548,7 +552,8 @@ class DeadLeavesImage:
         """Sample grayscale texture for each pixel.
 
         Returns:
-            torch.Tensor: Texture values.
+            torch.Tensor:
+                Texture values.
         """
         with self.device:
             for dist in self.texture_distributions.values():
@@ -588,7 +593,8 @@ class DeadLeavesImage:
         """Sample a 3d texture for each pixel.
 
         Returns:
-            torch.Tensor: Texture values.
+            torch.Tensor:
+                Texture values.
         """
         with self.device:
             texture = {}
@@ -601,7 +607,8 @@ class DeadLeavesImage:
         Texture patches will be blended into color based on a leaf-wise alpha value.
 
         Returns:
-            torch.Tensor: Texture values.
+            torch.Tensor:
+                Texture values.
         """
         with self.device:
             texture = torch.zeros(self.partition.shape)
@@ -631,7 +638,8 @@ class DeadLeavesImage:
         """Show selected image.
 
         Args:
-            image (torch.Tensor): Image to show.
+            image (torch.Tensor):
+                Image to show.
         """
         fig, ax = plt.subplots(frameon=False)
         ax.imshow(image.cpu().numpy(), vmax=1, vmin=0)
@@ -644,8 +652,10 @@ class DeadLeavesImage:
         """Save image to path.
 
         Args:
-            image (torch.Tensor): Image to save.
-            save_to (Path): Path to file to save image to.
+            image (torch.Tensor):
+                Image to save.
+            save_to (Path):
+                Path to file to save image to.
         """
         plt.imsave(save_to, image.cpu().numpy())
 
@@ -653,13 +663,16 @@ class DeadLeavesImage:
         """Generate animation of dead leaves partition generation.
 
         Args:
-            fps (int, optional): Frames per second of animation. In each frame a new
+            fps (int, optional):
+                Frames per second of animation. In each frame a new
                 leaf is sampled. Defaults to 10.
-            save_to (Path, optional): Path to file to save animation to. If None the
+            save_to (Path, optional):
+                Path to file to save animation to. If None the
                 animation will not be saved. Defaults to None.
 
         Returns:
-            animation.FuncAnimation: Animation of partition generation.
+            animation.FuncAnimation:
+                Animation of partition generation.
         """
         fig, ax = plt.subplots(frameon=False)
         fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=None, hspace=None)

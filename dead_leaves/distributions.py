@@ -11,30 +11,37 @@ from pathlib import Path
 class BaseDistribution(Distribution):
     """Base class for custom distributions
 
-    Methods:
-        pdf: Probability density function.
-        cdf: (Approximation of) cumulative density function.
-        icdf: Inverse cumulative density function.
-        ppf: Percent point function, i.e. approximation of
-            inverse cumulative function.
-        sample: Draw sample(s) from the distribution.
-
     Raises:
-            NotImplementedError: Class contains empty methods for
-                - initialization (__init__)
-                - probability density function (pdf)
-                - inverse cumulative function (icdf)
+            NotImplementedError:
+                Class contains empty methods for
+                    - initialization (__init__)
+                    - probability density function (pdf)
+                    - inverse cumulative function (icdf)
     """
 
-    _batch_shape = torch.Size()
+    _batch_shape: torch.Size = torch.Size()
 
     def __init__(self, *args, **kwargs) -> None:
         pass
 
     def pdf(self, x: torch.Tensor) -> torch.Tensor:
+        """Returns the probability density function evaluated at *x*.
+
+        Args:
+            x (torch.Tensor):
+                Value(s) to evaluate.
+        """
         raise NotImplementedError
 
     def cdf(self, x: torch.Tensor) -> torch.Tensor:
+        """Returns (approximation of) the cumulative density function evaluated at *x*.
+        If not implemented this method will compute the cdf as approximation
+        via the pdf.
+
+        Args:
+            x (torch.Tensor):
+                Value(s) to evaluate.
+        """
         x_grid = torch.linspace(
             self.support.lower_bound, self.support.upper_bound, steps=10000
         )
@@ -56,9 +63,21 @@ class BaseDistribution(Distribution):
         return p
 
     def icdf(self, p: torch.Tensor) -> torch.Tensor:
+        """Returns the inverse cumulative density function evaluated at *p*.
+
+        Args:
+            p (torch.Tensor):
+                Probability value(s) to evaluate.
+        """
         raise NotImplementedError
 
     def ppf(self, p: torch.Tensor) -> torch.Tensor:
+        """Returns the percent point function, i.e. approximation of inverse cumulative
+        function evaluated at *p*.
+
+        Args:
+            p (torch.Tensor): Probability value(s) to evaluate.
+        """
         x_grid = torch.linspace(
             self.support.lower_bound, self.support.upper_bound, steps=10000
         )
@@ -72,6 +91,11 @@ class BaseDistribution(Distribution):
         ) / (cdf_values[idx] - cdf_values[idx - 1])
 
     def sample(self, n=1) -> torch.Tensor:
+        """Generates a sample from the distribution.
+
+        Args:
+            n (int, optional): Number of samples. Defaults to 1.
+        """
         try:
             return self.icdf(torch.rand(n))
         except NotImplementedError:
@@ -79,16 +103,19 @@ class BaseDistribution(Distribution):
 
 
 class PowerLaw(BaseDistribution):
-    """Distribution with density that follows the power law
+    """Distribution with density that follows the power law.
 
     Args:
-        low (float): Minimal allowed value.
-        high (float): Maximal allowed value.
-        k (float, optional): Power law exponent. Defaults to 3.
+        low (float):
+            Minimal allowed value.
+        high (float):
+            Maximal allowed value.
+        k (float, optional):
+            Power law exponent. Defaults to 3.
     """
 
     @property
-    def arg_constraints(self):
+    def arg_constraints(self) -> dict:
         return {
             "k": constraints.positive,
             "low": constraints.positive,
@@ -97,9 +124,11 @@ class PowerLaw(BaseDistribution):
 
     def __init__(self, low: float, high: float, k: float = 3) -> None:
         self.low, self.high, self.k = broadcast_all(low, high, k)
-        self.scale_factor = self.low ** (1 - self.k) - self.high ** (1 - self.k)
-        super().__init__(validate_args=True)
+        self.scale_factor: torch.Tensor = self.low ** (1 - self.k) - self.high ** (
+            1 - self.k
+        )
 
+    @property
     @constraints.dependent_property(is_discrete=False, event_dim=0)
     def support(self):
         return constraints.interval(self.low, self.high)
@@ -129,12 +158,14 @@ class PowerLaw(BaseDistribution):
 
 
 class Cosine(BaseDistribution):
-    """Distribution with density that follows that cosine
+    """Distribution with density that follows the cosine
 
     Args:
-        amplitude (float): Amplitude of cosine. Value must be between 0.0 and 1.0.
+        amplitude (float):
+            Amplitude of cosine. Value must be between 0.0 and 1.0.
             Defaults to 0.5.
-        frequency (int): Frequency of cosine. Defaults to 4,
+        frequency (int):
+            Frequency of cosine. Defaults to 4,
             i.e. peaks at the cardinals.
     """
 
@@ -175,14 +206,17 @@ class Cosine(BaseDistribution):
 
 
 class ExpCosine(BaseDistribution):
-    """Distribution with cosine density with exponential peaks.
+    """Distribution with cosine density and exponential peaks.
 
     Args:
-        amplitude (float): Amplitude of density function. Value must be positive.
+        amplitude (float):
+            Amplitude of density function. Value must be positive.
             Defaults to 1.
-        frequency (int): Frequency of cosine. Defaults to 4,
+        frequency (int):
+            Frequency of cosine. Defaults to 4,
             i.e. peaks at the cardinals.
-        exponential_constant (float): Growth constant of exponential component.
+        exponential_constant (float):
+            Growth constant of exponential component.
             Larger values generate stronger peaks. Negative values invert the peaks.
             Defaults to 3.
     """
@@ -230,7 +264,8 @@ class Constant(Distribution):
     """Distribution class which return a constant value.
 
     Args:
-        value (float): Constant value to be return in each sampling.
+        value (float):
+            Constant value to be return in each sampling.
     """
 
     @property
@@ -241,31 +276,55 @@ class Constant(Distribution):
     def support(self):
         return constraints.real
 
-    _batch_shape = torch.Size()
+    _batch_shape: torch.Size = torch.Size()
 
     def __init__(self, value: float) -> None:
-        self.value = value
-
-    def sample(self, n=1) -> torch.Tensor:
-        return self.value * torch.ones(n)
+        self.value: float = value
 
     def pdf(self, x: torch.Tensor) -> torch.Tensor:
+        """Returns the probability density function evaluated at *x*.
+
+        Args:
+            x (torch.Tensor):
+                Value(s) to evaluate.
+        """
         return torch.where(x == self.value, torch.tensor(1.0), torch.tensor(0.0))
 
     def cdf(self, x: torch.Tensor) -> torch.Tensor:
+        """Returns the cumulative density function evaluated at *x*.
+
+        Args:
+            x (torch.Tensor):
+                Value(s) to evaluate.
+        """
         return torch.where(
             torch.tensor(x < self.value), torch.tensor(0.0), torch.tensor(1.0)
         )
 
     def icdf(self, p: torch.Tensor) -> torch.Tensor:
+        """Returns the inverse cumulative density function evaluated at *p*.
+
+        Args:
+            p (torch.Tensor):
+                Probability value(s) to evaluate.
+        """
         return self.value * torch.ones_like(p)
+
+    def sample(self, n=1) -> torch.Tensor:
+        """Generates a sample from the distribution.
+
+        Args:
+            n (int, optional): Number of samples. Defaults to 1.
+        """
+        return self.value * torch.ones(n)
 
 
 class Image(Distribution):
     """Distribution to sample images uniformly from an image data set.
 
     Args:
-        dir (Path | str): Path to image data set directory.
+        dir (Path | str):
+            Path to image data set directory.
     """
 
     @property
@@ -276,29 +335,32 @@ class Image(Distribution):
     def support(self):
         return constraints.real
 
-    _batch_shape = torch.Size()
+    _batch_shape: torch.Size = torch.Size()
 
     def __init__(self, dir: Path | str) -> None:
         if not isinstance(dir, (str, Path)):
             raise TypeError("dir must be a string or Path object.")
         if not Path(dir).exists():
             raise FileNotFoundError(f"Directory {dir} does not exist.")
-        self.dir = dir
-        self.files = []
+        self.dir: Path | str = dir
+        file_list = []
         for root, _, files in os.walk(self.dir):
-            self.files += [os.path.join(root, f) for f in files]
-        self.files = [
-            file
-            for file in self.files
-            if re.search(r"\.(png|jpg|gif|tiff|jpeg)$", file)
+            file_list += [os.path.join(root, f) for f in files]
+        self.files: list[str] = [
+            file for file in file_list if re.search(r"\.(png|jpg|gif|tiff|jpeg)$", file)
         ]
 
         if len(self.files) == 0:
             raise ValueError(f"No image files found in directory {self.dir}")
 
-        self.n_files = len(self.files)
+        self.n_files: int = len(self.files)
 
     def sample(self, n=1) -> list[Path]:
+        """Draws a sample from the available images.
+
+        Args:
+            n (int, optional): Number of samples. Defaults to 1.
+        """
         idx = torch.multinomial(
             torch.ones(self.n_files), num_samples=n[0], replacement=True
         )
