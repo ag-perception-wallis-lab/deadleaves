@@ -380,6 +380,6 @@ class Image(Distribution):
             n (int, optional): Number of samples. Defaults to 1.
         """
         idx = torch.multinomial(
-            torch.ones(self.n_files), num_samples=n[0], replacement=True
+            torch.ones(self.n_files), num_samples=n, replacement=True
         )
         return [self.files[i] for i in idx]
