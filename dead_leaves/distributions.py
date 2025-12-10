@@ -24,6 +24,24 @@ class BaseDistribution(Distribution):
     def __init__(self, *args, **kwargs) -> None:
         pass
 
+    def _validate_args(self):
+        """Validate input arguments.
+
+        Raises:
+            ValueError
+        """
+        for param, constraint in self.arg_constraints.items():
+            value = getattr(self, param)
+            valid = constraint.check(value)
+            if not torch._is_all_true(valid):
+                raise ValueError(
+                    f"Expected parameter {param} "
+                    f"({type(value).__name__} of shape {tuple(value.shape)}) "
+                    f"of distribution {repr(self)} "
+                    f"to satisfy the constraint {repr(constraint)}, "
+                    f"but found invalid values:\n{value}"
+                )
+
     def pdf(self, x: torch.Tensor) -> torch.Tensor:
         """Returns the probability density function evaluated at *x*.
 
@@ -127,6 +145,7 @@ class PowerLaw(BaseDistribution):
         self.scale_factor: torch.Tensor = self.low ** (1 - self.k) - self.high ** (
             1 - self.k
         )
+        self._validate_args()
 
     @property
     @constraints.dependent_property(is_discrete=False, event_dim=0)
@@ -182,7 +201,7 @@ class Cosine(BaseDistribution):
 
     def __init__(self, amplitude: float = 0.5, frequency: int = 4) -> None:
         self.amplitude, self.frequency = broadcast_all(amplitude, frequency)
-        super().__init__(validate_args=True)
+        self._validate_args()
 
     def pdf(self, x: torch.Tensor) -> torch.Tensor:
         d = torch.where(
@@ -242,7 +261,7 @@ class ExpCosine(BaseDistribution):
         self.amplitude, self.frequency, self.exponential_constant = broadcast_all(
             amplitude, frequency, exponential_constant
         )
-        super().__init__(validate_args=True)
+        self._validate_args()
 
     def pdf(self, x: torch.Tensor) -> torch.Tensor:
         def f(x):
