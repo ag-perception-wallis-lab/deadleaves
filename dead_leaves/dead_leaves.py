@@ -614,7 +614,10 @@ class DeadLeavesImage:
             texture = torch.zeros(self.partition.shape)
             texture_params = {}
             for param, dist in self.texture_distributions.items():
-                texture_params[param] = dist.sample((len(self.leaves),))
+                if isinstance(dist, Image):
+                    texture_params[param] = dist.sample(len(self.leaves))
+                else:
+                    texture_params[param] = dist.sample((len(self.leaves), 1))
             for leaf_idx in self.leaves.leaf_idx:
                 top, left, bottom, right = bounding_box(self.partition, leaf_idx)
                 width = right - left
