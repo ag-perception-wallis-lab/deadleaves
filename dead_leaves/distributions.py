@@ -147,6 +147,14 @@ class PowerLaw(BaseDistribution):
         )
         self._validate_args()
 
+    def __str__(self):
+        return (
+            "PowerLaw("
+            f"low: {float(self.low)}, "
+            f"high: {float(self.high)}, "
+            f"k: {float(self.k)})"
+        )
+
     @property
     def support(self):
         return constraints.interval(self.low, self.high)
@@ -201,6 +209,13 @@ class Cosine(BaseDistribution):
     def __init__(self, amplitude: float = 0.5, frequency: int = 4) -> None:
         self.amplitude, self.frequency = broadcast_all(amplitude, frequency)
         self._validate_args()
+
+    def __str__(self):
+        return (
+            "Cosine("
+            f"amplitude: {float(self.amplitude)}, "
+            f"frequency: {int(self.frequency)})"
+        )
 
     def pdf(self, x: torch.Tensor) -> torch.Tensor:
         d = torch.where(
@@ -262,6 +277,14 @@ class ExpCosine(BaseDistribution):
         )
         self._validate_args()
 
+    def __str__(self):
+        return (
+            "ExpCosine("
+            f"amplitude: {float(self.amplitude)}, "
+            f"frequency: {int(self.frequency)}, "
+            f"exponential_constant: {float(self.exponential_constant)})"
+        )
+
     def pdf(self, x: torch.Tensor) -> torch.Tensor:
         def f(x):
             return self.amplitude * torch.exp(
@@ -298,6 +321,9 @@ class Constant(Distribution):
 
     def __init__(self, value: float) -> None:
         self.value: float = value
+
+    def __str__(self):
+        return f"Constant(value: {self.value})"
 
     def pdf(self, x: torch.Tensor) -> torch.Tensor:
         """Returns the probability density function evaluated at *x*.
@@ -372,6 +398,9 @@ class Image(Distribution):
             raise ValueError(f"No image files found in directory {self.dir}")
 
         self.n_files: int = len(self.files)
+
+    def __str__(self):
+        return f"Image(dir: {self.dir})"
 
     def sample(self, n=1) -> list[Path]:
         """Draws a sample from the available images.
