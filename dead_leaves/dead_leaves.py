@@ -625,7 +625,9 @@ class DeadLeavesImage:
                 texture_patch_path = texture_params["source"][leaf_idx - 1]
                 texture_patch = (
                     pil_to_tensor(
-                        PIL.Image.open(texture_patch_path).resize((width, height))
+                        PIL.Image.open(texture_patch_path)
+                        .convert("L")
+                        .resize((width, height))
                     )
                     / 255
                 )
