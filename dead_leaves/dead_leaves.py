@@ -539,6 +539,7 @@ class DeadLeavesImage:
             (("source"), ("R", "G", "B")): lambda x: x,
             (("source"), ("H", "S", "V")): lambda x: rgb_to_hsv(torch.clip(x, 0, 1)),
             (("source"), ("gray")): lambda x: x,
+            (("gray"), ("source")): lambda x: x,
         }
 
         if self.color_space == self.texture_space:
