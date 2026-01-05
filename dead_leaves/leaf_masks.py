@@ -1,8 +1,10 @@
 import torch
+import pandas as pd
 
 
 def circular(
-    index_grid: tuple[torch.Tensor, torch.Tensor], params: dict[str, torch.Tensor]
+    index_grid: tuple[torch.Tensor, torch.Tensor],
+    params: dict[str, torch.Tensor] | pd.Series,
 ) -> torch.Tensor:
     """Generate mask of circle from given area and x-y-position on tensor.
 
@@ -22,7 +24,8 @@ def circular(
 
 
 def rectangular(
-    index_grid: tuple[torch.Tensor, torch.Tensor], params: dict[str, torch.Tensor]
+    index_grid: tuple[torch.Tensor, torch.Tensor],
+    params: dict[str, torch.Tensor] | pd.Series,
 ) -> torch.Tensor:
     """Generate mask of rectangle from given area, aspect ratio, orientation,
     and x-y-position on tensor.
@@ -49,7 +52,8 @@ def rectangular(
 
 
 def ellipsoid(
-    index_grid: tuple[torch.Tensor, torch.Tensor], params: dict[str, torch.Tensor]
+    index_grid: tuple[torch.Tensor, torch.Tensor],
+    params: dict[str, torch.Tensor] | pd.Series,
 ) -> torch.Tensor:
     """Generate mask of ellipsoid from given area, aspect ratio, orientation,
     and x-y-position on tensor.
@@ -76,7 +80,8 @@ def ellipsoid(
 
 
 def regular_polygon(
-    index_grid: tuple[torch.Tensor, torch.Tensor], params: dict[str, torch.Tensor]
+    index_grid: tuple[torch.Tensor, torch.Tensor],
+    params: dict[str, torch.Tensor] | pd.Series,
 ) -> torch.Tensor:
     """Generate mask of regular polygon from given area, number of vertices
     and x-y-position on tensor.
