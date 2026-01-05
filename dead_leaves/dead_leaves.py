@@ -1,4 +1,5 @@
 from .distributions import PowerLaw, Constant, Cosine, ExpCosine, Image
+from .leaf_masks import circular, rectangular, ellipsoid, regular_polygon
 from .utils import choose_compute_backend, bounding_box
 from typing import Literal
 import matplotlib.pyplot as plt
@@ -87,10 +88,10 @@ class DeadLeavesModel:
             indexing="xy",
         )
         leaf_mask = {
-            "circular": self._circular_leaf_mask,
-            "ellipsoid": self._ellipsoid_leaf_mask,
-            "rectangular": self._rectangular_leaf_mask,
-            "polygon": self._regular_polygon_leaf_mask,
+            "circular": circular,
+            "ellipsoid": ellipsoid,
+            "rectangular": rectangular,
+            "polygon": regular_polygon,
         }
         self.generate_leaf_mask = leaf_mask[shape]
         self.model()
@@ -155,7 +156,7 @@ class DeadLeavesModel:
 
         while torch.any((partition == 0) & (self.position_mask == 1)):
             params = self.sample_parameters()
-            leaf_mask = self.generate_leaf_mask(params)
+            leaf_mask = self.generate_leaf_mask((self.X, self.Y), params)
             mask = leaf_mask & (partition == 0)
             if (mask.sum() > 0) & self.position_mask[
                 params["y_pos"].to(int), params["x_pos"].to(int)
@@ -169,113 +170,6 @@ class DeadLeavesModel:
         leaves = pd.DataFrame(leaves_params, columns=self.params)
         leaves["leaf_idx"] = torch.tensor(range(leaf_idx - 1)) + 1
         return leaves, partition
-
-    def _circular_leaf_mask(self, params: dict[str, torch.Tensor]) -> torch.Tensor:
-        """Generate mask of circle from given area and x-y-position on tensor.
-
-        Args:
-            params (dict[str, tensor]): Value for each parameter.
-
-        Returns:
-            torch.Tensor: Leaf mask.
-        """
-        dist_from_center = torch.sqrt(
-            (self.X - params["x_pos"]) ** 2 + (self.Y - params["y_pos"]) ** 2
-        )
-        mask = dist_from_center <= torch.sqrt(params["area"] / torch.pi)
-        return mask
-
-    def _rectangular_leaf_mask(self, params: dict) -> torch.Tensor:
-        """Generate mask of rectangle from given area, aspect ratio, orientation,
-        and x-y-position on tensor.
-
-        Args:
-            params (dict[str, tensor]): Value for each parameter.
-
-        Returns:
-            torch.Tensor: Leaf mask.
-        """
-        height = torch.sqrt(params["area"] / params["aspect_ratio"])
-        width = height * params["aspect_ratio"]
-        sin = torch.sin(params["orientation"])
-        cos = torch.cos(params["orientation"])
-        dx = self.X - params["x_pos"]
-        dy = self.Y - params["y_pos"]
-        X = dx * cos - dy * sin
-        Y = dx * sin + dy * cos
-        mask = (torch.abs(X) <= width / 2) & (torch.abs(Y) <= height / 2)
-        return mask
-
-    def _ellipsoid_leaf_mask(self, params: dict) -> torch.Tensor:
-        """Generate mask of ellipsoid from given area, aspect ratio, orientation,
-        and x-y-position on tensor.
-
-        Args:
-            params (dict[str, tensor]): Value for each parameter.
-
-        Returns:
-            torch.Tensor: Leaf mask.
-        """
-        a = torch.sqrt((params["area"] * params["aspect_ratio"]) / torch.pi)
-        b = torch.sqrt(params["area"] / (torch.pi * params["aspect_ratio"]))
-        sin = torch.sin(params["orientation"])
-        cos = torch.cos(params["orientation"])
-        dx = self.X - params["x_pos"]
-        dy = self.Y - params["y_pos"]
-        X = dx * cos - dy * sin
-        Y = dx * sin + dy * cos
-        mask = (X / a) ** 2 + (Y / b) ** 2 <= 1
-        return mask
-
-    def _regular_polygon_leaf_mask(self, params: dict) -> torch.Tensor:
-        """Generate mask of regular polygon from given area, number of vertices
-        and x-y-position on tensor.
-
-        Args:
-            params (dict[str, tensor]): Value for each parameter.
-
-        Returns:
-            torch.Tensor: Leaf mask.
-        """
-        radius = torch.sqrt(
-            2
-            * params["area"]
-            / (params["n_vertices"] * torch.sin(2 * torch.pi / params["n_vertices"]))
-        )
-        angles = torch.linspace(
-            0,
-            2 * torch.pi,
-            params["n_vertices"].int(),
-            device=self.device,
-        )
-        cos_angles = torch.cos(angles)
-        sin_angles = torch.sin(angles)
-        vertices = torch.stack(
-            (
-                params["x_pos"] + radius * cos_angles,
-                params["y_pos"] + radius * sin_angles,
-            ),
-            dim=1,
-        )
-        n = vertices.size(0)
-
-        x_coords, y_coords = self.X.ravel(), self.Y.ravel()
-        mask = torch.zeros(x_coords.shape[0], device=self.device, dtype=torch.bool)
-
-        # ray casting algorithm
-        for i in range(n):
-            v1 = vertices[i]
-            v2 = vertices[(i + 1) % n]
-
-            y_range_condition = (v1[1] > y_coords) != (v2[1] > y_coords)
-            x_intersection = (v2[0] - v1[0]) * (y_coords - v1[1]) / (
-                v2[1] - v1[1]
-            ) + v1[0]
-            x_range_condition = x_coords < x_intersection
-
-            mask ^= y_range_condition & x_range_condition
-
-        return mask.reshape(self.size)
 
 
 class DeadLeavesImage:
