@@ -431,20 +431,54 @@ class DeadLeavesImage:
                 texture_params[param] = dist.sample((len(self.leaves),))
             for _, row in self.leaves.iterrows():
                 leaf_idx = row.leaf_idx
+                texture_patch_path = texture_params["source"][leaf_idx - 1]
+                leaf_mask = self.partition == leaf_idx
+                texture_mask = torch.zeros_like(self.partition)
+
                 unoccluded_leaf_mask = leaf_mask_kw[row["shape"]]((X, Y), row)
                 top, left, bottom, right = bounding_box(unoccluded_leaf_mask, 1)
-                width = right - left
-                height = bottom - top
-                texture_patch_path = texture_params["source"][leaf_idx - 1]
-                texture_patch = (
-                    pil_to_tensor(
-                        PIL.Image.open(texture_patch_path).resize((width, height))
+                visible_height = bottom - top
+                visible_width = right - left
+                if (
+                    top == 0
+                    or left == 0
+                    or bottom == self.size[0]
+                    or right == self.size[1]
+                ):
+                    centered_leaf = row.copy()
+                    centered_leaf["x_pos"] = self.size[1] // 2
+                    centered_leaf["y_pos"] = self.size[0] // 2
+                    centered_leaf_mask = leaf_mask_kw[row["shape"]](
+                        (X, Y), centered_leaf
                     )
-                    / 255
-                )
-                leaf_mask = self.partition == leaf_idx
-                texture_mask = torch.zeros(self.partition.shape)
-                texture_mask[top:bottom, left:right] = texture_patch
+                    ctop, cleft, cbottom, cright = bounding_box(centered_leaf_mask, 1)
+                    full_width = cright - cleft
+                    full_height = cbottom - ctop
+                    texture_patch = (
+                        pil_to_tensor(
+                            PIL.Image.open(texture_patch_path).resize(
+                                (full_width, full_height)
+                            )
+                        )
+                        / 255
+                    )
+                    offset_y = full_height - visible_height
+                    offset_x = full_width - visible_width
+                    texture_mask[top:bottom, left:right] = texture_patch[
+                        :,
+                        offset_y : offset_y + visible_height,
+                        offset_x : offset_x + visible_width,
+                    ]
+                else:
+                    texture_patch = (
+                        pil_to_tensor(
+                            PIL.Image.open(texture_patch_path).resize(
+                                (visible_width, visible_height)
+                            )
+                        )
+                        / 255
+                    )
+                    texture_mask[top:bottom, left:right] = texture_patch
                 texture += (
                     leaf_mask * texture_params["alpha"][leaf_idx - 1] * texture_mask
                 )
