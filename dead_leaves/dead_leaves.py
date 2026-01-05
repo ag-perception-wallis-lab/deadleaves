@@ -53,13 +53,6 @@ class DeadLeavesModel:
         - sample_parameters: Sample values from self.distributions.
         - sample_partition: Generate dead leaves partition by iteratively sampling
             leaves based on the model.
-        - _circular_leaf_mask: Generate circular leaf mask from position, and area.
-        - _rectangular_leaf_mask: Generate rectangular leaf mask from position, area,
-            orientation, and aspect ratio.
-        - _ellipsoid_leaf_mask: Generate ellipsoidal leaf mask from position, area,
-            orientation, and aspect ratio.
-        - _regular_polygon_leaf_mask: Generate regular polygon leaf mask from position,
-            area, and number of vertices.
     """
 
     def __init__(
