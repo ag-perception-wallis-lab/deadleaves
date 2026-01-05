@@ -518,7 +518,7 @@ class DeadLeavesImage:
                 leaf_idx = row.leaf_idx
                 texture_patch_path = texture_params["source"][leaf_idx - 1]
                 leaf_mask = self.partition == leaf_idx
-                texture_mask = torch.zeros_like(self.partition)
+                texture_mask = torch.zeros(self.partition.shape)
 
                 unoccluded_leaf_mask = leaf_mask_kw[row["shape"]]((X, Y), row)
                 top, left, bottom, right = bounding_box(unoccluded_leaf_mask, 1)
