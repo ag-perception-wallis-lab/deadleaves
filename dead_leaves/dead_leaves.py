@@ -1,4 +1,5 @@
 from .distributions import PowerLaw, Constant, Cosine, ExpCosine, Image
+from .leaf_masks import circular, rectangular, ellipsoid, regular_polygon
 from .utils import choose_compute_backend, bounding_box
 from typing import Literal, Callable
 import matplotlib.pyplot as plt
@@ -24,6 +25,13 @@ dist_kw: dict[str, torch.distributions.distribution.Distribution] = {
     "cosine": Cosine,
     "expcosine": ExpCosine,
     "image": Image,
+}
+
+leaf_mask_kw = {
+    "circular": circular,
+    "ellipsoid": ellipsoid,
+    "rectangular": rectangular,
+    "polygon": regular_polygon,
 }
 
 
@@ -65,7 +73,7 @@ class DeadLeavesModel:
         if position_mask is not None:
             if position_mask.shape != size:
                 raise ValueError("Position mask needs to match image size.")
-            self.position_mask: torch.Tensor = position_mask
+            self.position_mask: torch.Tensor = position_mask.to(device=self.device)
         else:
             self.position_mask: torch.Tensor = torch.ones(
                 self.size, dtype=int, device=self.device
@@ -85,13 +93,7 @@ class DeadLeavesModel:
             torch.arange(self.size[0], device=self.device),
             indexing="xy",
         )
-        leaf_mask = {
-            "circular": self._circular_leaf_mask,
-            "ellipsoid": self._ellipsoid_leaf_mask,
-            "rectangular": self._rectangular_leaf_mask,
-            "polygon": self._regular_polygon_leaf_mask,
-        }
-        self.generate_leaf_mask: Callable = leaf_mask[shape]
+        self.generate_leaf_mask: Callable = leaf_mask_kw[shape]
         self.model()
 
     shape_kw: dict[str, list[str]] = {
@@ -212,7 +214,7 @@ class DeadLeavesModel:
 
         while torch.any((partition == 0) & (self.position_mask == 1)):
             params = self.sample_parameters()
-            leaf_mask = self.generate_leaf_mask(params)
+            leaf_mask = self.generate_leaf_mask((self.X, self.Y), params)
             mask = leaf_mask & (partition == 0)
             if (mask.sum() > 0) & self.position_mask[
                 params["y_pos"].to(int), params["x_pos"].to(int)
@@ -225,124 +227,8 @@ class DeadLeavesModel:
 
         leaves = pd.DataFrame(leaves_params, columns=self.params)
         leaves["leaf_idx"] = torch.tensor(range(leaf_idx - 1)) + 1
+        leaves["shape"] = self.shape
         return leaves, partition
-
-    def _circular_leaf_mask(self, params: dict[str, torch.Tensor]) -> torch.Tensor:
-        """Generate mask of circle from given area and x-y-position on tensor.
-
-        Args:
-            params (dict[str, torch.Tensor]):
-                Value for each parameter.
-
-        Returns:
-            torch.Tensor:
-                Leaf mask.
-        """
-        dist_from_center = torch.sqrt(
-            (self.X - params["x_pos"]) ** 2 + (self.Y - params["y_pos"]) ** 2
-        )
-        mask = dist_from_center <= torch.sqrt(params["area"] / torch.pi)
-        return mask
-
-    def _rectangular_leaf_mask(self, params: dict[str, torch.Tensor]) -> torch.Tensor:
-        """Generate mask of rectangle from given area, aspect ratio, orientation,
-        and x-y-position on tensor.
-
-        Args:
-            params (dict[str, torch.Tensor]):
-                Value for each parameter.
-
-        Returns:
-            torch.Tensor:
-                Leaf mask.
-        """
-        height = torch.sqrt(params["area"] / params["aspect_ratio"])
-        width = height * params["aspect_ratio"]
-        sin = torch.sin(params["orientation"])
-        cos = torch.cos(params["orientation"])
-        dx = self.X - params["x_pos"]
-        dy = self.Y - params["y_pos"]
-        X = dx * cos - dy * sin
-        Y = dx * sin + dy * cos
-        mask = (torch.abs(X) <= width / 2) & (torch.abs(Y) <= height / 2)
-        return mask
-
-    def _ellipsoid_leaf_mask(self, params: dict[str, torch.Tensor]) -> torch.Tensor:
-        """Generate mask of ellipsoid from given area, aspect ratio, orientation,
-        and x-y-position on tensor.
-
-        Args:
-            params (dict[str, torch.Tensor]):
-                Value for each parameter.
-
-        Returns:
-            torch.Tensor:
-                Leaf mask.
-        """
-        a = torch.sqrt((params["area"] * params["aspect_ratio"]) / torch.pi)
-        b = torch.sqrt(params["area"] / (torch.pi * params["aspect_ratio"]))
-        sin = torch.sin(params["orientation"])
-        cos = torch.cos(params["orientation"])
-        dx = self.X - params["x_pos"]
-        dy = self.Y - params["y_pos"]
-        X = dx * cos - dy * sin
-        Y = dx * sin + dy * cos
-        mask = (X / a) ** 2 + (Y / b) ** 2 <= 1
-        return mask
-
-    def _regular_polygon_leaf_mask(
-        self, params: dict[str, torch.Tensor]
-    ) -> torch.Tensor:
-        """Generate mask of regular polygon from given area, number of vertices
-        and x-y-position on tensor.
-
-        Args:
-            params (dict[str, torch.Tensor]):
-                Value for each parameter.
-
-        Returns:
-            torch.Tensor:
-                Leaf mask.
-        """
-        radius = torch.sqrt(
-            2
-            * params["area"]
-            / (params["n_vertices"] * torch.sin(2 * torch.pi / params["n_vertices"]))
-        )
-        angles = torch.linspace(
-            0,
-            2 * torch.pi,
-            params["n_vertices"].int(),
-            device=self.device,
-        )
-        cos_angles = torch.cos(angles)
-        sin_angles = torch.sin(angles)
-        vertices = torch.stack(
-            (
-                params["x_pos"] + radius * cos_angles,
-                params["y_pos"] + radius * sin_angles,
-            ),
-            dim=1,
-        )
-        n = vertices.size(0)
-
-        x_coords, y_coords = self.X.ravel(), self.Y.ravel()
-        mask = torch.zeros(x_coords.shape[0], device=self.device, dtype=torch.bool)
-
-        # ray casting algorithm
-        for i in range(n):
-            v1 = vertices[i]
-            v2 = vertices[(i + 1) % n]
-
-            y_range_condition = (v1[1] > y_coords) != (v2[1] > y_coords)
-            x_intersection = (v2[0] - v1[0]) * (y_coords - v1[1]) / (
-                v2[1] - v1[1]
-            ) + v1[0]
-            x_range_condition = x_coords < x_intersection
-
-            mask ^= y_range_condition & x_range_condition
-
-        return mask.reshape(self.size)
 
 
 class DeadLeavesImage:
@@ -388,6 +274,8 @@ class DeadLeavesImage:
             | dict[str, dict[str, dict[str, float | dict[str, dict[str, float]]]]]
         ) = texture_param_distributions
         self.background_color: torch.Tensor | None = background_color
+        if isinstance(background_color, torch.Tensor):
+            self.background_color = self.background_color.to(device=self.device)
         self.leaves: pd.DataFrame = leaves
         self.partition: torch.Tensor = partition
         color_spaces = {
@@ -614,6 +502,11 @@ class DeadLeavesImage:
                 Texture values.
         """
         with self.device:
+            X, Y = torch.meshgrid(
+                torch.arange(self.size[1], device=self.device),
+                torch.arange(self.size[0], device=self.device),
+                indexing="xy",
+            )
             texture = torch.zeros(self.partition.shape)
             texture_params = {}
             for param, dist in self.texture_distributions.items():
@@ -621,8 +514,10 @@ class DeadLeavesImage:
                     texture_params[param] = dist.sample(len(self.leaves))
                 else:
                     texture_params[param] = dist.sample((len(self.leaves), 1))
-            for leaf_idx in self.leaves.leaf_idx:
-                top, left, bottom, right = bounding_box(self.partition, leaf_idx)
+            for _, row in self.leaves.iterrows():
+                leaf_idx = row.leaf_idx
+                unoccluded_leaf_mask = leaf_mask_kw[row["shape"]]((X, Y), row)
+                top, left, bottom, right = bounding_box(unoccluded_leaf_mask, 1)
                 width = right - left
                 height = bottom - top
                 texture_patch_path = texture_params["source"][leaf_idx - 1]
