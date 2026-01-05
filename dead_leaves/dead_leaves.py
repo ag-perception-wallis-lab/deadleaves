@@ -27,6 +27,13 @@ dist_kw = {
     "image": Image,
 }
 
+leaf_mask_kw = {
+    "circular": circular,
+    "ellipsoid": ellipsoid,
+    "rectangular": rectangular,
+    "polygon": regular_polygon,
+}
+
 
 class DeadLeavesModel:
     """Setup a dead leaves model
@@ -80,13 +87,7 @@ class DeadLeavesModel:
             torch.arange(self.size[0], device=self.device),
             indexing="xy",
         )
-        leaf_mask = {
-            "circular": circular,
-            "ellipsoid": ellipsoid,
-            "rectangular": rectangular,
-            "polygon": regular_polygon,
-        }
-        self.generate_leaf_mask = leaf_mask[shape]
+        self.generate_leaf_mask = leaf_mask_kw[shape]
         self.model()
 
     shape_kw = {
