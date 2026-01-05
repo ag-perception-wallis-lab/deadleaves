@@ -420,12 +420,19 @@ class DeadLeavesImage:
             torch.Tensor: Texture values.
         """
         with self.device:
+            X, Y = torch.meshgrid(
+                torch.arange(self.size[1], device=self.device),
+                torch.arange(self.size[0], device=self.device),
+                indexing="xy",
+            )
             texture = torch.zeros(self.partition.shape)
             texture_params = {}
             for param, dist in self.texture_distributions.items():
                 texture_params[param] = dist.sample((len(self.leaves),))
-            for leaf_idx in self.leaves.leaf_idx:
-                top, left, bottom, right = bounding_box(self.partition, leaf_idx)
+            for _, row in self.leaves.iterrows():
+                leaf_idx = row.leaf_idx
+                unoccluded_leaf_mask = leaf_mask_kw[row["shape"]]((X, Y), row)
+                top, left, bottom, right = bounding_box(unoccluded_leaf_mask, 1)
                 width = right - left
                 height = bottom - top
                 texture_patch_path = texture_params["source"][leaf_idx - 1]
