@@ -541,9 +541,9 @@ class DeadLeavesImage:
                     full_height = cbottom - ctop
                     texture_patch = (
                         pil_to_tensor(
-                            PIL.Image.open(texture_patch_path).resize(
-                                (full_width, full_height)
-                            )
+                            PIL.Image.open(texture_patch_path)
+                            .convert("L")
+                            .resize((full_width, full_height))
                         )
                         / 255
                     )
@@ -557,9 +557,9 @@ class DeadLeavesImage:
                 else:
                     texture_patch = (
                         pil_to_tensor(
-                            PIL.Image.open(texture_patch_path).resize(
-                                (visible_width, visible_height)
-                            )
+                            PIL.Image.open(texture_patch_path)
+                            .convert("L")
+                            .resize((visible_width, visible_height))
                         )
                         / 255
                     )
