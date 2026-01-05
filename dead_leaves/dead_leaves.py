@@ -76,7 +76,7 @@ class DeadLeavesModel:
         if position_mask is not None:
             if position_mask.shape != size:
                 raise ValueError("Position mask needs to match image size.")
-            self.position_mask = position_mask
+            self.position_mask = position_mask.to(device=self.device)
         else:
             self.position_mask = torch.ones(self.size, dtype=int, device=self.device)
         self.n_sample = n_sample
@@ -230,6 +230,8 @@ class DeadLeavesImage:
         self.color_param_distributions = color_param_distributions
         self.texture_param_distributions = texture_param_distributions
         self.background_color = background_color
+        if isinstance(background_color, torch.Tensor):
+            self.background_color = self.background_color.to(device=self.device)
         self.leaves = leaves
         self.partition = partition
         color_spaces = {
