@@ -19,5 +19,12 @@ exclude = ["examples*", "test*"]
 
 [dependency-groups]
 test = ["pytest>=8.4.2"]
-docs = ["myst-nb", "pydata-sphinx-theme", "sphinx", "sphinx-autoapi", "sphinx-gallery"]
-dev  = [{ include-group = "docs" }, { include-group = "test" }]
+docs = [
+    "myst-nb",
+    "pydata-sphinx-theme",
+    "sphinx",
+    "sphinx-autoapi",
+    "sphinx-design",
+    "sphinx-gallery",
+]
+dev = [{ include-group = "docs" }, { include-group = "test" }]

@@ -5,5 +5,5 @@ _build
 paper_files
 *.html
 *.rst
-gallery
+docs/gallery
 reference
