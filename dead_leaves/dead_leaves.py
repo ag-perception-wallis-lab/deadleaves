@@ -369,9 +369,10 @@ class DeadLeavesImage:
         leaves: pd.DataFrame,
         partition: torch.Tensor,
         color_param_distributions: dict[str, dict[str, dict[str, float]]],
-        texture_param_distributions: dict[str, dict[str, dict[str, float]]] = {
-            "gray": {"constant": {"value": 0}}
-        },
+        texture_param_distributions: (
+            dict[str, dict[str, dict[str, float]]]
+            | dict[str, dict[str, dict[str, float | dict[str, dict[str, float]]]]]
+        ) = {"gray": {"constant": {"value": 0.0}}},
         background_color: torch.Tensor | None = None,
         device: Literal["cuda", "mps", "cpu"] | None = None,
     ):
@@ -382,9 +383,10 @@ class DeadLeavesImage:
         self.color_param_distributions: dict[str, dict[str, dict[str, float]]] = (
             color_param_distributions
         )
-        self.texture_param_distributions: dict[str, dict[str, dict[str, float]]] = (
-            texture_param_distributions
-        )
+        self.texture_param_distributions: (
+            dict[str, dict[str, dict[str, float]]]
+            | dict[str, dict[str, dict[str, float | dict[str, dict[str, float]]]]]
+        ) = texture_param_distributions
         self.background_color: torch.Tensor | None = background_color
         self.leaves: pd.DataFrame = leaves
         self.partition: torch.Tensor = partition
