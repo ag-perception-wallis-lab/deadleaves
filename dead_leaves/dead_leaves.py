@@ -163,6 +163,7 @@ class DeadLeavesModel:
 
         leaves = pd.DataFrame(leaves_params, columns=self.params)
         leaves["leaf_idx"] = torch.tensor(range(leaf_idx - 1)) + 1
+        leaves["shape"] = self.shape
         return leaves, partition
 
 
