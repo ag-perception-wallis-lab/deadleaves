@@ -497,6 +497,9 @@ class DeadLeavesImage:
         """Sample leaf-wise grayscale texture from a folder of texture patches.
         Texture patches will be blended into color based on a leaf-wise alpha value.
 
+        NOTE: May produce distorted textures for leaves larger than the canvas in
+        either dimension.
+
         Returns:
             torch.Tensor:
                 Texture values.
@@ -531,8 +534,10 @@ class DeadLeavesImage:
                     or right == self.size[1]
                 ):
                     centered_leaf = row.copy()
-                    centered_leaf["x_pos"] = self.size[1] // 2
-                    centered_leaf["y_pos"] = self.size[0] // 2
+                    frac_leaf_x_pos = torch.frac(centered_leaf["x_pos"])
+                    frac_leaf_y_pos = torch.frac(centered_leaf["y_pos"])
+                    centered_leaf["x_pos"] = self.size[1] // 2 + frac_leaf_x_pos
+                    centered_leaf["y_pos"] = self.size[0] // 2 + frac_leaf_y_pos
                     centered_leaf_mask = leaf_mask_kw[row["shape"]](
                         (X, Y), centered_leaf
                     )
@@ -547,8 +552,8 @@ class DeadLeavesImage:
                         )
                         / 255
                     )
-                    offset_y = full_height - visible_height
-                    offset_x = full_width - visible_width
+                    offset_y = full_height - visible_height if top == 0 else 0
+                    offset_x = full_width - visible_width if left == 0 else 0
                     texture_mask[top:bottom, left:right] = texture_patch[
                         :,
                         offset_y : offset_y + visible_height,
