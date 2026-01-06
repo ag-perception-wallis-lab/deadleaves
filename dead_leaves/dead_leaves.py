@@ -27,7 +27,13 @@ dist_kw: dict[str, torch.distributions.distribution.Distribution] = {
     "image": Image,
 }
 
-leaf_mask_kw = {
+leaf_mask_kw: dict[
+    str,
+    Callable[
+        [tuple[torch.Tensor, torch.Tensor], dict[str, torch.Tensor] | pd.Series],
+        torch.Tensor,
+    ],
+] = {
     "circular": circular,
     "ellipsoid": ellipsoid,
     "rectangular": rectangular,
