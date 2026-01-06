@@ -20,6 +20,7 @@ class BaseDistribution(Distribution):
     """
 
     _batch_shape: torch.Size = torch.Size()
+    """The shape over which parameters are batched."""
 
     def __init__(self, *args, **kwargs) -> None:
         pass
@@ -145,9 +146,11 @@ class PowerLaw(BaseDistribution):
         self.scale_factor: torch.Tensor = self.low ** (1 - self.k) - self.high ** (
             1 - self.k
         )
+        """Scales probabilities for values between low and high to interval [0,1]."""
         self._validate_args()
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Returns a readable string representation of the object."""
         return (
             "PowerLaw("
             f"low: {float(self.low)}, "
@@ -210,7 +213,8 @@ class Cosine(BaseDistribution):
         self.amplitude, self.frequency = broadcast_all(amplitude, frequency)
         self._validate_args()
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Returns a readable string representation of the object."""
         return (
             "Cosine("
             f"amplitude: {float(self.amplitude)}, "
@@ -277,7 +281,8 @@ class ExpCosine(BaseDistribution):
         )
         self._validate_args()
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Returns a readable string representation of the object."""
         return (
             "ExpCosine("
             f"amplitude: {float(self.amplitude)}, "
@@ -317,12 +322,11 @@ class Constant(Distribution):
     def support(self):
         return constraints.real
 
-    _batch_shape: torch.Size = torch.Size()
-
     def __init__(self, value: float) -> None:
         self.value: float = value
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Returns a readable string representation of the object."""
         return f"Constant(value: {self.value})"
 
     def pdf(self, x: torch.Tensor) -> torch.Tensor:
@@ -379,27 +383,29 @@ class Image(Distribution):
     def support(self):
         return constraints.real
 
-    _batch_shape: torch.Size = torch.Size()
-
     def __init__(self, dir: Path | str) -> None:
         if not isinstance(dir, (str, Path)):
             raise TypeError("dir must be a string or Path object.")
         if not Path(dir).exists():
             raise FileNotFoundError(f"Directory {dir} does not exist.")
         self.dir: Path | str = dir
+        """Path to image data set directory."""
         file_list = []
         for root, _, files in os.walk(self.dir):
             file_list += [os.path.join(root, f) for f in files]
         self.files: list[str] = [
             file for file in file_list if re.search(r"\.(png|jpg|gif|tiff|jpeg)$", file)
         ]
+        """List of image files in the directory."""
 
         if len(self.files) == 0:
             raise ValueError(f"No image files found in directory {self.dir}")
 
         self.n_files: int = len(self.files)
+        """Number of image files."""
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Returns a readable string representation of the object."""
         return f"Image(dir: {self.dir})"
 
     def sample(self, n=1) -> list[Path]:

@@ -77,31 +77,37 @@ class DeadLeavesModel:
         self.device: torch.device = (
             torch.device(device) if device else choose_compute_backend()
         )
+        """Chosen compute backend."""
         self.size: tuple[int, int] = size
+        """Height (y, M) and width (x, N) of the canvas."""
+        self.position_mask: torch.Tensor = torch.ones(
+            self.size, dtype=int, device=self.device
+        )
+        """Positions on canvas masked for sampling leaf positions."""
         if position_mask is not None:
             if position_mask.shape != size:
                 raise ValueError("Position mask needs to match image size.")
             self.position_mask: torch.Tensor = position_mask.to(device=self.device)
-        else:
-            self.position_mask: torch.Tensor = torch.ones(
-                self.size, dtype=int, device=self.device
-            )
-        self.n_sample: int | None = n_sample  # number of leaves to sample
+        self.n_sample: int | None = n_sample
+        """Number of leaves to sample."""
         self.shape: (
             Literal["circular"]
             | Literal["ellipsoid"]
             | Literal["rectangular"]
             | Literal["polygon"]
         ) = shape
+        """Shape of the leaves."""
         self.param_distributions: dict[str, dict[str, dict[str, float]]] = (
             param_distributions
         )
+        """Shape parameters and their distributions and distribution parameter values."""
         self.X, self.Y = torch.meshgrid(
             torch.arange(self.size[1], device=self.device),
             torch.arange(self.size[0], device=self.device),
             indexing="xy",
         )
         self.generate_leaf_mask: Callable = leaf_mask_kw[shape]
+        """Method to generate mask of leaf on canvas."""
         self.model()
 
     shape_kw: dict[str, list[str]] = {
@@ -110,6 +116,7 @@ class DeadLeavesModel:
         "rectangular": ["area", "aspect_ratio", "orientation"],
         "polygon": ["area", "n_vertices"],
     }
+    """Dictionary connecting keys to respective list of shape parameters."""
 
     def resolve_dependencies(self) -> list[str]:
         """Resolve model parameter dependencies.
@@ -273,19 +280,26 @@ class DeadLeavesImage:
         self.device: torch.device = (
             torch.device(device) if device else choose_compute_backend()
         )
+        """Chosen compute backend."""
         self.size: torch.Size = partition.shape
+        """Height (y, M) and width (x, N) of the canvas."""
         self.color_param_distributions: dict[str, dict[str, dict[str, float]]] = (
             color_param_distributions
         )
+        """Color parameters and their distribution setup."""
         self.texture_param_distributions: (
             dict[str, dict[str, dict[str, float]]]
             | dict[str, dict[str, dict[str, float | dict[str, dict[str, float]]]]]
         ) = texture_param_distributions
+        """Texture parameters and their distribution setup."""
         self.background_color: torch.Tensor | None = background_color
+        """Color for pixels not belonging to any leaf."""
         if isinstance(background_color, torch.Tensor):
             self.background_color = self.background_color.to(device=self.device)
         self.leaves: pd.DataFrame = leaves
+        """Dataframe of leaves and their parameters."""
         self.partition: torch.Tensor = partition
+        """Partition of the image area."""
         color_spaces = {
             ("B", "G", "R"): ("R", "G", "B"),
             ("H", "S", "V"): ("H", "S", "V"),
@@ -296,9 +310,11 @@ class DeadLeavesImage:
         self.color_space = color_spaces[
             tuple(sorted(list(self.color_param_distributions.keys())))
         ]
+        """Color space in which leaf colors are sampled."""
         self.texture_space = color_spaces[
             tuple(sorted(list(self.texture_param_distributions.keys())))
         ]
+        """Color space in which leaf textures are sampled."""
         colors = {
             ("R", "G", "B"): self._sample_3d_colors,
             ("H", "S", "V"): self._sample_3d_colors,
@@ -312,7 +328,9 @@ class DeadLeavesImage:
             ("source"): self._sample_texture_patch,
         }
         self.sample_colors: Callable = colors[self.color_space]
+        """Method to sample colors."""
         self.sample_texture: Callable = textures[self.texture_space]
+        """Method to sample textures."""
         self.model()
 
     def model(self) -> None:
