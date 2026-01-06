@@ -51,7 +51,7 @@ Ask a question, report a bug, request a feature, or contribute.
 
 getting_started/index
 user_guides/index
-Reference <reference/dead_leaves/index>
 Gallery <gallery/index>
+Reference <reference/dead_leaves/index>
 Development <development/contributing>
 ```
