@@ -26,6 +26,7 @@ dist_kw: dict[str, type[torch.distributions.distribution.Distribution]] = {
     "expcosine": ExpCosine,
     "image": Image,
 }
+"""Dictionary connecting keys to distribution classes."""
 
 leaf_mask_kw: dict[
     str,
@@ -39,6 +40,7 @@ leaf_mask_kw: dict[
     "rectangular": rectangular,
     "polygon": regular_polygon,
 }
+"""Dictionary connecting keys to respective leaf mask generative function."""
 
 
 class DeadLeavesModel:
