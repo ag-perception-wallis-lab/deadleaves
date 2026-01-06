@@ -9,11 +9,14 @@ def circular(
     """Generate mask of circle from given area and x-y-position on tensor.
 
     Args:
-        index_grid (tuple[tensor, tensor]): x and y indices of area to be masked.
-        params (dict[str, tensor]): Value for each parameter.
+        index_grid (tuple[tensor, tensor]):
+            x and y indices of area to be masked.
+        params (dict[str, tensor]):
+            Value for each parameter.
 
     Returns:
-        torch.Tensor: Leaf mask.
+        torch.Tensor:
+            Leaf mask.
     """
     X, Y = index_grid
     dist_from_center = torch.sqrt(
@@ -31,11 +34,14 @@ def rectangular(
     and x-y-position on tensor.
 
     Args:
-        index_grid (tuple[tensor, tensor]): x and y indices of area to be masked.
-        params (dict[str, tensor]): Value for each parameter.
+        index_grid (tuple[tensor, tensor]):
+            x and y indices of area to be masked.
+        params (dict[str, tensor]):
+            Value for each parameter.
 
     Returns:
-        torch.Tensor: Leaf mask.
+        torch.Tensor:
+            Leaf mask.
     """
     X, Y = index_grid
     with X.device:
@@ -59,11 +65,14 @@ def ellipsoid(
     and x-y-position on tensor.
 
     Args:
-        index_grid (tuple[tensor, tensor]): x and y indices of area to be masked.
-        params (dict[str, tensor]): Value for each parameter.
+        index_grid (tuple[tensor, tensor]):
+            x and y indices of area to be masked.
+        params (dict[str, tensor]):
+            Value for each parameter.
 
     Returns:
-        torch.Tensor: Leaf mask.
+        torch.Tensor:
+            Leaf mask.
     """
     X, Y = index_grid
     with X.device:
@@ -87,11 +96,14 @@ def regular_polygon(
     and x-y-position on tensor.
 
     Args:
-        index_grid (tuple[tensor, tensor]): x and y indices of area to be masked.
-        params (dict[str, tensor]): Value for each parameter.
+        index_grid (tuple[tensor, tensor]):
+            x and y indices of area to be masked.
+        params (dict[str, tensor]):
+            Value for each parameter.
 
     Returns:
-        torch.Tensor: Leaf mask.
+        torch.Tensor:
+            Leaf mask.
     """
     X, Y = index_grid
     with X.device:
