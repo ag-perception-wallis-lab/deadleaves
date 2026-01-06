@@ -15,7 +15,7 @@ import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
-dist_kw: dict[str, torch.distributions.distribution.Distribution] = {
+dist_kw: dict[str, type[torch.distributions.distribution.Distribution]] = {
     "beta": torch.distributions.beta.Beta,
     "uniform": torch.distributions.uniform.Uniform,
     "normal": torch.distributions.normal.Normal,
