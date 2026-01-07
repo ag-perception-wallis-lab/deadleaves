@@ -249,9 +249,6 @@ class ExpCosine(BaseDistribution):
     """Distribution with cosine density and exponential peaks.
 
     Args:
-        amplitude (float):
-            Amplitude of density function. Value must be positive.
-            Defaults to 1.
         frequency (int):
             Frequency of cosine. Defaults to 4,
             i.e. peaks at the cardinals.
@@ -268,19 +265,17 @@ class ExpCosine(BaseDistribution):
     @property
     def arg_constraints(self):
         return {
-            "amplitude": constraints.positive,
             "frequency": constraints.positive_integer,
             "exponential_constant": constraints.positive,
         }
 
     def __init__(
         self,
-        amplitude: float = 1,
         frequency: int = 4,
         exponential_constant: float = 3,
     ) -> None:
-        self.amplitude, self.frequency, self.exponential_constant = broadcast_all(
-            amplitude, frequency, exponential_constant
+        self.frequency, self.exponential_constant = broadcast_all(
+            frequency, exponential_constant
         )
         self._validate_args()
 
@@ -288,14 +283,13 @@ class ExpCosine(BaseDistribution):
         """Returns a readable string representation of the object."""
         return (
             "ExpCosine("
-            f"amplitude: {float(self.amplitude)}, "
             f"frequency: {int(self.frequency)}, "
             f"exponential_constant: {float(self.exponential_constant)})"
         )
 
     def pdf(self, x: torch.Tensor) -> torch.Tensor:
         def f(x):
-            return self.amplitude * torch.exp(
+            return torch.exp(
                 -self.exponential_constant
                 * torch.sqrt(1 - torch.cos(self.frequency * x))
             )
