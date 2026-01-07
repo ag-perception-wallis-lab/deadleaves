@@ -5,7 +5,10 @@ from torch.distributions.distribution import Distribution
 from torch.distributions import constraints
 from torch.distributions.utils import broadcast_all
 from torchquad import Trapezoid
+from torchquad import set_log_level
 from pathlib import Path
+
+set_log_level("ERROR")
 
 
 class BaseDistribution(Distribution):
