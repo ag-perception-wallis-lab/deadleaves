@@ -322,6 +322,9 @@ class Constant(Distribution):
     def support(self):
         return constraints.real
 
+    _batch_shape: torch.Size = torch.Size()
+    """The shape over which parameters are batched."""
+
     def __init__(self, value: float) -> None:
         self.value: float = value
 
@@ -382,6 +385,9 @@ class Image(Distribution):
     @property
     def support(self):
         return constraints.real
+
+    _batch_shape: torch.Size = torch.Size()
+    """The shape over which parameters are batched."""
 
     def __init__(self, dir: Path | str) -> None:
         if not isinstance(dir, (str, Path)):
