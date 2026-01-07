@@ -1,0 +1,35 @@
+"""
+Example 6
+===========================
+
+Natural colors and textures (Madhusudana et al., 2022)
+"""
+
+from dead_leaves import DeadLeavesModel, DeadLeavesImage
+
+model = DeadLeavesModel(
+    shape="circular",
+    param_distributions={
+        "area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}},
+    },
+    size=(512, 512),
+)
+leaves, partition = model.sample_partition()
+colormodel = DeadLeavesImage(
+    leaves=leaves,
+    partition=partition,
+    color_param_distributions={
+        "source": {"image": {"dir": "/home/swantje/datasets/places365"}}
+    },
+    texture_param_distributions={
+        "source": {"image": {"dir": "/home/swantje/datasets/brodatz"}},
+        "alpha": {"normal": {"loc": 0.0, "scale": 0.4}},
+    },
+)
+image = colormodel.sample_image()
+colormodel.show(image)
+
+colormodel.save(image, "images/sphx_glr_plot_ex6_001.png")
+colormodel.save(image, "images/thumb/sphx_glr_plot_ex6_thumb.png")
+
+# %%

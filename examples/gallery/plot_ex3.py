@@ -1,0 +1,32 @@
+"""
+Example 3
+===========================
+
+Square leaves with axis aligned (Baradad et al., 2022)
+"""
+
+from dead_leaves import DeadLeavesModel, DeadLeavesImage
+
+model = DeadLeavesModel(
+    "rectangular",
+    {
+        "area": {"powerlaw": {"low": 500.0, "high": 10000.0, "k": 1.5}},
+        "orientation": {"constant": {"value": 0.0}},
+        "aspect_ratio": {"constant": {"value": 1}},
+    },
+    (1000, 1000),
+)
+leaves, partition = model.sample_partition()
+
+color_params = {
+    "R": {"uniform": {"low": 0.0, "high": 1.0}},
+    "G": {"uniform": {"low": 0.0, "high": 1.0}},
+    "B": {"uniform": {"low": 0.0, "high": 1.0}},
+}
+
+colormodel = DeadLeavesImage(leaves, partition, color_params)
+image = colormodel.sample_image()
+colormodel.show(image)
+
+colormodel.save(image, "images/sphx_glr_plot_ex3_001.png")
+colormodel.save(image, "images/thumb/sphx_glr_plot_ex3_thumb.png")
