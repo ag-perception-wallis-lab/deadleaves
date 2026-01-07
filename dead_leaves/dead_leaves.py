@@ -600,14 +600,17 @@ class DeadLeavesImage:
                 )
         return texture.unsqueeze(-1).expand(-1, -1, 3)
 
-    def show(self, image: torch.Tensor) -> None:
+    def show(self, image: torch.Tensor, figsize: tuple[int, int] | None = None) -> None:
         """Show selected image.
 
         Args:
             image (torch.Tensor):
                 Image to show.
+            figsize (tuple[int,int], optional):
+                Figure size in inches (width, height). If None size is inferred from
+                image size. Defaults to None.
         """
-        fig, ax = plt.subplots(frameon=False)
+        fig, ax = plt.subplots(figsize=figsize, frameon=False)
         ax.imshow(image.cpu().numpy(), vmax=1, vmin=0)
         fig.tight_layout()
         ax.axis("off")
