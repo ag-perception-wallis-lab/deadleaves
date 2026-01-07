@@ -1,3 +1,15 @@
+---
+jupytext:
+  formats: md:myst
+  text_representation:
+    extension: .md
+    format_name: myst
+kernelspec:
+  display_name: Python 3
+  language: python
+  name: python3
+---
+
 # Textures
 
 Textures add variation to the color of each leaf, giving images more realism and complexity.
@@ -23,6 +35,32 @@ For example, adding gray-scale Gaussian noise to an image:
 - **Effect**: All leaves share the same pixel-level noise characteristics.
 - **Use case**: Simple global texture effects.
 
+**Example**
+
+```{code-cell}
+:tags: [hide-input]
+from dead_leaves import DeadLeavesModel, DeadLeavesImage
+
+model = DeadLeavesModel(
+    shape = "circular", 
+    param_distributions = {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
+    size = (512,512)
+)
+leaves, partition = model.sample_partition()
+
+colormodel = DeadLeavesImage(
+    leaves = leaves, 
+    partition = partition, 
+    color_param_distributions = {"gray": {"uniform": {"low": 0.0, "high": 1.0}}},
+    texture_param_distributions = {
+        "gray": {"normal": {"loc": 0, "scale": 0.1}}
+        }
+    )
+image = colormodel.sample_image()
+
+colormodel.show(image, figsize = (3,3))
+```
+
 ### Per-Leaf Noise
 
 By introducing a hierarchical structure, you can sample noise parameters independently for each leaf.
@@ -36,6 +74,37 @@ For example, Gaussian noise per leaf in gray-scale:
 
 - **Effect**: Each leaf has an independent texture variation.
 - **Use case**: Images with heterogeneous textures across objects.
+
+**Example**
+
+```{code-cell}
+:tags: [hide-input]
+from dead_leaves import DeadLeavesModel, DeadLeavesImage
+
+model = DeadLeavesModel(
+    shape = "circular", 
+    param_distributions = {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
+    size = (512,512)
+)
+leaves, partition = model.sample_partition()
+
+colormodel = DeadLeavesImage(
+    leaves = leaves, 
+    partition = partition, 
+    color_param_distributions = {"gray": {"uniform": {"low": 0.0, "high": 1.0}}},
+    texture_param_distributions = {
+        "gray": {
+            "normal": {
+                "loc": 0, 
+                "scale": {"uniform": {"low": 0.05, "high": 0.2}}
+                }
+            }
+        }
+    )
+image = colormodel.sample_image()
+
+colormodel.show(image, figsize = (3,3))
+```
 
 ## From texture patches
 
@@ -53,3 +122,28 @@ Each leaf is assigned a patch and blended with its color using an alpha value:
 - `alpha`: Blending factor controlling how strongly the texture is applied.
 - **Effect**: Each leaf receives a sampled patch, creating complex and realistic surface patterns.
 - **Use case**: Generate images that mimic real-world textures or artistic styles.
+
+```{code-cell}
+:tags: [hide-input]
+from dead_leaves import DeadLeavesModel, DeadLeavesImage
+
+model = DeadLeavesModel(
+    shape = "circular", 
+    param_distributions = {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
+    size = (512,512)
+)
+leaves, partition = model.sample_partition()
+
+colormodel = DeadLeavesImage(
+    leaves = leaves, 
+    partition = partition, 
+    color_param_distributions = {"gray": {"uniform": {"low": 0.0, "high": 1.0}}},
+    texture_param_distributions = {
+        "source": {"image": {"dir": "/home/swantje/datasets/brodatz"}},
+        "alpha": {"normal": {"loc": 0.0, "scale": 0.4}},
+    }
+    )
+image = colormodel.sample_image()
+
+colormodel.show(image, figsize = (3,3))
+```

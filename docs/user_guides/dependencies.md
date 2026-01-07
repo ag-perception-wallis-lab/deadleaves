@@ -1,3 +1,15 @@
+---
+jupytext:
+  formats: md:myst
+  text_representation:
+    extension: .md
+    format_name: myst
+kernelspec:
+  display_name: Python 3
+  language: python
+  name: python3
+---
+
 # Dependencies
 
 You can define dependencies between leaf features, allowing one parameter to influence another.
@@ -25,6 +37,36 @@ If a parameter depends on a single feature, the value of `"from"` is  that featu
     {"from": "x_pos", "fn": lambda x: x * 0.01}
 ```
 
+**Example**
+
+```{code-cell}
+:tags: [hide-input]
+from dead_leaves import DeadLeavesModel, DeadLeavesImage
+
+model = DeadLeavesModel(
+    shape = "circular", 
+    param_distributions = {"area": {"powerlaw": {"low": 100.0, "high": 5000.0, "k": 1.5}}},
+    size = (512,512)
+)
+leaves, partition = model.sample_partition()
+
+colormodel = DeadLeavesImage(
+    leaves = leaves, 
+    partition = partition, 
+    color_param_distributions = {
+        "H": {"normal": {
+            "loc": {"from": "x_pos", "fn": lambda x: 1/512*x * 0.3 + (1-1/512*x) * 0.6}, 
+            "scale": 0.05
+        }},
+        "S": {"normal": {"loc": 0.6, "scale": 0.1}},
+        "V": {"normal": {"loc": 0.6, "scale": 0.1}}
+        }
+    )
+image = colormodel.sample_image()
+
+colormodel.show(image, figsize = (3,3))
+```
+
 ### Multi-Feature Dependencies
 
 If a parameter depends on multiple features, `"from"` must be a list of feature names.
@@ -38,3 +80,38 @@ In this case, `fn` receives a dictionary mapping feature names to their sampled 
 ```
 
 This enables defining complex dependencies between spatial, geometric, and visual properties.
+
+**Example**
+
+```{code-cell}
+:tags: [hide-input]
+from dead_leaves import DeadLeavesModel, DeadLeavesImage
+import numpy
+
+model = DeadLeavesModel(
+    shape = "circular", 
+    param_distributions = {"area": {"powerlaw": {"low": 100.0, "high": 5000.0, "k": 1.5}}},
+    size = (512,512)
+)
+leaves, partition = model.sample_partition()
+
+def fn(d):
+    distance_from_center = numpy.sqrt((256 - d["x_pos"]) ** 2 + (256 - d["y_pos"]) ** 2)
+    return numpy.where(distance_from_center <= 128, 0.5, 0.8)
+
+colormodel = DeadLeavesImage(
+    leaves = leaves, 
+    partition = partition, 
+    color_param_distributions = {
+        "H": {"normal": {
+            "loc": {"from": ["x_pos","y_pos"], "fn": fn}, 
+            "scale": 0.05
+        }},
+        "S": {"normal": {"loc": 0.6, "scale": 0.1}},
+        "V": {"normal": {"loc": 0.6, "scale": 0.1}}
+        }
+    )
+image = colormodel.sample_image()
+
+colormodel.show(image, figsize = (3,3))
+```
