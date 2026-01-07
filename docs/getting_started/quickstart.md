@@ -70,7 +70,7 @@ The package includes common PyTorch distributions and several custom ones:
 | `"poisson"` | `rate` | |
 | `"powerlaw"` | `low`, `high`, `k` | |
 | `"cosine"` | `amplitude`, `frequency` | |
-| `"expcosine"` | `amplitude`, `frequency`, `exponential_constant` | |
+| `"expcosine"` | `frequency`, `exponential_constant` | |
 | `"image"` | `dir` | |
 | `"constant"` | `value` | deterministic |
 
