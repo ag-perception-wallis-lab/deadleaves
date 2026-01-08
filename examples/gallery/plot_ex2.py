@@ -7,7 +7,7 @@ from dead_leaves import DeadLeavesModel, DeadLeavesImage
 from PIL import Image
 from torchvision.transforms.functional import pil_to_tensor
 
-reference_image = Image.open("ulb_5136-2516.jpg").resize(
+reference_image = Image.open("../../examples/images/ulb_5136-2516.jpg").resize(
     (731, 512), box=(0, 0, 3810, 2667)
 )
 

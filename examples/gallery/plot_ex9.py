@@ -20,7 +20,9 @@ colormodel = DeadLeavesImage(
     partition=partition,
     color_param_distributions={"gray": {"constant": {"value": 0.0}}},
     texture_param_distributions={
-        "source": {"image": {"dir": "/home/swantje/dead_leaves/examples/textures"}},
+        "source": {
+            "image": {"dir": "../../examples/textures/sphere"}
+        },  # this folder only contains a single texture file which will be used for all leaves
         "alpha": {"constant": {"value": 1.0}},
     },
 )
