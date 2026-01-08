@@ -6,6 +6,9 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import sys
+import os
+
 project = "Dead Leaves"
 author = "Swantje Mahncke"
 copyright = f"2025, {author}"
@@ -44,9 +47,13 @@ myst_enable_extensions = ["dollarmath", "colon_fence"]
 latex_engine = "lualatex"
 
 # Sphinx Gallery
+sys.path.insert(0, os.path.dirname(__file__))
+
 sphinx_gallery_conf = {
     "examples_dirs": "../examples/gallery",  # path to example scripts
     "gallery_dirs": "gallery",  # path to where to save gallery generated output
+    "image_scrapers": ("dead_leaves_scraper.dead_leaves_scraper"),
+    "within_subsection_order": "FileNameSortKey",
 }
 
 # Auto API
@@ -54,11 +61,8 @@ autoapi_dirs = ["../dead_leaves"]  # path to package
 autoapi_root = "reference"  # path to where to save the auto api generated output
 autoapi_keep_files = True
 
-import os
-
 if os.environ.get("SPHINX_AUTOBUILD") == "1":
     autoapi_generate_api_docs = False
-
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
