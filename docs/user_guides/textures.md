@@ -68,7 +68,7 @@ For example, Gaussian noise per leaf in gray-scale:
 
 ```
 {
-    "grey": {"normal": {"loc": 0.0, "scale": <distribution>}}
+    "gray": {"normal": {"loc": 0.0, "scale": <distribution>}}
 }
 ```
 
