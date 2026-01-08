@@ -15,7 +15,7 @@ model = DeadLeavesModel(
         "orientation": {"uniform": {"low": 0.0, "high": 2 * torch.pi}},
         "aspect_ratio": {"constant": {"value": 1}},
     },
-    (1000, 1000),
+    (512, 731),
 )
 leaves, partition = model.sample_partition()
 

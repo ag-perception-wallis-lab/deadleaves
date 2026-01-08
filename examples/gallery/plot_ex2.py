@@ -8,7 +8,7 @@ from PIL import Image
 from torchvision.transforms.functional import pil_to_tensor
 
 reference_image = Image.open("ulb_5136-2516.jpg").resize(
-    (512, 512), box=(0, 0, 2500, 2500)
+    (731, 512), box=(0, 0, 3810, 2667)
 )
 
 image_tensor = pil_to_tensor(pic=reference_image) / 255
@@ -16,7 +16,7 @@ image_tensor = pil_to_tensor(pic=reference_image) / 255
 model = DeadLeavesModel(
     "circular",
     {"area": {"powerlaw": {"low": 100.0, "high": 5000.0, "k": 1.5}}},
-    (512, 512),
+    (512, 731),
 )
 leaves, partition = model.sample_partition()
 

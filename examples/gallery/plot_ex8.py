@@ -12,23 +12,23 @@ from PIL import Image
 from torchvision.transforms.functional import pil_to_tensor
 
 reference_image = Image.open("ulb_5136-2516.jpg").resize(
-    (512, 512), box=(0, 0, 2500, 2500)
+    (731, 512), box=(0, 0, 3810, 2667)
 )
 
 image_tensor = (
     pil_to_tensor(pic=reference_image).to(device=choose_compute_backend()) / 255
 )
 
-position_mask = torch.zeros((512, 512))
-X, Y = torch.meshgrid(
-    torch.arange(512),
+position_mask = torch.zeros((512, 731))
+Y, X = torch.meshgrid(
+    torch.arange(731),
     torch.arange(512),
     indexing="xy",
 )
 for radius in [50, 120, 200]:
     for angle in [0, 0.5 * torch.pi, torch.pi, 1.5 * torch.pi]:
         x_pos = int(radius * torch.cos(torch.Tensor([angle]))) + 256
-        y_pos = int(radius * torch.sin(torch.Tensor([angle]))) + 256
+        y_pos = int(radius * torch.sin(torch.Tensor([angle]))) + 365.5
         area = torch.Tensor([radius * 10])
         dist_from_center = torch.sqrt((X - x_pos) ** 2 + (Y - y_pos) ** 2)
         mask = dist_from_center <= torch.sqrt(area / torch.pi)
@@ -43,7 +43,7 @@ model = DeadLeavesModel(
         "aspect_ratio": {"uniform": {"low": 0.5, "high": 2}},
         "orientation": {"uniform": {"low": 0.0, "high": 2 * torch.pi}},
     },
-    (512, 512),
+    (512, 731),
     position_mask,
 )
 leaves, partition = model.sample_partition()

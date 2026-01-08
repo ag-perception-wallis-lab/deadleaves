@@ -14,7 +14,7 @@ model = DeadLeavesModel(
         "orientation": {"constant": {"value": 0.0}},
         "aspect_ratio": {"constant": {"value": 1}},
     },
-    (1000, 1000),
+    (512, 731),
 )
 leaves, partition = model.sample_partition()
 

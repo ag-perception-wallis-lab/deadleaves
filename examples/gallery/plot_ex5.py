@@ -12,7 +12,7 @@ model = DeadLeavesModel(
         "aspect_ratio": {"uniform": {"low": 0.001, "high": 10}},
         "orientation": {"constant": {"value": 0.0}},
     },
-    size=(512, 512),
+    size=(512, 731),
 )
 leaves, partition = model.sample_partition()
 colormodel = DeadLeavesImage(

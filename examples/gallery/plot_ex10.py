@@ -7,13 +7,13 @@ import torch
 from dead_leaves import DeadLeavesModel, DeadLeavesImage
 from dead_leaves.utils import choose_compute_backend
 
-position_mask = torch.zeros((512, 512))
-X, Y = torch.meshgrid(
-    torch.arange(512),
+position_mask = torch.zeros((512, 731))
+Y, X = torch.meshgrid(
+    torch.arange(731),
     torch.arange(512),
     indexing="xy",
 )
-dist_from_center = torch.sqrt((X - 255.5) ** 2 + (Y - 255.5) ** 2)
+dist_from_center = torch.sqrt((X - 255.5) ** 2 + (Y - 365.5) ** 2)
 position_mask = (dist_from_center <= 200) & (dist_from_center >= 50)
 position_mask = position_mask.to(device=choose_compute_backend()).to(bool)
 
@@ -24,7 +24,7 @@ model = DeadLeavesModel(
         "aspect_ratio": {"uniform": {"low": 0.5, "high": 2}},
         "orientation": {"uniform": {"low": 0.0, "high": 2 * torch.pi}},
     },
-    (512, 512),
+    (512, 731),
     position_mask,
     n_sample=1000,
 )
