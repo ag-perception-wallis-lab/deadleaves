@@ -57,6 +57,11 @@ leaves, partition = model.sample_partition()
 
 Each shape type has required parameters, and each of those parameters must be assigned a sampling distribution.
 
+```{tip}
+Since the sampling process is random you will generate a new partition each time the command `.sample_partition()` is called.
+For reproducibility you may set a seed with `torch.manual_seed()`.
+```
+
 ## Using distributions
 
 You can specify parameter distributions using dictionaries.
