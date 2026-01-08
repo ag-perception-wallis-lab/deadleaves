@@ -53,6 +53,7 @@ This returns:
 
 ```{code-cell}
 leaves, partition = model.sample_partition()
+leaves.head()
 ```
 
 Each shape type has required parameters, and each of those parameters must be assigned a sampling distribution.
