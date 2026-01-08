@@ -578,10 +578,10 @@ colormodel = DeadLeavesImage(
     leaves = leaves, 
     partition = partition, 
     color_param_distributions={
-        "source": {"image": {"dir": "/home/swantje/datasets/places365"}}
+        "source": {"image": {"dir": "../../examples/images"}}
     },
     texture_param_distributions={
-        "source": {"image": {"dir": "/home/swantje/datasets/brodatz"}},
+        "source": {"image": {"dir": "../../examples/textures/brodatz"}},
         "alpha": {"normal": {"loc": 0.0, "scale": 0.4}},
     },
     )

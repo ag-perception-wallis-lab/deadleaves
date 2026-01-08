@@ -169,7 +169,7 @@ colormodel = DeadLeavesImage(
     leaves = leaves, 
     partition = partition, 
     color_param_distributions = {
-        "source": {"image": {"dir": "/home/swantje/datasets/places365"}},
+        "source": {"image": {"dir": "../../examples/images"}},
         }
     )
 image = colormodel.sample_image()
