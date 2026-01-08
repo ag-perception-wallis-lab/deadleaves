@@ -27,6 +27,3 @@ color_params = {
 colormodel = DeadLeavesImage(leaves, partition, color_params)
 image = colormodel.sample_image()
 colormodel.show(image)
-
-colormodel.save(image, "images/sphx_glr_plot_ex3_001.png")
-colormodel.save(image, "images/thumb/sphx_glr_plot_ex3_thumb.png")

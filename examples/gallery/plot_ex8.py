@@ -86,6 +86,3 @@ image = colormodel.sample_image()
 mask = partition == 0
 image[mask] = image_tensor.permute(1, 2, 0)[mask]
 colormodel.show(image)
-
-colormodel.save(image, "images/sphx_glr_plot_ex8_001.png")
-colormodel.save(image, "images/thumb/sphx_glr_plot_ex8_thumb.png")

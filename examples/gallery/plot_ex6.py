@@ -28,8 +28,3 @@ colormodel = DeadLeavesImage(
 )
 image = colormodel.sample_image()
 colormodel.show(image)
-
-colormodel.save(image, "images/sphx_glr_plot_ex6_001.png")
-colormodel.save(image, "images/thumb/sphx_glr_plot_ex6_thumb.png")
-
-# %%
