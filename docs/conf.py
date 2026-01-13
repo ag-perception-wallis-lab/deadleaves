@@ -80,8 +80,5 @@ html_theme_options = {
     "navbar_persistent": [],
 }
 html_title = f"{project} v{release} Manual"
-
-# import sys
-# import os
-
-# sys.path.insert(0, os.path.abspath("../dead_leaves"))
+html_logo = "_static/logo_dead_leaves.png"
+html_favicon = "_static/logo_dead_leaves.png"
