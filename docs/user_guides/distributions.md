@@ -441,6 +441,10 @@ plt.show()
 }
 ```
 
+```{Note}
+Random variables with this distribution always produce values between $-\pi$ and $\pi$ and are mainly useful to parameterized orientation distributions.
+```
+
 **Example: Cosine orientation**
 
 ```{code-cell}
@@ -517,6 +521,10 @@ plt.show()
 }
 ```
 
+```{Note}
+Random variables with this distribution always produce values between $-\pi$ and $\pi$ and are mainly useful to parameterized orientation distributions.
+```
+
 **Example: Exponential cosine orientation**
 
 ```{code-cell}
@@ -549,6 +557,8 @@ colormodel.show(image, figsize = (3,3))
 The `Image` distribution samples from a set of image files in a given directory.
 The class will discover all image type files in `dir` and uniformly sample images from the list.
 
+**Use case**: Assign color or texture by sampling existing images or texture patches, respectively.
+
 ```python
 {
     "image": {
@@ -557,7 +567,10 @@ The class will discover all image type files in `dir` and uniformly sample image
 }
 ```
 
-**Use case**: Assign color or texture by sampling existing images or texture patches, respectively.
+```{Note}
+Sampling from this distribution will return one or multiple paths to image(s) in `dir`.
+In particular, it will **sample from all available image files** in the directory provided.
+```
 
 **Example: Color and texture from images**
 
