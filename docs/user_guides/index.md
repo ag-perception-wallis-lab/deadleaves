@@ -3,7 +3,7 @@
 ::::{grid} 2 
 :gutter: 3
 
-:::{grid-item-card} Shapes
+:::{grid-item-card} Shapes and Sizes
 :link: shapes
 :link-type: doc 
 :text-align: center 
