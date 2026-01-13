@@ -47,13 +47,26 @@ model = DeadLeavesModel(
 ```
 
 To generate a sample, use `.sample_partition()`.
-This returns:
+This will trigger a sampling process where in each iteration a sample for each leaf parameter is drawn (in our example the parameters are `x_pos`, `y_pos`, and `area`).
+The parameters samples are then used to generate a leaf mask which is placed on top of the canvas and each pixel which does not jet belong to a leaf will be assigned to the current leaf through a `leaf_idx`, i.,e. we add leaves to the canvas from front to back with occlusion.
+This process is repeated until all pixels belong to an object.
+After the sampling process we receive two outputs:
 - a **pandas DataFrame** describing all generated leaves (location + shape parameters), and
 - a **partition**, i.e. a segmentation map assigning each pixel to the leaf on top at that location.
 
 ```{code-cell}
 leaves, partition = model.sample_partition()
 leaves.head()
+```
+
+```{code-cell}
+:tags: [remove-input]
+import matplotlib.pyplot as plt
+
+plt.imshow(partition.cpu(), cmap='terrain')
+plt.axis('off')
+plt.colorbar(label = "Leaf index")
+plt.show()
 ```
 
 Each shape type has required parameters, and each of those parameters must be assigned a sampling distribution.
@@ -99,14 +112,16 @@ colormodel = DeadLeavesImage(
     )
 ```
 
-You then sample an image using `.sample_image()`:
+You then sample an image using `.sample_image()`.
+This will draw a sample from your color distribution for each leaf index and save the value to the `leaves` dataframe.
+Each pixel in the canvas is the assigned the color value of the leaf it belongs to and the resulting image is returned.
 
 ```{code-cell}
 image = colormodel.sample_image()
 colormodel.show(image)
 ```
 
-## Adding texture
+## Adding texture (optional)
 
 You can optionally add texture on top of the leaf colors.
 The simplest example uses pixel-wise Gaussian noise:
@@ -154,6 +169,10 @@ image = colormodel.sample_image()
 
 # Display the result
 colormodel.show(image)
+```
+
+```{note}
+Since the rendering process simply adds the color (and texture) based on the partition to the canvas the resulting dead leaves image has a pixel-perfect rendering and a know segmentation map. 
 ```
 
 ## Next steps
