@@ -1,8 +1,8 @@
 """
-Example 9
+3D Texture
 ===========================
 
-3D Texture (Groen et al., 2012)
+replication of Groen et al., 2012
 """
 
 from dead_leaves import DeadLeavesModel, DeadLeavesImage

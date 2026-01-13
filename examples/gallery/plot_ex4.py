@@ -1,8 +1,8 @@
 """
-Example 4
+RGB rotated squares
 ===========================
 
-Rotated square leaves (Baradad et al., 2022)
+replication of Baradad et al., 2022
 """
 
 import torch

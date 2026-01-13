@@ -1,8 +1,8 @@
 """
-Example 3
+RGB squares
 ===========================
 
-Square leaves with axis aligned (Baradad et al., 2022)
+replication of Baradad et al., 2022
 """
 
 from dead_leaves import DeadLeavesModel, DeadLeavesImage

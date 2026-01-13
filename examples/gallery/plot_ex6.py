@@ -1,8 +1,8 @@
 """
-Example 6
+Natural colors and textures
 ===========================
 
-Natural colors and textures (Madhusudana et al., 2022)
+replication of Madhusudana et al., 2022
 """
 
 from dead_leaves import DeadLeavesModel, DeadLeavesImage

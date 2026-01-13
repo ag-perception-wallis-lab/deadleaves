@@ -1,5 +1,5 @@
 """
-Example 7
+HSV color and leaf-wise noise
 ===========================
 """
 

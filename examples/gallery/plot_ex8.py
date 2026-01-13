@@ -1,8 +1,8 @@
 """
-Example 8
+Leaves in natural images
 ===========================
 
-Dead leaves in natural images (Wallis and Bex, 2012)
+replication of Wallis and Bex, 2012
 """
 
 import torch
