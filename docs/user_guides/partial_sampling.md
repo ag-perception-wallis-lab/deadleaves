@@ -83,8 +83,9 @@ colormodel.show(image, figsize = (3,3))
 
 ## Background color
 
-Empty pixels resulting from sparse sampling or masked positions are filled with a background color (RGB).
+Empty pixels resulting from sparse sampling or masked positions are filled with a background color.
 The background color can be specified explicitly via the `DeadLeavesImage` argument `background_color`, if not specified the background will be black.
+The background color is parameterized in the color mode of the textures, i.e. with RGB color distribution and HSV texture distribution the vector $(0,0,1)$ will correspond to white.
 
 **Example**
 
