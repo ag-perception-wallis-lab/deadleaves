@@ -150,7 +150,7 @@ class DeadLeavesModel:
             dist_class = dist_kw[dist_name]
             hyper_params = dist_dict[dist_name].copy()
             if any([isinstance(p, dict) for p in hyper_params.values()]):
-                self.distributions[param] = "resolve during sampling"
+                self.distributions[param] = None
             else:
                 self.distributions[param] = dist_class(**hyper_params)
         self.params = list(self.distributions.keys())
@@ -166,7 +166,7 @@ class DeadLeavesModel:
             params = self.resolve_dependencies()
             for param in params:
                 dist = self.distributions[param]
-                if dist == "resolve during sampling":
+                if dist is None:
                     dist_dict = self.param_distributions[param]
                     dist_name = list(dist_dict.keys())[0]
                     dist_class = dist_kw[dist_name]
