@@ -146,6 +146,11 @@ class DeadLeavesModel:
             "y_pos": torch.distributions.uniform.Uniform(0, self.size[0]),
         }
         for param, dist_dict in self.param_distributions.items():
+            if len(dist_dict) != 1:
+                raise ValueError(
+                    f"Distribution dictionary for {param} contains"
+                    f"{len(dist_dict)} keys, 1 is required."
+                )
             dist_name = list(dist_dict.keys())[0]
             dist_class = dist_kw[dist_name]
             hyper_params = dist_dict[dist_name].copy()
@@ -168,6 +173,11 @@ class DeadLeavesModel:
                 dist = self.distributions[param]
                 if dist is None:
                     dist_dict = self.param_distributions[param]
+                    if len(dist_dict) != 1:
+                        raise ValueError(
+                            f"Distribution dictionary for {param} contains"
+                            f"{len(dist_dict)} keys, 1 is required."
+                        )
                     dist_name = list(dist_dict.keys())[0]
                     dist_class = dist_kw[dist_name]
                     hyper_params = dist_dict[dist_name].copy()
@@ -404,6 +414,11 @@ class DeadLeavesImage:
         with self.device:
             self.color_distributions = {}
             for param, dist_dict in self.color_param_distributions.items():
+                if len(dist_dict) != 1:
+                    raise ValueError(
+                        f"Distribution dictionary for {param} contains"
+                        f"{len(dist_dict)} keys, 1 is required."
+                    )
                 dist_name = list(dist_dict.keys())[0]
                 dist_class = dist_kw[dist_name]
                 hyper_params = dist_dict[dist_name].copy()
@@ -415,6 +430,11 @@ class DeadLeavesImage:
                 self.color_distributions[param] = dist_class(**hyper_params)
             self.texture_distributions = {}
             for param, dist_dict in self.texture_param_distributions.items():
+                if len(dist_dict) != 1:
+                    raise ValueError(
+                        f"Distribution dictionary for {param} contains"
+                        f"{len(dist_dict)} keys, 1 is required."
+                    )
                 dist_name = list(dist_dict.keys())[0]
                 dist_class = dist_kw[dist_name]
                 hyper_params = dist_dict[dist_name].copy()
