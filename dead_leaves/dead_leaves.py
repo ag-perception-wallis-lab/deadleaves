@@ -148,8 +148,8 @@ class DeadLeavesModel:
         for param, dist_dict in self.param_distributions.items():
             if len(dist_dict) != 1:
                 raise ValueError(
-                    f"Distribution dictionary for {param} contains"
-                    f"{len(dist_dict)} keys, 1 is required."
+                    f"Distribution dictionary for {param} contains "
+                    f"{len(dist_dict)} keys, but 1 is required."
                 )
             dist_name = list(dist_dict.keys())[0]
             dist_class = dist_kw[dist_name]
@@ -175,8 +175,8 @@ class DeadLeavesModel:
                     dist_dict = self.param_distributions[param]
                     if len(dist_dict) != 1:
                         raise ValueError(
-                            f"Distribution dictionary for {param} contains"
-                            f"{len(dist_dict)} keys, 1 is required."
+                            f"Distribution dictionary for {param} contains "
+                            f"{len(dist_dict)} keys, but 1 is required."
                         )
                     dist_name = list(dist_dict.keys())[0]
                     dist_class = dist_kw[dist_name]
@@ -416,8 +416,8 @@ class DeadLeavesImage:
             for param, dist_dict in self.color_param_distributions.items():
                 if len(dist_dict) != 1:
                     raise ValueError(
-                        f"Distribution dictionary for {param} contains"
-                        f"{len(dist_dict)} keys, 1 is required."
+                        f"Distribution dictionary for {param} contains "
+                        f"{len(dist_dict)} keys, but 1 is required."
                     )
                 dist_name = list(dist_dict.keys())[0]
                 dist_class = dist_kw[dist_name]
@@ -432,8 +432,8 @@ class DeadLeavesImage:
             for param, dist_dict in self.texture_param_distributions.items():
                 if len(dist_dict) != 1:
                     raise ValueError(
-                        f"Distribution dictionary for {param} contains"
-                        f"{len(dist_dict)} keys, 1 is required."
+                        f"Distribution dictionary for {param} contains "
+                        f"{len(dist_dict)} keys, but 1 is required."
                     )
                 dist_name = list(dist_dict.keys())[0]
                 dist_class = dist_kw[dist_name]
