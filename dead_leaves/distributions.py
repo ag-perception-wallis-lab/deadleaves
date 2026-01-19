@@ -26,6 +26,11 @@ class BaseDistribution(Distribution):
                 - inverse cumulative function (icdf)
     """
 
+    _batch_shape = torch.Size()
+
+    def __init__(self, *args, **kwargs) -> None:
+        pass
+
     def pdf(self, x: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError
 
@@ -236,6 +241,8 @@ class Constant(Distribution):
     def support(self):
         return constraints.real
 
+    _batch_shape = torch.Size()
+
     def __init__(self, value: float) -> None:
         self.value = value
 
@@ -269,12 +276,13 @@ class Image(Distribution):
     def support(self):
         return constraints.real
 
+    _batch_shape = torch.Size()
+
     def __init__(self, dir: Path | str) -> None:
         if not isinstance(dir, (str, Path)):
             raise TypeError("dir must be a string or Path object.")
         if not Path(dir).exists():
             raise FileNotFoundError(f"Directory {dir} does not exist.")
-
         self.dir = dir
         self.files = []
         for root, _, files in os.walk(self.dir):
