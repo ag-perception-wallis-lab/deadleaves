@@ -26,6 +26,18 @@ dist_kw = {
     "image": Image,
 }
 
+dist_params: dict[str, set[str]] = {
+    "beta": {"concentration0", "concentration1"},
+    "uniform": {"low", "high"},
+    "normal": {"loc", "scale"},
+    "poisson": {"rate"},
+    "powerlaw": {"low", "high", "k"},
+    "constant": {"value"},
+    "cosine": {"amplitude", "frequency"},
+    "expcosine": {"frequency", "exponential_constant"},
+    "image": {"dir"},
+}
+
 
 class DeadLeavesModel:
     """Setup a dead leaves model
@@ -154,6 +166,12 @@ class DeadLeavesModel:
             dist_name = list(dist_dict.keys())[0]
             dist_class = dist_kw[dist_name]
             hyper_params = dist_dict[dist_name].copy()
+            if set(hyper_params.keys()) != dist_params[dist_name]:
+                raise ValueError(
+                    f"Distribution dictionary for {param} with distribution "
+                    f"{dist_name} expects parameters: {dist_params[dist_name]} "
+                    f"but received {set(hyper_params.keys())}"
+                )
             if any([isinstance(p, dict) for p in hyper_params.values()]):
                 self.distributions[param] = None
             else:
@@ -181,6 +199,12 @@ class DeadLeavesModel:
                     dist_name = list(dist_dict.keys())[0]
                     dist_class = dist_kw[dist_name]
                     hyper_params = dist_dict[dist_name].copy()
+                    if set(hyper_params.keys()) != dist_params[dist_name]:
+                        raise ValueError(
+                            f"Distribution dictionary for {param} with distribution "
+                            f"{dist_name} expects parameters: {dist_params[dist_name]} "
+                            f"but received {set(hyper_params.keys())}"
+                        )
                     for idx, hyper_param in hyper_params.items():
                         if isinstance(hyper_param, dict):
                             hyper_params[idx] = torch.tensor(
@@ -422,6 +446,12 @@ class DeadLeavesImage:
                 dist_name = list(dist_dict.keys())[0]
                 dist_class = dist_kw[dist_name]
                 hyper_params = dist_dict[dist_name].copy()
+                if set(hyper_params.keys()) != dist_params[dist_name]:
+                    raise ValueError(
+                        f"Distribution dictionary for {param} with distribution "
+                        f"{dist_name} expects parameters: {dist_params[dist_name]} "
+                        f"but received {set(hyper_params.keys())}"
+                    )
                 for idx, hyper_param in hyper_params.items():
                     if isinstance(hyper_param, dict):
                         hyper_params[idx] = torch.tensor(
@@ -438,6 +468,12 @@ class DeadLeavesImage:
                 dist_name = list(dist_dict.keys())[0]
                 dist_class = dist_kw[dist_name]
                 hyper_params = dist_dict[dist_name].copy()
+                if set(hyper_params.keys()) != dist_params[dist_name]:
+                    raise ValueError(
+                        f"Distribution dictionary for {param} with distribution "
+                        f"{dist_name} expects parameters: {dist_params[dist_name]} "
+                        f"but received {set(hyper_params.keys())}"
+                    )
                 self.texture_distributions[param] = dist_class(**hyper_params)
 
     def sample_image(self) -> torch.Tensor:
