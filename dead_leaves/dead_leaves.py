@@ -42,6 +42,18 @@ leaf_mask_kw: dict[
 }
 """Dictionary connecting keys to respective leaf mask generative function."""
 
+dist_params: dict[str, set[str]] = {
+    "beta": {"concentration0", "concentration1"},
+    "uniform": {"low", "high"},
+    "normal": {"loc", "scale"},
+    "poisson": {"rate"},
+    "powerlaw": {"low", "high", "k"},
+    "constant": {"value"},
+    "cosine": {"amplitude", "frequency"},
+    "expcosine": {"frequency", "exponential_constant"},
+    "image": {"dir"},
+}
+
 
 class DeadLeavesModel:
     """
@@ -170,11 +182,22 @@ class DeadLeavesModel:
             ),
         }
         for param, dist_dict in self.param_distributions.items():
+            if len(dist_dict) != 1:
+                raise ValueError(
+                    f"Distribution dictionary for {param} contains "
+                    f"{len(dist_dict)} keys, but 1 is required."
+                )
             dist_name = list(dist_dict.keys())[0]
             dist_class = dist_kw[dist_name]
             hyper_params = dist_dict[dist_name].copy()
+            if set(hyper_params.keys()) != dist_params[dist_name]:
+                raise ValueError(
+                    f"Distribution dictionary for {param} with distribution "
+                    f"{dist_name} expects parameters: {dist_params[dist_name]} "
+                    f"but received {set(hyper_params.keys())}"
+                )
             if any([isinstance(p, dict) for p in hyper_params.values()]):
-                self.distributions[param] = "resolve during sampling"
+                self.distributions[param] = None
             else:
                 self.distributions[param] = dist_class(**hyper_params)
         self.params = list(self.distributions.keys())
@@ -191,11 +214,22 @@ class DeadLeavesModel:
             params = self.resolve_dependencies()
             for param in params:
                 dist = self.distributions[param]
-                if dist == "resolve during sampling":
+                if dist is None:
                     dist_dict = self.param_distributions[param]
+                    if len(dist_dict) != 1:
+                        raise ValueError(
+                            f"Distribution dictionary for {param} contains "
+                            f"{len(dist_dict)} keys, but 1 is required."
+                        )
                     dist_name = list(dist_dict.keys())[0]
                     dist_class = dist_kw[dist_name]
                     hyper_params = dist_dict[dist_name].copy()
+                    if set(hyper_params.keys()) != dist_params[dist_name]:
+                        raise ValueError(
+                            f"Distribution dictionary for {param} with distribution "
+                            f"{dist_name} expects parameters: {dist_params[dist_name]} "
+                            f"but received {set(hyper_params.keys())}"
+                        )
                     for idx, hyper_param in hyper_params.items():
                         if isinstance(hyper_param, dict):
                             if isinstance(hyper_param["from"], str):
@@ -338,9 +372,20 @@ class DeadLeavesImage:
         with self.device:
             self.color_distributions = {}
             for param, dist_dict in self.color_param_distributions.items():
+                if len(dist_dict) != 1:
+                    raise ValueError(
+                        f"Distribution dictionary for {param} contains "
+                        f"{len(dist_dict)} keys, but 1 is required."
+                    )
                 dist_name = list(dist_dict.keys())[0]
                 dist_class = dist_kw[dist_name]
                 hyper_params = dist_dict[dist_name].copy()
+                if set(hyper_params.keys()) != dist_params[dist_name]:
+                    raise ValueError(
+                        f"Distribution dictionary for {param} with distribution "
+                        f"{dist_name} expects parameters: {dist_params[dist_name]} "
+                        f"but received {set(hyper_params.keys())}"
+                    )
                 for idx, hyper_param in hyper_params.items():
                     if isinstance(hyper_param, dict):
                         hyper_params[idx] = torch.tensor(
@@ -349,9 +394,20 @@ class DeadLeavesImage:
                 self.color_distributions[param] = dist_class(**hyper_params)
             self.texture_distributions = {}
             for param, dist_dict in self.texture_param_distributions.items():
+                if len(dist_dict) != 1:
+                    raise ValueError(
+                        f"Distribution dictionary for {param} contains "
+                        f"{len(dist_dict)} keys, but 1 is required."
+                    )
                 dist_name = list(dist_dict.keys())[0]
                 dist_class = dist_kw[dist_name]
                 hyper_params = dist_dict[dist_name].copy()
+                if set(hyper_params.keys()) != dist_params[dist_name]:
+                    raise ValueError(
+                        f"Distribution dictionary for {param} with distribution "
+                        f"{dist_name} expects parameters: {dist_params[dist_name]} "
+                        f"but received {set(hyper_params.keys())}"
+                    )
                 if any([isinstance(p, dict) for p in hyper_params.values()]):
                     self.texture_distributions[param] = "resolve during sampling"
                 else:
