@@ -19,6 +19,8 @@ def circular(
             Leaf mask.
     """
     X, Y = index_grid
+    if params["area"] < 0:
+        raise ValueError("Provided area must be non-negative.")
     dist_from_center = torch.sqrt(
         (X - params["x_pos"]) ** 2 + (Y - params["y_pos"]) ** 2
     )
@@ -44,6 +46,10 @@ def rectangular(
             Leaf mask.
     """
     X, Y = index_grid
+    if params["area"] < 0:
+        raise ValueError("Provided area must be non-negative.")
+    if params["aspect_ratio"] <= 0:
+        raise ValueError("Provided aspect_ratio must be positive.")
     with X.device:
         height = torch.sqrt(params["area"] / params["aspect_ratio"])
         width = height * params["aspect_ratio"]
@@ -75,6 +81,10 @@ def ellipsoid(
             Leaf mask.
     """
     X, Y = index_grid
+    if params["area"] <= 0:
+        raise ValueError("Provided area must be positive.")
+    if params["aspect_ratio"] <= 0:
+        raise ValueError("Provided aspect_ratio must be positive.")
     with X.device:
         a = torch.sqrt((params["area"] * params["aspect_ratio"]) / torch.pi)
         b = torch.sqrt(params["area"] / (torch.pi * params["aspect_ratio"]))
@@ -106,6 +116,12 @@ def regular_polygon(
             Leaf mask.
     """
     X, Y = index_grid
+    if params["area"] <= 0:
+        raise ValueError("Provided area must be positive.")
+    if params["n_vertices"] <= 0:
+        raise ValueError("Provided number of vertices must be positive.")
+    if params["n_vertices"] != int(params["n_vertices"]):
+        raise ValueError("Provided number of vertices must be an integer.")
     with X.device:
         radius = torch.sqrt(
             2
