@@ -576,24 +576,60 @@ class ImageRenderer:
         )
         self.texture_space = color_spaces.get(tuple(keys), None)
     
-    def _render_texture(self) -> torch.Tensor:
-        """Generate a dead leaves image.
+    def _get_texture_param_columns(self, channel: str) -> list[str]:
+        prefix = f"texture_{channel}_"
+        return [
+            c for c in self.instance_table.columns
+            if c.startswith(prefix) and not c.endswith("_dist")
+        ]
+    
+    def _get_leaf_texture_params(self, leaf_row, channel: str) -> dict:
+        prefix = f"texture_{channel}_"
+        hyper_params = {}
+    
+        for col in self._get_texture_param_columns(channel):
+            param_name = col[len(prefix):]
+            hyper_params[param_name] = leaf_row[col]
+    
+        return hyper_params
+    
+    def _generate_leafwise_texture_1d(self, channel):
+        texture = torch.zeros(self.size, device=self.device)
+        for _, leaf in self.instance_table.iterrows():
+            dist_name = leaf[f"texture_{channel}_dist"]
+            dist_class = dist_kw[dist_name]
+            hyper_params = self._get_leaf_texture_params(leaf, channel)
+            leaf_texture = dist_class(**hyper_params).sample(self.size)
 
+            mask = self.instance_map == leaf["leaf_idx"]
+            texture[mask] = leaf_texture[mask]
+        return texture
+
+    
+    def _generate_leafwise_texture(self) -> torch.Tensor:
+        """Generate a per-pixel texture image from leafwise texture parameters.
+    
         Returns:
-            torch.Tensor:
-                Dead leaves image tensor.
+            torch.Tensor
+                Texture image of shape (H, W, 3).
         """
-        texture = torch.zeros(self.size + (3,), device=self.device)
-        
+        H, W = self.size
+        texture = torch.zeros((H, W, 3), device=self.device)
+    
         if self.texture_space is None:
             return texture
+    
+        if self.texture_space == "gray":
+            gray = self._generate_leafwise_texture_1d("gray")
+            return gray.unsqueeze(-1).expand(-1, -1, 3)
 
-        else:
-            print("hi")
-        
-        # if texture == ("H", "S", "V"):
-        #     texture = torch.Tensor(hsv_to_rgb(texture.cpu())).to(self.device)
-        return texture
+        if self.texture_space in [("R", "G", "B"), ("H", "S", "V")]:
+            for i, channel in enumerate(self.texture_space):
+                texture[:, :, i] = self._generate_leafwise_texture_1d(channel)
+
+            if self.texture_space == ("H", "S", "V"):
+                texture = torch.tensor(hsv_to_rgb(texture.cpu()), device=self.device)
+            return texture
 
     def render_image(self) -> torch.Tensor:
         """Generate a dead leaves image.
@@ -609,7 +645,7 @@ class ImageRenderer:
                 dtype=torch.float32,
                 device=self.device
             )
-            texture = self._render_texture()
+            texture = self._generate_leafwise_texture()
             for leaf_idx in self.instance_table.leaf_idx:
                 image[self.instance_map == leaf_idx] = torch.clip(
                     colors[leaf_idx - 1] + texture[self.instance_map == leaf_idx], 0, 1
