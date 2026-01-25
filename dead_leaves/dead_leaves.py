@@ -322,7 +322,7 @@ class LeafAppearanceSampler:
     # Color
     # -------------------------------------
     def _configure_color(self) -> None:
-        """Generate distribution instances to sample from."""
+        """Generate color distribution instances to sample from."""
         with self.device:
             self.color_distributions = {}
             for param, dist_dict in self.color_param_distributions.items():
@@ -405,8 +405,9 @@ class LeafAppearanceSampler:
             ) -> torch.Tensor:
         """Sample leaf colors according to the configured color space.
         
-        pd.DataFrame:
-            Updated DataFrame with color parameters added to each leaf
+        Returns:
+            pd.DataFrame:
+                Updated DataFrame with color parameters added to each leaf
         """
         self.color_param_distributions: dict[str, dict[str, dict[str, float]]] = (
             color_param_distributions
@@ -444,15 +445,11 @@ class LeafAppearanceSampler:
     # Texture
     # -------------------------------------    
     def _configure_texture(self) -> None:
+        """Generate texture distribution instances to sample from."""
         with self.device:
             self.texture_distributions = {}
         
-            for param, dist_dict in self.texture_param_distributions.items():
-                if len(dist_dict) != 1:
-                    raise ValueError(
-                        f"Distribution dictionary for {param} must contain exactly one entry."
-                    )
-    
+            for param, dist_dict in self.texture_param_distributions.items():  
                 dist_name, hyper_params = next(iter(dist_dict.items()))
                 dist_class = dist_kw[dist_name]
         
@@ -464,7 +461,7 @@ class LeafAppearanceSampler:
                         resolved_params[key] = sub_dist_class(**sub_params).sample((self.n_leaves,))
                     elif isinstance(value, str):
                         resolved_params[key] = dist_class(value).sample(self.n_leaves)
-                    elif isinstance(value, float):
+                    elif isinstance(value, (int, float)):
                         resolved_params[key] = value
         
                 self.texture_distributions[param] = {
@@ -477,10 +474,9 @@ class LeafAppearanceSampler:
         """
         Materialize per-leaf texture parameters and distribution metadata.
     
-        Returns
-        -------
-        pd.DataFrame
-            One row per leaf with resolved texture parameters for all channels.
+        Returns:
+            pd.DataFrame
+                One row per leaf with resolved texture parameters for all channels.
         """
         with self.device:
             rows = []
@@ -572,6 +568,7 @@ class ImageRenderer:
         self._infer_texture_space()
     
     def _infer_texture_space(self) -> None:
+        """Infer which color space the texture parameters are defined in"""
         keys = sorted(
             col.removeprefix("texture_").split("_")[0]
             for col in self.instance_table.columns
