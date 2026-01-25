@@ -534,79 +534,76 @@ class LeafAppearanceSampler:
         return self.instance_table
 
 
+class ImageRenderer:
+    """Setup color and texture model for a dead leaves partition.
+
+    Args:
+        instance_table (pd.DataFrame):
+            Dataframe of leaves and their parameters.
+        instance_map (torch.Tensor):
+            Partition which assigns image locations to a leaves
+        background_color (torch.Tensor, optional):
+            For images which are not fully covered (due to a position mask or sparse
+            sampling) one can set a RGB background color. If None the back ground will
+            be black. Defaults to None.
+    """
+
+    def __init__(
+        self,
+        instance_table: pd.DataFrame,
+        instance_map: torch.Tensor,
+        background_color: torch.Tensor | None = None,
+        device: Literal["cuda", "mps", "cpu"] | None = None,
+    ):
+        self.device: torch.device = (
+            torch.device(device) if device else choose_compute_backend()
+        )
+        """Chosen compute backend."""
+        self.size: torch.Size = instance_map.shape
+        """Height (y, M) and width (x, N) of the canvas."""
+        self.background_color: torch.Tensor | None = background_color
+        """Color for pixels not belonging to any leaf."""
+        if isinstance(background_color, torch.Tensor):
+            self.background_color = self.background_color.to(device=self.device)
+        self.instance_table: pd.DataFrame = instance_table
+        """Dataframe of leaves and their parameters."""
+        self.instance_map: torch.Tensor = instance_map
+        """Partition of the image area."""
+    
+    def _render_texture(self) -> torch.Tensor:
+        texture = 1
+        
+        if texture == ("H", "S", "V"):
+            texture = torch.Tensor(hsv_to_rgb(texture.cpu())).to(self.device)
+        return texture
+
+    def render_image(self) -> torch.Tensor:
+        """Generate a dead leaves image.
+
         Returns:
             torch.Tensor:
-                Texture values.
+                Dead leaves image tensor.
         """
         with self.device:
-            X, Y = torch.meshgrid(
-                torch.arange(self.size[1], device=self.device),
-                torch.arange(self.size[0], device=self.device),
-                indexing="xy",
+            image = torch.zeros(self.size + (3,), device=self.device)
+            colors = torch.tensor(
+                self.instance_table[["color_R", "color_G", "color_B"]].to_numpy(),
+                dtype=torch.float32,
+                device=self.device
             )
-            texture = torch.zeros(self.partition.shape)
-            texture_params = {}
-            for param, dist in self.texture_distributions.items():
-                if isinstance(dist, Image):
-                    texture_params[param] = dist.sample(len(self.leaves))
-                else:
-                    texture_params[param] = dist.sample((len(self.leaves), 1))
-            for _, row in self.leaves.iterrows():
-                leaf_idx = row.leaf_idx
-                texture_patch_path = texture_params["source"][leaf_idx - 1]
-                leaf_mask = self.partition == leaf_idx
-                texture_mask = torch.zeros(self.partition.shape)
-
-                unoccluded_leaf_mask = leaf_mask_kw[row["shape"]]((X, Y), row)
-                top, left, bottom, right = bounding_box(unoccluded_leaf_mask, 1)
-                visible_height = bottom - top
-                visible_width = right - left
-                if (
-                    top == 0
-                    or left == 0
-                    or bottom == self.size[0]
-                    or right == self.size[1]
-                ):
-                    centered_leaf = row.copy()
-                    frac_leaf_x_pos = torch.frac(centered_leaf["x_pos"])
-                    frac_leaf_y_pos = torch.frac(centered_leaf["y_pos"])
-                    centered_leaf["x_pos"] = self.size[1] // 2 + frac_leaf_x_pos
-                    centered_leaf["y_pos"] = self.size[0] // 2 + frac_leaf_y_pos
-                    centered_leaf_mask = leaf_mask_kw[row["shape"]](
-                        (X, Y), centered_leaf
-                    )
-                    ctop, cleft, cbottom, cright = bounding_box(centered_leaf_mask, 1)
-                    full_width = cright - cleft
-                    full_height = cbottom - ctop
-                    texture_patch = (
-                        pil_to_tensor(
-                            PIL.Image.open(texture_patch_path)
-                            .convert("L")
-                            .resize((full_width, full_height))
-                        )
-                        / 255
-                    )
-                    offset_y = full_height - visible_height if top == 0 else 0
-                    offset_x = full_width - visible_width if left == 0 else 0
-                    texture_mask[top:bottom, left:right] = texture_patch[
-                        :,
-                        offset_y : offset_y + visible_height,
-                        offset_x : offset_x + visible_width,
-                    ]
-                else:
-                    texture_patch = (
-                        pil_to_tensor(
-                            PIL.Image.open(texture_patch_path)
-                            .convert("L")
-                            .resize((visible_width, visible_height))
-                        )
-                        / 255
-                    )
-                    texture_mask[top:bottom, left:right] = texture_patch
-                texture += (
-                    leaf_mask * texture_params["alpha"][leaf_idx - 1] * texture_mask
+            # texture = self._render_texture()
+            texture = torch.zeros(self.size + (3,), device=self.device)
+            for leaf_idx in self.instance_table.leaf_idx:
+                image[self.instance_map == leaf_idx] = torch.clip(
+                    colors[leaf_idx - 1] + texture[self.instance_map == leaf_idx], 0, 1
                 )
-        return texture.unsqueeze(-1).expand(-1, -1, 3)
+            if self.background_color is not None:
+                image[self.instance_map == 0] = self.background_color
+            return image
+    
+    def apply_image_noise():
+        image = 1
+        return image
 
     def show(self, image: torch.Tensor, figsize: tuple[int, int] | None = None) -> None:
         """Show selected image.
@@ -659,7 +656,7 @@ class LeafAppearanceSampler:
         ax.set_ylim(0, self.size[0])
 
         def add_leaf(frame):
-            leaf = self.leaves.iloc[frame]
+            leaf = self.instance_table.iloc[frame]
             circle = plt.Circle(
                 (leaf.y_pos.cpu(), leaf.x_pos.cpu()),
                 leaf.radius.cpu(),
@@ -671,7 +668,7 @@ class LeafAppearanceSampler:
             return ax
 
         dl_animation = animation.FuncAnimation(
-            fig, add_leaf, frames=len(self.leaves), interval=1000 / fps, repeat=False
+            fig, add_leaf, frames=len(self.instance_table), interval=1000 / fps, repeat=False
         )
 
         if save_to:
