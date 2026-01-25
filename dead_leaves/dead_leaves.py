@@ -452,17 +452,20 @@ class LeafAppearanceSampler:
             for param, dist_dict in self.texture_param_distributions.items():  
                 dist_name, hyper_params = next(iter(dist_dict.items()))
                 dist_class = dist_kw[dist_name]
-        
+                
                 resolved_params = {}
-                for key, value in hyper_params.items():
-                    if isinstance(value, dict):
-                        sub_dist_name, sub_params = next(iter(value.items()))
-                        sub_dist_class = dist_kw[sub_dist_name]
-                        resolved_params[key] = sub_dist_class(**sub_params).sample((self.n_leaves,))
-                    elif isinstance(value, str):
-                        resolved_params[key] = dist_class(value).sample(self.n_leaves)
-                    elif isinstance(value, (int, float)):
-                        resolved_params[key] = value
+                if param == "alpha":
+                    resolved_params["alpha"] = dist_class(**hyper_params).sample((self.n_leaves,1))
+                else:
+                    for key, value in hyper_params.items():
+                        if isinstance(value, dict):
+                            sub_dist_name, sub_params = next(iter(value.items()))
+                            sub_dist_class = dist_kw[sub_dist_name]
+                            resolved_params[key] = sub_dist_class(**sub_params).sample((self.n_leaves,))
+                        elif isinstance(value, str):
+                            resolved_params[key] = dist_class(value).sample(self.n_leaves)
+                        elif isinstance(value, (int, float)):
+                            resolved_params[key] = value
         
                 self.texture_distributions[param] = {
                     "dist_name": dist_name,
