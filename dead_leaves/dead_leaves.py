@@ -569,12 +569,33 @@ class ImageRenderer:
         """Dataframe of leaves and their parameters."""
         self.instance_map: torch.Tensor = instance_map
         """Partition of the image area."""
+        self._infer_texture_space()
+    
+    def _infer_texture_space(self) -> None:
+        keys = sorted(
+            col.removeprefix("texture_").split("_")[0]
+            for col in self.instance_table.columns
+            if col.startswith("texture_") and col.endswith("_dist")
+        )
+        self.texture_space = color_spaces.get(tuple(keys), None)
     
     def _render_texture(self) -> torch.Tensor:
-        texture = 1
+        """Generate a dead leaves image.
+
+        Returns:
+            torch.Tensor:
+                Dead leaves image tensor.
+        """
+        texture = torch.zeros(self.size + (3,), device=self.device)
         
-        if texture == ("H", "S", "V"):
-            texture = torch.Tensor(hsv_to_rgb(texture.cpu())).to(self.device)
+        if self.texture_space is None:
+            return texture
+
+        else:
+            print("hi")
+        
+        # if texture == ("H", "S", "V"):
+        #     texture = torch.Tensor(hsv_to_rgb(texture.cpu())).to(self.device)
         return texture
 
     def render_image(self) -> torch.Tensor:
@@ -591,8 +612,7 @@ class ImageRenderer:
                 dtype=torch.float32,
                 device=self.device
             )
-            # texture = self._render_texture()
-            texture = torch.zeros(self.size + (3,), device=self.device)
+            texture = self._render_texture()
             for leaf_idx in self.instance_table.leaf_idx:
                 image[self.instance_map == leaf_idx] = torch.clip(
                     colors[leaf_idx - 1] + texture[self.instance_map == leaf_idx], 0, 1
