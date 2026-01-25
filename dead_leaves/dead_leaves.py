@@ -444,33 +444,34 @@ class LeafAppearanceSampler:
     # Texture
     # -------------------------------------    
     def _configure_texture(self) -> None:
-        self.texture_distributions = {}
+        with self.device:
+            self.texture_distributions = {}
+        
+            for param, dist_dict in self.texture_param_distributions.items():
+                if len(dist_dict) != 1:
+                    raise ValueError(
+                        f"Distribution dictionary for {param} must contain exactly one entry."
+                    )
     
-        for param, dist_dict in self.texture_param_distributions.items():
-            if len(dist_dict) != 1:
-                raise ValueError(
-                    f"Distribution dictionary for {param} must contain exactly one entry."
-                )
-
-            dist_name, hyper_params = next(iter(dist_dict.items()))
-            dist_class = dist_kw[dist_name]
-    
-            resolved_params = {}
-            for key, value in hyper_params.items():
-                if isinstance(value, dict):
-                    sub_dist_name, sub_params = next(iter(value.items()))
-                    sub_dist_class = dist_kw[sub_dist_name]
-                    resolved_params[key] = sub_dist_class(**sub_params).sample((self.n_leaves,))
-                elif isinstance(value, str):
-                    resolved_params[key] = dist_class(value).sample(self.n_leaves)
-                elif isinstance(value, float):
-                    resolved_params[key] = value
-    
-            self.texture_distributions[param] = {
-                "dist_name": dist_name,
-                "dist_class": dist_class,
-                "params": resolved_params,
-            }
+                dist_name, hyper_params = next(iter(dist_dict.items()))
+                dist_class = dist_kw[dist_name]
+        
+                resolved_params = {}
+                for key, value in hyper_params.items():
+                    if isinstance(value, dict):
+                        sub_dist_name, sub_params = next(iter(value.items()))
+                        sub_dist_class = dist_kw[sub_dist_name]
+                        resolved_params[key] = sub_dist_class(**sub_params).sample((self.n_leaves,))
+                    elif isinstance(value, str):
+                        resolved_params[key] = dist_class(value).sample(self.n_leaves)
+                    elif isinstance(value, float):
+                        resolved_params[key] = value
+        
+                self.texture_distributions[param] = {
+                    "dist_name": dist_name,
+                    "dist_class": dist_class,
+                    "params": resolved_params,
+                }
 
     def _sample_texture_parameters(self) -> torch.Tensor:
         """
@@ -481,36 +482,33 @@ class LeafAppearanceSampler:
         pd.DataFrame
             One row per leaf with resolved texture parameters for all channels.
         """
-        rows = []
+        with self.device:
+            rows = []
+            for leaf_idx in self.instance_table.leaf_idx:
+                row = {"leaf_idx": leaf_idx}
+        
+                for channel_name, channel_cfg in self.texture_distributions.items():
+                    dist_name = channel_cfg["dist_name"]
+                    params = channel_cfg["params"]
+        
+                    # distribution metadata
+                    row[f"texture_{channel_name}_dist"] = dist_name
+        
+                    # per-parameter values
+                    for param, value in params.items():
+                        if isinstance(value, torch.Tensor):
+                            row[f"texture_{channel_name}_{param}"] = value[leaf_idx - 1].item()
+                        elif isinstance(value, list):
+                            row[f"texture_{channel_name}_{param}"] = value[leaf_idx - 1]
+                        else:
+                            row[f"texture_{channel_name}_{param}"] = value
     
-        for leaf_idx in self.instance_table.leaf_idx:
-            row = {"leaf_idx": leaf_idx}
-    
-            for channel_name, channel_cfg in self.texture_distributions.items():
-                dist_name = channel_cfg["dist_name"]
-                params = channel_cfg["params"]
-    
-                # distribution metadata
-                row[f"texture_{channel_name}_dist"] = dist_name
-    
-                # per-parameter values
-                for param, value in params.items():
-                    if isinstance(value, torch.Tensor):
-                        row[f"texture_{channel_name}_{param}"] = value[leaf_idx - 1].item()
-                    elif isinstance(value, list):
-                        row[f"texture_{channel_name}_{param}"] = value[leaf_idx - 1]
-                    else:
-                        row[f"texture_{channel_name}_{param}"] = value
-
-            rows.append(row)
-        return pd.DataFrame(rows)
+                rows.append(row)
+            return pd.DataFrame(rows)
     
     def sample_texture(
             self,
-            texture_param_distributions: (
-                dict[str, dict[str, dict[str, float]]]
-                | dict[str, dict[str, dict[str, float | dict[str, dict[str, float]]]]]
-            )
+            texture_param_distributions: dict[str, dict[str, dict[str, float | dict[str, dict[str, float]]]]],
             ) -> torch.Tensor:
         """Sample leaf textures according to the configured color space.
         
