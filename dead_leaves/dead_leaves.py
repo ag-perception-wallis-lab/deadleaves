@@ -54,6 +54,14 @@ dist_params: dict[str, set[str]] = {
     "image": {"dir"},
 }
 
+color_spaces = {
+    ("B", "G", "R"): ("R", "G", "B"),
+    ("H", "S", "V"): ("H", "S", "V"),
+    ("gray",): ("gray"),
+    ("source",): ("source"),
+    ("alpha", "source"): ("source"),
+}
+
 
 class LeafGeometryGenerator:
     """
@@ -280,14 +288,12 @@ class LeafGeometryGenerator:
         return instance_table, instance_map
 
 
-class DeadLeavesImage:
+class LeafAppearanceSampler:
     """Setup color and texture model for a dead leaves partition.
 
     Args:
-        leaves (pd.DataFrame):
+        instance_table (pd.DataFrame):
             Dataframe of leaves and their parameters.
-        partition (torch.Tensor):
-            Partition of the image area.
         color_param_distributions (dict[str, dict[str, dict[str, float]]])
             Color parameters and their distribution setup.
         texture_param_distributions (dict[str, dict[str, dict[str, float]]], optional):
@@ -301,73 +307,21 @@ class DeadLeavesImage:
 
     def __init__(
         self,
-        leaves: pd.DataFrame,
-        partition: torch.Tensor,
-        color_param_distributions: dict[str, dict[str, dict[str, float]]],
-        texture_param_distributions: (
-            dict[str, dict[str, dict[str, float]]]
-            | dict[str, dict[str, dict[str, float | dict[str, dict[str, float]]]]]
-        ) = {"gray": {"constant": {"value": 0.0}}},
-        background_color: torch.Tensor | None = None,
+        instance_table: pd.DataFrame,
         device: Literal["cuda", "mps", "cpu"] | None = None,
     ):
         self.device: torch.device = (
             torch.device(device) if device else choose_compute_backend()
         )
         """Chosen compute backend."""
-        self.size: torch.Size = partition.shape
-        """Height (y, M) and width (x, N) of the canvas."""
-        self.color_param_distributions: dict[str, dict[str, dict[str, float]]] = (
-            color_param_distributions
-        )
-        """Color parameters and their distribution setup."""
-        self.texture_param_distributions: (
-            dict[str, dict[str, dict[str, float]]]
-            | dict[str, dict[str, dict[str, float | dict[str, dict[str, float]]]]]
-        ) = texture_param_distributions
-        """Texture parameters and their distribution setup."""
-        self.background_color: torch.Tensor | None = background_color
-        """Color for pixels not belonging to any leaf."""
-        if isinstance(background_color, torch.Tensor):
-            self.background_color = self.background_color.to(device=self.device)
-        self.leaves: pd.DataFrame = leaves
+        self.instance_table: pd.DataFrame = instance_table.copy()
         """Dataframe of leaves and their parameters."""
-        self.partition: torch.Tensor = partition
-        """Partition of the image area."""
-        color_spaces = {
-            ("B", "G", "R"): ("R", "G", "B"),
-            ("H", "S", "V"): ("H", "S", "V"),
-            ("gray",): ("gray"),
-            ("source",): ("source"),
-            ("alpha", "source"): ("source"),
-        }
-        self.color_space = color_spaces[
-            tuple(sorted(list(self.color_param_distributions.keys())))
-        ]
-        """Color space in which leaf colors are sampled."""
-        self.texture_space = color_spaces[
-            tuple(sorted(list(self.texture_param_distributions.keys())))
-        ]
-        """Color space in which leaf textures are sampled."""
-        colors = {
-            ("R", "G", "B"): self._sample_3d_colors,
-            ("H", "S", "V"): self._sample_3d_colors,
-            ("gray"): self._sample_grayscale_colors,
-            ("source"): self._sample_colors_from_images,
-        }
-        textures = {
-            ("R", "G", "B"): self._sample_3d_texture,
-            ("H", "S", "V"): self._sample_3d_texture,
-            ("gray"): self._sample_grayscale_texture,
-            ("source"): self._sample_texture_patch,
-        }
-        self.sample_colors: Callable = colors[self.color_space]
-        """Method to sample colors."""
-        self.sample_texture: Callable = textures[self.texture_space]
-        """Method to sample textures."""
-        self.model()
+        self.n_leaves = len(self.instance_table)
 
-    def model(self) -> None:
+    # -------------------------------------
+    # Color
+    # -------------------------------------
+    def _configure_color(self) -> None:
         """Generate distribution instances to sample from."""
         with self.device:
             self.color_distributions = {}
@@ -389,66 +343,24 @@ class DeadLeavesImage:
                 for idx, hyper_param in hyper_params.items():
                     if isinstance(hyper_param, dict):
                         hyper_params[idx] = torch.tensor(
-                            hyper_param["fn"](self.leaves[hyper_param["from"]])
+                            hyper_param["fn"](self.instance_table[hyper_param["from"]])
                         )
                 self.color_distributions[param] = dist_class(**hyper_params)
-            self.texture_distributions = {}
-            for param, dist_dict in self.texture_param_distributions.items():
-                if len(dist_dict) != 1:
-                    raise ValueError(
-                        f"Distribution dictionary for {param} contains "
-                        f"{len(dist_dict)} keys, but 1 is required."
-                    )
-                dist_name = list(dist_dict.keys())[0]
-                dist_class = dist_kw[dist_name]
-                hyper_params = dist_dict[dist_name].copy()
-                if set(hyper_params.keys()) != dist_params[dist_name]:
-                    raise ValueError(
-                        f"Distribution dictionary for {param} with distribution "
-                        f"{dist_name} expects parameters: {dist_params[dist_name]} "
-                        f"but received {set(hyper_params.keys())}"
-                    )
-                if any([isinstance(p, dict) for p in hyper_params.values()]):
-                    self.texture_distributions[param] = "resolve during sampling"
-                else:
-                    self.texture_distributions[param] = dist_class(**hyper_params)
-
-    def sample_image(self) -> torch.Tensor:
-        """Generate a dead leaves image from the model.
-
-        Returns:
-            torch.Tensor:
-                Dead leaves image tensor.
-        """
-        with self.device:
-            image = torch.zeros(self.size + (3,), device=self.device)
-            colors = self.sample_colors()
-            colors = self._transform_colors_to_texture_space(colors)
-            texture = self.sample_texture()
-            for leaf_idx in self.leaves.leaf_idx:
-                image[self.partition == leaf_idx] = torch.clip(
-                    colors[leaf_idx - 1] + texture[self.partition == leaf_idx], 0, 1
-                )
-            if self.background_color is not None:
-                image[self.partition == 0] = self.background_color
-            if self.texture_space == ("H", "S", "V"):
-                image = torch.Tensor(hsv_to_rgb(image.cpu())).to(self.device)
-            return image
 
     def _sample_grayscale_colors(self) -> torch.Tensor:
         """Sample a grayscale color for each leaf.
-
-        Returns:
-            torch.Tensor:
-                Color values.
+            
+         Returns:
+             torch.Tensor:
+                 Color values.
         """
         with self.device:
             for dist in self.color_distributions.values():
                 if len(dist.batch_shape) == 0:
-                    colors = dist.sample((len(self.leaves), 1))
+                    colors = dist.sample((self.n_leaves, 1))
                 else:
                     colors = dist.sample().expand(1, -1).permute(1, 0)
-        return colors.expand(-1, 3)
+        return colors
 
     def _sample_3d_colors(self) -> torch.Tensor:
         """Sample a 3d color for each leaf.
@@ -461,17 +373,16 @@ class DeadLeavesImage:
             colors = {}
             for param, dist in self.color_distributions.items():
                 if len(dist.batch_shape) == 0:
-                    colors[param] = dist.sample((len(self.leaves),))
+                    colors[param] = dist.sample((self.n_leaves,))
                 else:
                     colors[param] = dist.sample()
             color_tensor = torch.stack(
                 [colors[param] for param in self.color_space], dim=1
             )
-            self.leaves[list(self.color_distributions.keys())] = color_tensor.cpu()
-        return color_tensor
+        return color_tensor.cpu()
 
     def _sample_colors_from_images(self) -> torch.Tensor:
-        """From a random image sample a pixel value for each leaf.
+        """Sample a pixel value for each leaf from a random image in folder.
 
         Returns:
             torch.Tensor:
@@ -483,105 +394,147 @@ class DeadLeavesImage:
             image = pil_to_tensor(PIL.Image.open(image_path)) / 255
             image_vector = image.reshape((3, -1))
             idx = torch.multinomial(
-                torch.ones(image_vector.shape[-1]), len(self.leaves), replacement=True
+                torch.ones(image_vector.shape[-1]), self.n_leaves, replacement=True
             )
             color_tensor = image_vector[:, idx]
-            return color_tensor.permute(1, 0)
-
-    def _transform_colors_to_texture_space(self, colors: torch.Tensor) -> torch.Tensor:
-        """Transform leaf colors to texture color space.
-
-        Args:
-            colors (torch.Tensor):
-                Tensor of leaf colors in color space.
-
-        Returns:
-            torch.Tensor:
-                Tensor of leaf colors in texture color space.
+        return color_tensor.permute(1, 0)
+    
+    def sample_color(
+            self,
+            color_param_distributions: dict[str, dict[str, dict[str, float]]],
+            ) -> torch.Tensor:
+        """Sample leaf colors according to the configured color space.
+        
+        pd.DataFrame:
+            Updated DataFrame with color parameters added to each leaf
         """
-        transformation_fns = {
-            (("H", "S", "V"), ("R", "G", "B")): lambda x: hsv_to_rgb(
-                torch.clip(x, 0, 1)
-            ),
-            (("R", "G", "B"), ("H", "S", "V")): lambda x: rgb_to_hsv(
-                torch.clip(x, 0, 1)
-            ),
-            (("H", "S", "V"), ("gray")): lambda x: hsv_to_rgb(torch.clip(x, 0, 1)),
-            (("R", "G", "B"), ("gray")): lambda x: x,
-            (("source"), ("R", "G", "B")): lambda x: x,
-            (("source"), ("H", "S", "V")): lambda x: rgb_to_hsv(torch.clip(x, 0, 1)),
-            (("source"), ("gray")): lambda x: x,
-            (("gray"), ("source")): lambda x: x,
-            (("H", "S", "V"), ("source")): lambda x: hsv_to_rgb(torch.clip(x, 0, 1)),
-        }
-
-        if self.color_space == self.texture_space:
-            return colors
+        self.color_param_distributions: dict[str, dict[str, dict[str, float]]] = (
+            color_param_distributions
+        )
+        self.color_space = color_spaces[
+            tuple(sorted(list(self.color_param_distributions.keys())))
+        ]
+        self._configure_color()
+        
+        color_columns = [f"color_{k}" for k in self.color_distributions]
+        color_columns_rgb = ["color_R", "color_G", "color_B"]
+        
+        if self.color_space == ("R", "G", "B"):
+            color = self._sample_3d_colors()
+        
+        elif self.color_space == ("H", "S", "V"):
+            color = self._sample_3d_colors()
+            self.instance_table[color_columns_rgb] = hsv_to_rgb(color)
+    
+        elif self.color_space == "gray":
+            color = self._sample_grayscale_colors()
+            self.instance_table[color_columns_rgb] =  color.expand(-1, 3)
+    
+        elif self.color_space == "source":
+            color = self._sample_colors_from_images()
+            color_columns = color_columns_rgb
+    
         else:
-            return torch.Tensor(
-                transformation_fns[(self.color_space, self.texture_space)](colors.cpu())
-            ).to(self.device)
+            raise ValueError(f"Unsupported color space: {self.color_space}")
 
-    def _sample_grayscale_texture(self) -> torch.Tensor:
-        """Sample grayscale texture for each pixel.
+        self.instance_table[color_columns] = color
+        return self.instance_table
 
-        Returns:
-            torch.Tensor:
-                Texture values.
+    # -------------------------------------
+    # Texture
+    # -------------------------------------    
+    def _configure_texture(self) -> None:
+        self.texture_distributions = {}
+    
+        for param, dist_dict in self.texture_param_distributions.items():
+            if len(dist_dict) != 1:
+                raise ValueError(
+                    f"Distribution dictionary for {param} must contain exactly one entry."
+                )
+
+            dist_name, hyper_params = next(iter(dist_dict.items()))
+            dist_class = dist_kw[dist_name]
+    
+            resolved_params = {}
+            for key, value in hyper_params.items():
+                if isinstance(value, dict):
+                    sub_dist_name, sub_params = next(iter(value.items()))
+                    sub_dist_class = dist_kw[sub_dist_name]
+                    resolved_params[key] = sub_dist_class(**sub_params).sample((self.n_leaves,))
+                elif isinstance(value, str):
+                    resolved_params[key] = dist_class(value).sample(self.n_leaves)
+                elif isinstance(value, float):
+                    resolved_params[key] = value
+    
+            self.texture_distributions[param] = {
+                "dist_name": dist_name,
+                "dist_class": dist_class,
+                "params": resolved_params,
+            }
+
+    def _sample_texture_parameters(self) -> torch.Tensor:
         """
-        with self.device:
-            for dist in self.texture_distributions.values():
-                if dist == "resolve during sampling":
-                    texture = torch.zeros(self.partition.size())
-                    dist_name, hyper_params = next(
-                        iter(self.texture_param_distributions["gray"].items())
-                    )
-                    dist_class = dist_kw[dist_name]
-                    for key, hyper_param in hyper_params.items():
-                        if isinstance(hyper_param, dict):
-                            hyper_param_dist_name, hyper_hyper_params = next(
-                                iter(hyper_param.items())
-                            )
-                            hyper_param_dist_class = dist_kw[hyper_param_dist_name]
-                            hyper_params[key] = hyper_param_dist_class(
-                                **hyper_hyper_params
-                            ).sample((len(self.leaves),))
-                    for leaf_idx in self.leaves.leaf_idx:
-                        leaf_hyper_params = {
-                            key: (
-                                value[leaf_idx - 1]
-                                if isinstance(value, torch.Tensor)
-                                else value
-                            )
-                            for key, value in hyper_params.items()
-                        }
-                        leaf_texture = dist_class(**leaf_hyper_params).sample(self.size)
-                        mask = self.partition == leaf_idx
-                        texture[mask] = leaf_texture[mask]
-                else:
-                    texture = dist.sample(self.size)
-
-        return texture.unsqueeze(-1).expand(-1, -1, 3)
-
-    def _sample_3d_texture(self) -> torch.Tensor:
-        """Sample a 3d texture for each pixel.
-
-        Returns:
-            torch.Tensor:
-                Texture values.
+        Materialize per-leaf texture parameters and distribution metadata.
+    
+        Returns
+        -------
+        pd.DataFrame
+            One row per leaf with resolved texture parameters for all channels.
         """
-        with self.device:
-            texture = {}
-            for param, dist in self.texture_distributions.items():
-                texture[param] = dist.sample(self.size)
-            return torch.stack([texture[param] for param in self.texture_space], dim=2)
+        rows = []
+    
+        for leaf_idx in self.instance_table.leaf_idx:
+            row = {"leaf_idx": leaf_idx}
+    
+            for channel_name, channel_cfg in self.texture_distributions.items():
+                dist_name = channel_cfg["dist_name"]
+                params = channel_cfg["params"]
+    
+                # distribution metadata
+                row[f"texture_{channel_name}_dist"] = dist_name
+    
+                # per-parameter values
+                for param, value in params.items():
+                    if isinstance(value, torch.Tensor):
+                        row[f"texture_{channel_name}_{param}"] = value[leaf_idx - 1].item()
+                    elif isinstance(value, list):
+                        row[f"texture_{channel_name}_{param}"] = value[leaf_idx - 1]
+                    else:
+                        row[f"texture_{channel_name}_{param}"] = value
 
-    def _sample_texture_patch(self) -> torch.Tensor:
-        """Sample leaf-wise grayscale texture from a folder of texture patches.
-        Texture patches will be blended into color based on a leaf-wise alpha value.
+            rows.append(row)
+        return pd.DataFrame(rows)
+    
+    def sample_texture(
+            self,
+            texture_param_distributions: (
+                dict[str, dict[str, dict[str, float]]]
+                | dict[str, dict[str, dict[str, float | dict[str, dict[str, float]]]]]
+            )
+            ) -> torch.Tensor:
+        """Sample leaf textures according to the configured color space.
+        
+        pd.DataFrame:
+            Updated DataFrame with texture parameters added to each leaf
+        """
+        self.texture_param_distributions: dict[str, dict[str, dict[str, float | dict[str, dict[str, float]]]]] = (
+            texture_param_distributions
+        )
+        self.texture_space = color_spaces[
+            tuple(sorted(list(self.texture_param_distributions.keys())))
+        ]
+        
+        self._configure_texture()
+        
+        if self.texture_space in ("gray", ("R", "G", "B"), ("H", "S", "V"), "source"):
+            df = self._sample_texture_parameters()
+    
+        else:
+            raise ValueError(f"Unsupported texture space: {self.texture_space}")
+        
+        self.instance_table = self.instance_table.merge(df, on="leaf_idx", how="left")
+        return self.instance_table
 
-        NOTE: May produce distorted textures for leaves larger than the canvas in
-        either dimension.
 
         Returns:
             torch.Tensor:
