@@ -4,7 +4,7 @@ from .utils import choose_compute_backend, bounding_box
 from typing import Literal, Callable
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from matplotlib.colors import hsv_to_rgb, rgb_to_hsv
+from matplotlib.colors import hsv_to_rgb
 import torch
 import pandas as pd
 import PIL.Image
