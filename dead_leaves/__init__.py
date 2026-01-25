@@ -1,1 +1,6 @@
-from .dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from .dead_leaves import (
+    LeafGeometryGenerator,
+    LeafAppearanceSampler,
+    ImageRenderer,
+    InstanceTopology,
+    )

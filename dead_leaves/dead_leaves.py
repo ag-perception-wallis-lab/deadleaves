@@ -779,3 +779,48 @@ class ImageRenderer:
             dl_animation.save(save_to, writer=FFwriter)
 
         return dl_animation
+
+
+class InstanceTopology():
+    """Description"""
+    def __init__(
+            self,
+            device: Literal["cuda", "mps", "cpu"] | None = None,
+            ):
+        self.device: torch.device = (
+            torch.device(device) if device else choose_compute_backend()
+            )
+
+    def instance_map_from_table(self, instance_table: pd.DataFrame, shape) -> torch.Tensor:
+        """
+        Construct instance_map from instance_table.
+    
+        Args:
+            instance_table : pd.DataFrame
+                Table containing per-leaf geometry parameters.
+    
+        Returns:
+            torch.Tensor
+                Instance map with shape self.size.
+        """
+        H, W = shape
+        instance_map = torch.zeros((H, W), device=self.device, dtype=torch.int64)
+        X, Y = torch.meshgrid(
+            torch.arange(W, device=self.device),
+            torch.arange(H, device=self.device),
+            indexing="xy",
+        )
+    
+        for _, row in instance_table.iterrows():
+            generate_leaf_mask = leaf_mask_kw[row["shape"]]
+            params = {
+                "x_pos": row["x_pos"],
+                "y_pos": row["y_pos"],
+                "area": row["area"],
+            }
+            leaf_mask = generate_leaf_mask((X, Y), params)
+            mask = leaf_mask & (instance_map == 0)
+            instance_map[mask] = int(row["leaf_idx"])
+        return instance_map
+
+
