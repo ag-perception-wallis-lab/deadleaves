@@ -580,6 +580,7 @@ class ImageRenderer:
         self.texture_space = color_spaces.get(tuple(keys), None)
     
     def _get_texture_param_columns(self, channel: str) -> list[str]:
+        """Get all columns which contain texture parameters from instance_table"""
         prefix = f"texture_{channel}_"
         return [
             c for c in self.instance_table.columns
@@ -587,6 +588,7 @@ class ImageRenderer:
         ]
     
     def _get_leaf_texture_params(self, leaf_row, channel: str) -> dict:
+        """Get values from columns with texture parameters in instance_table"""
         prefix = f"texture_{channel}_"
         hyper_params = {}
     
@@ -597,6 +599,13 @@ class ImageRenderer:
         return hyper_params
     
     def _generate_leafwise_texture_1d(self, channel):
+        """
+        Generate grayscale texture from sampled distributions.
+        
+        Returns:
+            torch.Tensor
+                Texture image of shape (H, W).
+        """
         texture = torch.zeros(self.size, device=self.device)
         for _, leaf in self.instance_table.iterrows():
             dist_name = leaf[f"texture_{channel}_dist"]
@@ -606,6 +615,39 @@ class ImageRenderer:
 
             mask = self.instance_map == leaf["leaf_idx"]
             texture[mask] = leaf_texture[mask]
+        return texture
+    
+    def _generate_leafwise_texture_from_source(self) -> torch.Tensor:
+        """
+        Generate grayscale texture from image sources stored in instance_table.
+        
+        Returns:
+            torch.Tensor
+                Texture image of shape (H, W).
+        """
+        H, W = self.size
+        texture = torch.zeros((H, W), device=self.device)
+    
+        X, Y = torch.meshgrid(
+            torch.arange(W, device=self.device),
+            torch.arange(H, device=self.device),
+            indexing="xy",
+        )
+    
+        for i, row in self.instance_table.iterrows():
+            leaf_idx = row.leaf_idx
+            leaf_mask = self.instance_map == leaf_idx
+
+            unoccluded_mask = leaf_mask_kw[row["shape"]]((X, Y), row)
+            top, left, bottom, right = bounding_box(unoccluded_mask, 1)
+            vh, vw = bottom - top, right - left
+            if vh <= 0 or vw <= 0:
+                continue
+
+            patch = pil_to_tensor(PIL.Image.open(row["texture_source_dir"]).convert("L").resize((vw, vh))).to(self.device) / 255.0
+            texture_patch = torch.zeros((H, W), device=self.device)
+            texture_patch[top:bottom, left:right] = patch
+            texture += leaf_mask * row["texture_alpha_alpha"] * texture_patch
         return texture
 
     
@@ -632,6 +674,11 @@ class ImageRenderer:
 
             if self.texture_space == ("H", "S", "V"):
                 texture = torch.tensor(hsv_to_rgb(texture.cpu()), device=self.device)
+            return texture
+        
+        if self.texture_space == "source":
+            gray = self._generate_leafwise_texture_from_source()
+            texture = gray.unsqueeze(-1).expand(-1, -1, 3)
             return texture
 
     def render_image(self) -> torch.Tensor:
