@@ -55,9 +55,9 @@ dist_params: dict[str, set[str]] = {
 }
 
 
-class DeadLeavesModel:
+class LeafGeometryGenerator:
     """
-    Setup a dead leaves model.
+    Set up the geometrical dead leaves model.
 
     Args:
         shape (Literal["circular", "ellipsoid", "rectangular", "polygon"]):
@@ -120,7 +120,7 @@ class DeadLeavesModel:
         )
         self.generate_leaf_mask: Callable = leaf_mask_kw[shape]
         """Method to generate mask of leaf on canvas."""
-        self.model()
+        self._configure_parameters()
 
     shape_kw: dict[str, list[str]] = {
         "circular": ["area"],
@@ -130,7 +130,7 @@ class DeadLeavesModel:
     }
     """Dictionary connecting keys to respective list of shape parameters."""
 
-    def resolve_dependencies(self) -> list[str]:
+    def _resolve_dependencies(self) -> list[str]:
         """Resolve model parameter dependencies.
 
         Raises:
@@ -159,7 +159,7 @@ class DeadLeavesModel:
                 dependencies.pop(param)
         return ordered_params
 
-    def model(self) -> None:
+    def _configure_parameters(self) -> None:
         """Generate list of model parameters and distribution instances to sample from.
 
         Raises:
@@ -202,7 +202,7 @@ class DeadLeavesModel:
                 self.distributions[param] = dist_class(**hyper_params)
         self.params = list(self.distributions.keys())
 
-    def sample_parameters(self) -> dict[str, torch.Tensor]:
+    def _sample_parameters(self) -> dict[str, torch.Tensor]:
         """Draw a sample from the model distributions.
 
         Returns:
@@ -211,7 +211,7 @@ class DeadLeavesModel:
         """
         with self.device:
             samples = {}
-            params = self.resolve_dependencies()
+            params = self._resolve_dependencies()
             for param in params:
                 dist = self.distributions[param]
                 if dist is None:
@@ -249,35 +249,35 @@ class DeadLeavesModel:
                 samples[param] = dist.sample()
             return samples
 
-    def sample_partition(self) -> tuple[pd.DataFrame, torch.Tensor]:
-        """Generate a dead leaves partition from the model.
+    def generate_instance(self) -> tuple[pd.DataFrame, torch.Tensor]:
+        """Generate a dead leaves instance from the model.
 
         Returns:
             tuple[pd.DataFrame, torch.Tensor]:
-                Dataframe of resulting leaves and their parameters,
-                as well as the partition.
+                DataFrame listing the parameters of all generated leaves, along
+                with an instance map assigning each image location to a leaf.
         """
         leaves_params = []
-        partition = torch.zeros(self.size, device=self.device, dtype=int)
+        instance_map = torch.zeros(self.size, device=self.device, dtype=int)
         leaf_idx = 1
 
-        while torch.any((partition == 0) & (self.position_mask == 1)):
-            params = self.sample_parameters()
+        while torch.any((instance_map == 0) & (self.position_mask == 1)):
+            params = self._sample_parameters()
             leaf_mask = self.generate_leaf_mask((self.X, self.Y), params)
-            mask = leaf_mask & (partition == 0)
+            mask = leaf_mask & (instance_map == 0)
             if (mask.sum() > 0) & self.position_mask[
                 params["y_pos"].to(int), params["x_pos"].to(int)
             ]:
-                partition[mask] = leaf_idx
+                instance_map[mask] = leaf_idx
                 leaves_params.append(params)
                 leaf_idx += 1
             if (self.n_sample is not None) and leaf_idx >= self.n_sample:
                 break
 
-        leaves = pd.DataFrame(leaves_params, columns=self.params)
-        leaves["leaf_idx"] = torch.tensor(range(leaf_idx - 1)) + 1
-        leaves["shape"] = self.shape
-        return leaves, partition
+        instance_table = pd.DataFrame(leaves_params, columns=self.params)
+        instance_table["leaf_idx"] = torch.tensor(range(leaf_idx - 1)) + 1
+        instance_table["shape"] = self.shape
+        return instance_table, instance_map
 
 
 class DeadLeavesImage:
