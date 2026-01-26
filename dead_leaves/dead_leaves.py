@@ -1,17 +1,19 @@
-from .distributions import PowerLaw, Constant, Cosine, ExpCosine, Image
-from .leaf_masks import circular, rectangular, ellipsoid, regular_polygon
-from .utils import choose_compute_backend, bounding_box
+import warnings
+from pathlib import Path
 from typing import Literal, Callable
+
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.colors import hsv_to_rgb
 import torch
+import numpy as np
 import pandas as pd
 import PIL.Image
-from pathlib import Path
 from torchvision.transforms.functional import pil_to_tensor
 
-import warnings
+from .distributions import PowerLaw, Constant, Cosine, ExpCosine, Image
+from .leaf_masks import circular, rectangular, ellipsoid, regular_polygon
+from .utils import choose_compute_backend, bounding_box
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
