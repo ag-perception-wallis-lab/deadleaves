@@ -70,11 +70,11 @@ class LeafGeometryGenerator:
     Set up the geometrical dead leaves model.
 
     Args:
-        shape (Literal["circular", "ellipsoid", "rectangular", "polygon"]):
+        leaf_shape (Literal["circular", "ellipsoid", "rectangular", "polygon"]):
             Shape of leaves.
-        param_distributions (dict[str, dict[str, [dict[str,float]]]):
-            Shape parameters and their distributions and distribution parameter values.
-        size (tuple[int, int]):
+        shape_param_distributions (dict[str, dict[str, [dict[str,float]]]):
+            Leaf shape parameters and their distributions and distribution parameter values.
+        image_shape (tuple[int, int]):
             Height (y, M) and width (x, N) of the area to be partitioned.
         position_mask (torch.Tensor, optional):
             Boolean tensor containing allowed leaf positions to create images with
@@ -89,9 +89,9 @@ class LeafGeometryGenerator:
 
     def __init__(
         self,
-        shape: Literal["circular", "ellipsoid", "rectangular", "polygon"],
-        param_distributions: dict[str, dict[str, dict[str, float]]],
-        size: tuple[int, int],
+        leaf_shape: Literal["circular", "ellipsoid", "rectangular", "polygon"],
+        shape_param_distributions: dict[str, dict[str, dict[str, float]]],
+        image_shape: tuple[int, int],
         position_mask: torch.Tensor | None = None,
         n_sample: int | None = None,
         device: Literal["cuda", "mps", "cpu"] | None = None,
@@ -100,35 +100,35 @@ class LeafGeometryGenerator:
             torch.device(device) if device else choose_compute_backend()
         )
         """Chosen compute backend."""
-        self.size: tuple[int, int] = size
+        self.image_shape: tuple[int, int] = image_shape
         """Height (y, M) and width (x, N) of the canvas."""
         self.n_sample: int | None = n_sample
         """Number of leaves to sample."""
-        self.shape: (
+        self.leaf_shape: (
             Literal["circular"]
             | Literal["ellipsoid"]
             | Literal["rectangular"]
             | Literal["polygon"]
-        ) = shape
+        ) = leaf_shape
         """Shape of the leaves."""
-        self.param_distributions: dict[str, dict[str, dict[str, float]]] = (
-            param_distributions
+        self.shape_param_distributions: dict[str, dict[str, dict[str, float]]] = (
+            shape_param_distributions
         )
         """Shape parameters and their distributions and distribution parameter values."""
         self.X, self.Y = torch.meshgrid(
-            torch.arange(self.size[1], device=self.device),
-            torch.arange(self.size[0], device=self.device),
+            torch.arange(self.image_shape[1], device=self.device),
+            torch.arange(self.image_shape[0], device=self.device),
             indexing="xy",
         )
-        self.generate_leaf_mask: Callable = leaf_mask_kw[shape]
+        self.generate_leaf_mask: Callable = leaf_mask_kw[leaf_shape]
         """Method to generate mask of leaf on canvas."""
-        self.position_mask = torch.ones(self.size, dtype=int, device=self.device)
+        self.position_mask = torch.ones(self.image_shape, dtype=int, device=self.device)
         if position_mask is not None:
             self._resolve_position_mask(position_mask)
         """Positions on canvas masked for sampling leaf positions."""
         self._configure_parameters()
 
-    shape_kw: dict[str, list[str]] = {
+    leaf_shape_kw: dict[str, list[str]] = {
         "circular": ["area"],
         "ellipsoid": ["area", "aspect_ratio", "orientation"],
         "rectangular": ["area", "aspect_ratio", "orientation"],
@@ -147,8 +147,8 @@ class LeafGeometryGenerator:
             list[str]:
                 Sorted list of parameters.
         """
-        dependencies = {param: set() for param in self.param_distributions}
-        for param, dist in self.param_distributions.items():
+        dependencies = {param: set() for param in self.shape_param_distributions}
+        for param, dist in self.shape_param_distributions.items():
             dist_params = next(iter(dist.values()))
             for dist_param in dist_params.values():
                 if isinstance(dist_param, dict) and "from" in dist_param:
@@ -170,13 +170,13 @@ class LeafGeometryGenerator:
 
         Raises:
             ValueError:
-                Provided parameters don't match provided shape.
+                Provided parameters don't match provided leaf shape.
         """
-        self.params = list(self.param_distributions.keys())
-        if set(self.params) != set(self.shape_kw[self.shape]):
+        self.params = list(self.shape_param_distributions.keys())
+        if set(self.params) != set(self.leaf_shape_kw[self.leaf_shape]):
             raise ValueError(
-                f"Model with {self.shape} shapes expects parameters: "
-                f"{self.shape_kw[self.shape]} but received {self.params}"
+                f"Model with {self.leaf_shape} shapes expects parameters: "
+                f"{self.leaf_shape_kw[self.leaf_shape]} but received {self.params}"
             )
         sampling_box = bounding_box(self.position_mask, 1)
         self.distributions = {
@@ -187,7 +187,7 @@ class LeafGeometryGenerator:
                 sampling_box[0], sampling_box[2]
             ),
         }
-        for param, dist_dict in self.param_distributions.items():
+        for param, dist_dict in self.shape_param_distributions.items():
             if len(dist_dict) != 1:
                 raise ValueError(
                     f"Distribution dictionary for {param} contains "
@@ -221,7 +221,7 @@ class LeafGeometryGenerator:
             for param in params:
                 dist = self.distributions[param]
                 if dist is None:
-                    dist_dict = self.param_distributions[param]
+                    dist_dict = self.shape_param_distributions[param]
                     if len(dist_dict) != 1:
                         raise ValueError(
                             f"Distribution dictionary for {param} contains "
@@ -269,26 +269,29 @@ class LeafGeometryGenerator:
                 raise ValueError("Position mask dict must contain 'shape' and 'params'.")
             
             # default position to image center
-            default_params = {"x_pos": self.size[1] // 2, "y_pos": self.size[0] // 2}
+            default_params = {
+                "x_pos": self.image_shape[1] // 2,
+                "y_pos": self.image_shape[0] // 2,
+                }
             params = {**default_params, **position_mask["params"]}
 
-            shape = position_mask["shape"]
+            leaf_shape = position_mask["shape"]
             params = {
                 k: torch.as_tensor(v, device=self.device)
                 for k, v in params.items()
             }
     
-            if shape not in leaf_mask_kw:
-                raise ValueError(f"Unknown shape '{shape}' for position mask.")
+            if leaf_shape not in leaf_mask_kw:
+                raise ValueError(f"Unknown shape '{leaf_shape}' for position mask.")
 
-            generate_mask = leaf_mask_kw[shape]
+            generate_mask = leaf_mask_kw[leaf_shape]
             mask = generate_mask((self.X, self.Y), params)
             self.position_mask =  mask.to(device=self.device, dtype=int)
     
         else:
             raise TypeError("position_mask must be a torch.Tensor, dict, or None.")
         
-        if self.position_mask.shape != self.size:
+        if self.position_mask.shape != self.image_shape:
             raise ValueError("Position mask must match image size.")
         
         if not torch.any(self.position_mask):
@@ -303,7 +306,7 @@ class LeafGeometryGenerator:
                 with an instance map assigning each image location to a leaf.
         """
         leaves_params = []
-        instance_map = torch.zeros(self.size, device=self.device, dtype=int)
+        instance_map = torch.zeros(self.image_shape, device=self.device, dtype=int)
         leaf_idx = 1
 
         while torch.any((instance_map == 0) & (self.position_mask == 1)):
@@ -321,7 +324,7 @@ class LeafGeometryGenerator:
 
         instance_table = pd.DataFrame(leaves_params, columns=self.params)
         instance_table["leaf_idx"] = torch.tensor(range(leaf_idx - 1)) + 1
-        instance_table["shape"] = self.shape
+        instance_table["leaf_shape"] = self.leaf_shape
         return instance_table, instance_map
 
 
@@ -595,7 +598,7 @@ class ImageRenderer:
             torch.device(device) if device else choose_compute_backend()
         )
         """Chosen compute backend."""
-        self.size: torch.Size = instance_map.shape
+        self.image_shape: torch.Size = instance_map.shape
         """Height (y, M) and width (x, N) of the canvas."""
         self.background_color: torch.Tensor | None = background_color
         """Color for pixels not belonging to any leaf."""
@@ -643,12 +646,12 @@ class ImageRenderer:
             torch.Tensor
                 Texture image of shape (H, W).
         """
-        texture = torch.zeros(self.size, device=self.device)
+        texture = torch.zeros(self.image_shape, device=self.device)
         for _, leaf in self.instance_table.iterrows():
             dist_name = leaf[f"texture_{channel}_dist"]
             dist_class = dist_kw[dist_name]
             hyper_params = self._get_leaf_texture_params(leaf, channel)
-            leaf_texture = dist_class(**hyper_params).sample(self.size)
+            leaf_texture = dist_class(**hyper_params).sample(self.image_shape)
 
             mask = self.instance_map == leaf["leaf_idx"]
             texture[mask] = leaf_texture[mask]
@@ -662,7 +665,7 @@ class ImageRenderer:
             torch.Tensor
                 Texture image of shape (H, W).
         """
-        H, W = self.size
+        H, W = self.image_shape
         texture = torch.zeros((H, W), device=self.device)
     
         X, Y = torch.meshgrid(
@@ -695,7 +698,7 @@ class ImageRenderer:
             torch.Tensor
                 Texture image of shape (H, W, 3).
         """
-        H, W = self.size
+        H, W = self.image_shape
         texture = torch.zeros((H, W, 3), device=self.device)
     
         if self.texture_space is None:
@@ -727,7 +730,7 @@ class ImageRenderer:
                 Dead leaves image tensor.
         """
         with self.device:
-            image = torch.zeros(self.size + (3,), device=self.device)
+            image = torch.zeros(self.image_shape + (3,), device=self.device)
             colors = torch.tensor(
                 self.instance_table[["color_R", "color_G", "color_B"]].to_numpy(),
                 dtype=torch.float32,
@@ -791,7 +794,10 @@ class ImageRenderer:
                 noisy_image[:, :, idx] += channel_noise
             
             else:
-                raise ValueError(f"Unsupported channel: {channel}")
+                raise ValueError(
+                    f"Unsupported channel for image-wide texture: '{channel}'. "
+                    "Should be 'gray', 'R', 'G', or 'B'."
+                    )
 
         return torch.clip(noisy_image, 0, 1)
 
@@ -843,8 +849,8 @@ class ImageRenderer:
         fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=None, hspace=None)
         ax.axis("off")
         ax.set_aspect("equal")
-        ax.set_xlim(0, self.size[1])
-        ax.set_ylim(0, self.size[0])
+        ax.set_xlim(0, self.image_shape[1])
+        ax.set_ylim(0, self.image_shape[0])
 
         def add_leaf(frame):
             leaf = self.instance_table.iloc[frame]
@@ -873,13 +879,15 @@ class InstanceTopology():
     """Description"""
     def __init__(
             self,
+            image_shape: tuple[int, int],
             device: Literal["cuda", "mps", "cpu"] | None = None,
             ):
+        self.image_shape: tuple[int, int] = image_shape
         self.device: torch.device = (
             torch.device(device) if device else choose_compute_backend()
             )
 
-    def instance_map_from_table(self, instance_table: pd.DataFrame, shape) -> torch.Tensor:
+    def instance_map_from_table(self, instance_table: pd.DataFrame) -> torch.Tensor:
         """
         Construct instance_map from instance_table.
     
@@ -889,9 +897,9 @@ class InstanceTopology():
     
         Returns:
             torch.Tensor
-                Instance map with shape self.size.
+                Instance map with shape self.image_shape.
         """
-        H, W = shape
+        H, W = self.image_shape
         instance_map = torch.zeros((H, W), device=self.device, dtype=torch.int64)
         X, Y = torch.meshgrid(
             torch.arange(W, device=self.device),
@@ -900,10 +908,8 @@ class InstanceTopology():
         )
     
         for _, row in instance_table.iterrows():
-            generate_leaf_mask = leaf_mask_kw[row["shape"]]
+            generate_leaf_mask = leaf_mask_kw[row["leaf_shape"]]
             leaf_mask = generate_leaf_mask((X, Y), row.to_dict())
             mask = leaf_mask & (instance_map == 0)
             instance_map[mask] = int(row["leaf_idx"])
         return instance_map
-
-
