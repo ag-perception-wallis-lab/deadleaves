@@ -813,12 +813,7 @@ class InstanceTopology():
     
         for _, row in instance_table.iterrows():
             generate_leaf_mask = leaf_mask_kw[row["shape"]]
-            params = {
-                "x_pos": row["x_pos"],
-                "y_pos": row["y_pos"],
-                "area": row["area"],
-            }
-            leaf_mask = generate_leaf_mask((X, Y), params)
+            leaf_mask = generate_leaf_mask((X, Y), row.to_dict())
             mask = leaf_mask & (instance_map == 0)
             instance_map[mask] = int(row["leaf_idx"])
         return instance_map
