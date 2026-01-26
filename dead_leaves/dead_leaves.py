@@ -742,9 +742,59 @@ class ImageRenderer:
                 image[self.instance_map == 0] = self.background_color
             return image
     
-    def apply_image_noise():
-        image = 1
-        return image
+    def apply_image_noise(
+        self,
+        image: torch.Tensor,
+        noise: dict[str, dict | torch.Tensor]
+    ) -> torch.Tensor:
+        """
+        Apply global noise to an image.
+    
+        Args:
+            image (torch.Tensor):
+                Input image tensor of shape (H, W, C), values in [0,1].
+            noise (dict):
+                Dictionary or tensor/array specifying noise per channel.
+                Examples:
+                - Distribution-based: {"gray": {"normal": {"loc": 0, "scale": 0.1}}}
+                - Array-based: {"R": torch.randn(H, W) * 0.05}
+    
+        Returns:
+            torch.Tensor:
+                Image with noise applied, clipped to [0,1].
+        """
+        noisy_image = image.clone()
+        H, W, C = noisy_image.shape
+    
+        for channel, spec in noise.items():
+            # Case 1: distribution-based noise
+            if isinstance(spec, dict):
+                dist_name = next(iter(spec.keys()))
+                dist_class = dist_kw[dist_name]
+                channel_noise = dist_class(**spec[dist_name]).sample((H, W)).to(self.device)
+
+            # Case 2: array-based noise
+            elif isinstance(spec, (torch.Tensor, np.ndarray)):
+                channel_noise = torch.as_tensor(spec, device=self.device, dtype=torch.float32)
+                if channel_noise.shape != (H, W):
+                    raise ValueError(f"Noise for channel {channel} must have shape {(H, W)}")
+
+            else:
+                raise TypeError(f"Noise spec for channel {channel} must be a dict or tensor/array")
+    
+            if channel == "gray":
+                for i in range(3):
+                    noisy_image += channel_noise.unsqueeze(-1)
+            
+            elif channel in ["R", "G", "B"]:
+                idx = {"R": 0, "G": 1, "B": 2}[channel]
+                noisy_image[:, :, idx] += channel_noise
+            
+            else:
+                raise ValueError(f"Unsupported channel: {channel}")
+
+        return torch.clip(noisy_image, 0, 1)
+
 
     def show(self, image: torch.Tensor, figsize: tuple[int, int] | None = None) -> None:
         """Show selected image.
