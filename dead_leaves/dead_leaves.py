@@ -706,8 +706,9 @@ class ImageRenderer:
             return gray.unsqueeze(-1).expand(-1, -1, 3)
 
         if self.texture_space in [("R", "G", "B"), ("H", "S", "V")]:
-            for i, channel in enumerate(self.texture_space):
-                texture[:, :, i] = self._generate_leafwise_texture_1d(channel)
+            for channel in self.texture_space:
+                idx = {"R": 0, "G": 1, "B": 2, "H": 0, "S": 1, "V": 2}[channel]
+                texture[:, :, idx] = self._generate_leafwise_texture_1d(channel)
 
             if self.texture_space == ("H", "S", "V"):
                 texture = torch.tensor(hsv_to_rgb(texture.cpu()), device=self.device)
