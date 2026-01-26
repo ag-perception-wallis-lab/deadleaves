@@ -259,7 +259,8 @@ class LeafGeometryGenerator:
         """Resolve position mask from tensor or geometric specification."""
         
         # Case 1: already a tensor
-        if isinstance(position_mask, torch.Tensor):
+        if isinstance(position_mask, (torch.Tensor, np.ndarray)):
+            position_mask = torch.as_tensor(position_mask, device=self.device, dtype=torch.int)
             self.position_mask = position_mask.to(device=self.device, dtype=int)
     
         # Case 2: geometric specification
