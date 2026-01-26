@@ -306,33 +306,33 @@ class LeafGeometryGenerator:
                 with an instance map assigning each image location to a leaf.
         """
         leaves_params = []
-        instance_map = torch.zeros(self.image_shape, device=self.device, dtype=int)
+        segmentation_map = torch.zeros(self.image_shape, device=self.device, dtype=int)
         leaf_idx = 1
 
-        while torch.any((instance_map == 0) & (self.position_mask == 1)):
+        while torch.any((segmentation_map == 0) & (self.position_mask == 1)):
             params = self._sample_parameters()
             leaf_mask = self.generate_leaf_mask((self.X, self.Y), params)
-            mask = leaf_mask & (instance_map == 0)
+            mask = leaf_mask & (segmentation_map == 0)
             if (mask.sum() > 0) & self.position_mask[
                 params["y_pos"].to(int), params["x_pos"].to(int)
             ]:
-                instance_map[mask] = leaf_idx
+                segmentation_map[mask] = leaf_idx
                 leaves_params.append(params)
                 leaf_idx += 1
             if (self.n_sample is not None) and leaf_idx >= self.n_sample:
                 break
 
-        instance_table = pd.DataFrame(leaves_params, columns=self.params)
-        instance_table["leaf_idx"] = torch.tensor(range(leaf_idx - 1)) + 1
-        instance_table["leaf_shape"] = self.leaf_shape
-        return instance_table, instance_map
+        leaf_table = pd.DataFrame(leaves_params, columns=self.params)
+        leaf_table["leaf_idx"] = torch.tensor(range(leaf_idx - 1)) + 1
+        leaf_table["leaf_shape"] = self.leaf_shape
+        return leaf_table, segmentation_map
 
 
 class LeafAppearanceSampler:
     """Setup color and texture model for a dead leaves partition.
 
     Args:
-        instance_table (pd.DataFrame):
+        leaf_table (pd.DataFrame):
             Dataframe of leaves and their parameters.
         color_param_distributions (dict[str, dict[str, dict[str, float]]])
             Color parameters and their distribution setup.
@@ -347,16 +347,16 @@ class LeafAppearanceSampler:
 
     def __init__(
         self,
-        instance_table: pd.DataFrame,
+        leaf_table: pd.DataFrame,
         device: Literal["cuda", "mps", "cpu"] | None = None,
     ):
         self.device: torch.device = (
             torch.device(device) if device else choose_compute_backend()
         )
         """Chosen compute backend."""
-        self.instance_table: pd.DataFrame = instance_table.copy()
+        self.leaf_table: pd.DataFrame = leaf_table.copy()
         """Dataframe of leaves and their parameters."""
-        self.n_leaves = len(self.instance_table)
+        self.n_leaves = len(self.leaf_table)
 
     # -------------------------------------
     # Color
@@ -383,7 +383,7 @@ class LeafAppearanceSampler:
                 for idx, hyper_param in hyper_params.items():
                     if isinstance(hyper_param, dict):
                         hyper_params[idx] = torch.tensor(
-                            hyper_param["fn"](self.instance_table[hyper_param["from"]])
+                            hyper_param["fn"](self.leaf_table[hyper_param["from"]])
                         )
                 self.color_distributions[param] = dist_class(**hyper_params)
 
@@ -465,11 +465,11 @@ class LeafAppearanceSampler:
         
         elif self.color_space == ("H", "S", "V"):
             color = self._sample_3d_colors()
-            self.instance_table[color_columns_rgb] = hsv_to_rgb(color)
+            self.leaf_table[color_columns_rgb] = hsv_to_rgb(color)
     
         elif self.color_space == "gray":
             color = self._sample_grayscale_colors()
-            self.instance_table[color_columns_rgb] =  color.expand(-1, 3)
+            self.leaf_table[color_columns_rgb] =  color.expand(-1, 3)
     
         elif self.color_space == "source":
             color = self._sample_colors_from_images()
@@ -478,8 +478,8 @@ class LeafAppearanceSampler:
         else:
             raise ValueError(f"Unsupported color space: {self.color_space}")
 
-        self.instance_table[color_columns] = color
-        return self.instance_table
+        self.leaf_table[color_columns] = color
+        return self.leaf_table
 
     # -------------------------------------
     # Texture
@@ -523,7 +523,7 @@ class LeafAppearanceSampler:
         """
         with self.device:
             rows = []
-            for leaf_idx in self.instance_table.leaf_idx:
+            for leaf_idx in self.leaf_table.leaf_idx:
                 row = {"leaf_idx": leaf_idx}
         
                 for channel_name, channel_cfg in self.texture_distributions.items():
@@ -569,17 +569,17 @@ class LeafAppearanceSampler:
         else:
             raise ValueError(f"Unsupported texture space: {self.texture_space}")
         
-        self.instance_table = self.instance_table.merge(df, on="leaf_idx", how="left")
-        return self.instance_table
+        self.leaf_table = self.leaf_table.merge(df, on="leaf_idx", how="left")
+        return self.leaf_table
 
 
 class ImageRenderer:
     """Setup color and texture model for a dead leaves partition.
 
     Args:
-        instance_table (pd.DataFrame):
+        leaf_table (pd.DataFrame):
             Dataframe of leaves and their parameters.
-        instance_map (torch.Tensor):
+        segmentation_map (torch.Tensor):
             Partition which assigns image locations to a leaves
         background_color (torch.Tensor, optional):
             For images which are not fully covered (due to a position mask or sparse
@@ -589,8 +589,8 @@ class ImageRenderer:
 
     def __init__(
         self,
-        instance_table: pd.DataFrame,
-        instance_map: torch.Tensor,
+        leaf_table: pd.DataFrame,
+        segmentation_map: torch.Tensor,
         background_color: torch.Tensor | None = None,
         device: Literal["cuda", "mps", "cpu"] | None = None,
     ):
@@ -598,15 +598,15 @@ class ImageRenderer:
             torch.device(device) if device else choose_compute_backend()
         )
         """Chosen compute backend."""
-        self.image_shape: torch.Size = instance_map.shape
+        self.image_shape: torch.Size = segmentation_map.shape
         """Height (y, M) and width (x, N) of the canvas."""
         self.background_color: torch.Tensor | None = background_color
         """Color for pixels not belonging to any leaf."""
         if isinstance(background_color, torch.Tensor):
             self.background_color = self.background_color.to(device=self.device)
-        self.instance_table: pd.DataFrame = instance_table
+        self.leaf_table: pd.DataFrame = leaf_table
         """Dataframe of leaves and their parameters."""
-        self.instance_map: torch.Tensor = instance_map
+        self.segmentation_map: torch.Tensor = segmentation_map
         """Partition of the image area."""
         self._infer_texture_space()
     
@@ -614,21 +614,21 @@ class ImageRenderer:
         """Infer which color space the texture parameters are defined in"""
         keys = sorted(
             col.removeprefix("texture_").split("_")[0]
-            for col in self.instance_table.columns
+            for col in self.leaf_table.columns
             if col.startswith("texture_") and col.endswith("_dist")
         )
         self.texture_space = color_spaces.get(tuple(keys), None)
     
     def _get_texture_param_columns(self, channel: str) -> list[str]:
-        """Get all columns which contain texture parameters from instance_table"""
+        """Get all columns which contain texture parameters from leaf_table"""
         prefix = f"texture_{channel}_"
         return [
-            c for c in self.instance_table.columns
+            c for c in self.leaf_table.columns
             if c.startswith(prefix) and not c.endswith("_dist")
         ]
     
     def _get_leaf_texture_params(self, leaf_row, channel: str) -> dict:
-        """Get values from columns with texture parameters in instance_table"""
+        """Get values from columns with texture parameters in leaf_table"""
         prefix = f"texture_{channel}_"
         hyper_params = {}
     
@@ -647,19 +647,19 @@ class ImageRenderer:
                 Texture image of shape (H, W).
         """
         texture = torch.zeros(self.image_shape, device=self.device)
-        for _, leaf in self.instance_table.iterrows():
+        for _, leaf in self.leaf_table.iterrows():
             dist_name = leaf[f"texture_{channel}_dist"]
             dist_class = dist_kw[dist_name]
             hyper_params = self._get_leaf_texture_params(leaf, channel)
             leaf_texture = dist_class(**hyper_params).sample(self.image_shape)
 
-            mask = self.instance_map == leaf["leaf_idx"]
+            mask = self.segmentation_map == leaf["leaf_idx"]
             texture[mask] = leaf_texture[mask]
         return texture
     
     def _generate_leafwise_texture_from_source(self) -> torch.Tensor:
         """
-        Generate grayscale texture from image sources stored in instance_table.
+        Generate grayscale texture from image sources stored in leaf_table.
         
         Returns:
             torch.Tensor
@@ -674,9 +674,9 @@ class ImageRenderer:
             indexing="xy",
         )
     
-        for i, row in self.instance_table.iterrows():
+        for i, row in self.leaf_table.iterrows():
             leaf_idx = row.leaf_idx
-            leaf_mask = self.instance_map == leaf_idx
+            leaf_mask = self.segmentation_map == leaf_idx
 
             unoccluded_mask = leaf_mask_kw[row["shape"]]((X, Y), row)
             top, left, bottom, right = bounding_box(unoccluded_mask, 1)
@@ -732,17 +732,17 @@ class ImageRenderer:
         with self.device:
             image = torch.zeros(self.image_shape + (3,), device=self.device)
             colors = torch.tensor(
-                self.instance_table[["color_R", "color_G", "color_B"]].to_numpy(),
+                self.leaf_table[["color_R", "color_G", "color_B"]].to_numpy(),
                 dtype=torch.float32,
                 device=self.device
             )
             texture = self._generate_leafwise_texture()
-            for leaf_idx in self.instance_table.leaf_idx:
-                image[self.instance_map == leaf_idx] = torch.clip(
-                    colors[leaf_idx - 1] + texture[self.instance_map == leaf_idx], 0, 1
+            for leaf_idx in self.leaf_table.leaf_idx:
+                image[self.segmentation_map == leaf_idx] = torch.clip(
+                    colors[leaf_idx - 1] + texture[self.segmentation_map == leaf_idx], 0, 1
                 )
             if self.background_color is not None:
-                image[self.instance_map == 0] = self.background_color
+                image[self.segmentation_map == 0] = self.background_color
             return image
     
     def apply_image_noise(
@@ -853,7 +853,7 @@ class ImageRenderer:
         ax.set_ylim(0, self.image_shape[0])
 
         def add_leaf(frame):
-            leaf = self.instance_table.iloc[frame]
+            leaf = self.leaf_table.iloc[frame]
             circle = plt.Circle(
                 (leaf.y_pos.cpu(), leaf.x_pos.cpu()),
                 leaf.radius.cpu(),
@@ -865,7 +865,7 @@ class ImageRenderer:
             return ax
 
         dl_animation = animation.FuncAnimation(
-            fig, add_leaf, frames=len(self.instance_table), interval=1000 / fps, repeat=False
+            fig, add_leaf, frames=len(self.leaf_table), interval=1000 / fps, repeat=False
         )
 
         if save_to:
@@ -887,12 +887,12 @@ class InstanceTopology():
             torch.device(device) if device else choose_compute_backend()
             )
 
-    def instance_map_from_table(self, instance_table: pd.DataFrame) -> torch.Tensor:
+    def segmentation_map_from_table(self, leaf_table: pd.DataFrame) -> torch.Tensor:
         """
-        Construct instance_map from instance_table.
+        Construct segmentation_map from leaf_table.
     
         Args:
-            instance_table : pd.DataFrame
+            leaf_table : pd.DataFrame
                 Table containing per-leaf geometry parameters.
     
         Returns:
@@ -900,16 +900,16 @@ class InstanceTopology():
                 Instance map with shape self.image_shape.
         """
         H, W = self.image_shape
-        instance_map = torch.zeros((H, W), device=self.device, dtype=torch.int64)
+        segmentation_map = torch.zeros((H, W), device=self.device, dtype=torch.int64)
         X, Y = torch.meshgrid(
             torch.arange(W, device=self.device),
             torch.arange(H, device=self.device),
             indexing="xy",
         )
     
-        for _, row in instance_table.iterrows():
+        for _, row in leaf_table.iterrows():
             generate_leaf_mask = leaf_mask_kw[row["leaf_shape"]]
             leaf_mask = generate_leaf_mask((X, Y), row.to_dict())
-            mask = leaf_mask & (instance_map == 0)
-            instance_map[mask] = int(row["leaf_idx"])
-        return instance_map
+            mask = leaf_mask & (segmentation_map == 0)
+            segmentation_map[mask] = int(row["leaf_idx"])
+        return segmentation_map
