@@ -100,14 +100,6 @@ class LeafGeometryGenerator:
         """Chosen compute backend."""
         self.size: tuple[int, int] = size
         """Height (y, M) and width (x, N) of the canvas."""
-        self.position_mask: torch.Tensor = torch.ones(
-            self.size, dtype=int, device=self.device
-        )
-        """Positions on canvas masked for sampling leaf positions."""
-        if position_mask is not None:
-            if position_mask.shape != size:
-                raise ValueError("Position mask needs to match image size.")
-            self.position_mask: torch.Tensor = position_mask.to(device=self.device)
         self.n_sample: int | None = n_sample
         """Number of leaves to sample."""
         self.shape: (
@@ -128,6 +120,10 @@ class LeafGeometryGenerator:
         )
         self.generate_leaf_mask: Callable = leaf_mask_kw[shape]
         """Method to generate mask of leaf on canvas."""
+        self.position_mask = torch.ones(self.size, dtype=int, device=self.device)
+        if position_mask is not None:
+            self._resolve_position_mask(position_mask)
+        """Positions on canvas masked for sampling leaf positions."""
         self._configure_parameters()
 
     shape_kw: dict[str, list[str]] = {
@@ -256,6 +252,44 @@ class LeafGeometryGenerator:
                     dist = dist_class(**hyper_params)
                 samples[param] = dist.sample()
             return samples
+    
+    def _resolve_position_mask(self, position_mask: torch.Tensor | dict) -> None:
+        """Resolve position mask from tensor or geometric specification."""
+        
+        # Case 1: already a tensor
+        if isinstance(position_mask, torch.Tensor):
+            self.position_mask = position_mask.to(device=self.device, dtype=int)
+    
+        # Case 2: geometric specification
+        elif isinstance(position_mask, dict):
+            if "shape" not in position_mask or "params" not in position_mask:
+                raise ValueError("Position mask dict must contain 'shape' and 'params'.")
+            
+            # default position to image center
+            default_params = {"x_pos": self.size[1] // 2, "y_pos": self.size[0] // 2}
+            params = {**default_params, **position_mask["params"]}
+
+            shape = position_mask["shape"]
+            params = {
+                k: torch.as_tensor(v, device=self.device)
+                for k, v in params.items()
+            }
+    
+            if shape not in leaf_mask_kw:
+                raise ValueError(f"Unknown shape '{shape}' for position mask.")
+
+            generate_mask = leaf_mask_kw[shape]
+            mask = generate_mask((self.X, self.Y), params)
+            self.position_mask =  mask.to(device=self.device, dtype=int)
+    
+        else:
+            raise TypeError("position_mask must be a torch.Tensor, dict, or None.")
+        
+        if self.position_mask.shape != self.size:
+            raise ValueError("Position mask must match image size.")
+        
+        if not torch.any(self.position_mask):
+            raise ValueError("Position mask is all zeros. No valid sampling positions.")
 
     def generate_instance(self) -> tuple[pd.DataFrame, torch.Tensor]:
         """Generate a dead leaves instance from the model.
