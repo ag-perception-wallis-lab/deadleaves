@@ -590,7 +590,8 @@ class ImageRenderer:
     def __init__(
         self,
         leaf_table: pd.DataFrame,
-        segmentation_map: torch.Tensor,
+        segmentation_map: torch.Tensor | None = None,
+        image_shape: tuple[int, int] | None = None,
         background_color: torch.Tensor | None = None,
         device: Literal["cuda", "mps", "cpu"] | None = None,
     ):
@@ -598,8 +599,6 @@ class ImageRenderer:
             torch.device(device) if device else choose_compute_backend()
         )
         """Chosen compute backend."""
-        self.image_shape: torch.Size = segmentation_map.shape
-        """Height (y, M) and width (x, N) of the canvas."""
         self.background_color: torch.Tensor | None = background_color
         """Color for pixels not belonging to any leaf."""
         if isinstance(background_color, torch.Tensor):
@@ -608,7 +607,30 @@ class ImageRenderer:
         """Dataframe of leaves and their parameters."""
         self.segmentation_map: torch.Tensor = segmentation_map
         """Partition of the image area."""
+        self.image_shape: torch.Size = image_shape
+        """Height (y, M) and width (x, N) of the canvas."""
+        self._resolve_image_shape()
+        if segmentation_map is None:
+            self._generate_segmentation_map()
         self._infer_texture_space()
+    
+    def _resolve_image_shape(self) -> None:
+        """Resolve image shape from segmentation_map or explicit image_shape."""
+        if self.segmentation_map is not None:
+            if self.image_shape is not None and self.segmentation_map.shape != self.image_shape:
+                raise ValueError(
+                    f"Segmentation map shape {self.segmentation_map.shape} "
+                    f"does not match provided image_shape {self.image_shape}"
+                )
+            self.image_shape = self.segmentation_map.shape
+        elif self.image_shape is None:
+            raise ValueError(
+                "Must provide at least one of 'segmentation_map' or 'image_shape'."
+            )
+
+    def _generate_segmentation_map(self) -> None:
+        topology = InstanceTopology(image_shape=self.image_shape)
+        self.segmentation_map = topology.segmentation_map_from_table(self.leaf_table)
     
     def _infer_texture_space(self) -> None:
         """Infer which color space the texture parameters are defined in"""
