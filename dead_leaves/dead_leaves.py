@@ -303,7 +303,7 @@ class LeafGeometryGenerator:
         Returns:
             tuple[pd.DataFrame, torch.Tensor]:
                 DataFrame listing the parameters of all generated leaves, along
-                with an instance map assigning each image location to a leaf.
+                with an segementation map assigning each image location to a leaf.
         """
         leaves_params = []
         segmentation_map = torch.zeros(self.image_shape, device=self.device, dtype=int)
@@ -629,7 +629,8 @@ class ImageRenderer:
             )
 
     def _generate_segmentation_map(self) -> None:
-        topology = InstanceTopology(image_shape=self.image_shape)
+        """Generate segmentation map if None is provided"""
+        topology = LeafTopology(image_shape=self.image_shape)
         self.segmentation_map = topology.segmentation_map_from_table(self.leaf_table)
     
     def _infer_texture_space(self) -> None:
@@ -897,41 +898,172 @@ class ImageRenderer:
         return dl_animation
 
 
-class InstanceTopology():
-    """Description"""
+class LeafTopology:
+    """
+    Topology-level operations on leaf tables to
+    - Construct segmentation maps
+    - Merge and relabel leaf tables
+    - Manage leaf identities (leaf_idx)
+    """
     def __init__(
-            self,
-            image_shape: tuple[int, int],
-            device: Literal["cuda", "mps", "cpu"] | None = None,
-            ):
-        self.image_shape: tuple[int, int] = image_shape
+        self,
+        image_shape: tuple[int, int] | None = None,
+        device: Literal["cuda", "mps", "cpu"] | None = None,
+    ):
+        self.image_shape: tuple[int, int] | None = image_shape
         self.device: torch.device = (
             torch.device(device) if device else choose_compute_backend()
-            )
-
-    def segmentation_map_from_table(self, leaf_table: pd.DataFrame) -> torch.Tensor:
+        )
+    
+    def _validate_geometry(self, leaf_table: pd.DataFrame) -> None:
+        required = {"x_pos", "y_pos", "leaf_shape", "leaf_idx", "area"}
+        missing = required - set(leaf_table.columns)
+        if missing:
+            raise ValueError(f"Missing required columns: {missing}")
+    
+    def _cull_outside_canvas(
+        self,
+        leaf_table: pd.DataFrame,
+    ) -> pd.DataFrame:
         """
-        Construct segmentation_map from leaf_table.
-    
-        Args:
-            leaf_table : pd.DataFrame
-                Table containing per-leaf geometry parameters.
-    
-        Returns:
-            torch.Tensor
-                Instance map with shape self.image_shape.
+        Remove leaves whose centers are outside the canvas.
         """
         H, W = self.image_shape
-        segmentation_map = torch.zeros((H, W), device=self.device, dtype=torch.int64)
+        return leaf_table[
+            (leaf_table.x_pos >= 0)
+            & (leaf_table.x_pos < W)
+            & (leaf_table.y_pos >= 0)
+            & (leaf_table.y_pos < H)
+        ].copy()
+
+    def segmentation_map_from_table(
+        self,
+        leaf_table: pd.DataFrame,
+    ) -> torch.Tensor:
+        """
+        Construct a segmentation map from a leaf table.
+        
+        Args:
+            leaf_table (pd.DataFrame):
+                Dataframe of leaves and their parameters.
+        
+        Returns:
+            torch.Tensor:
+                Segementation map which assigns each image location to a leaf.
+            
+        """
+        H, W = self.image_shape
+        segmentation_map = torch.zeros(
+            (H, W), device=self.device, dtype=torch.int64
+        )
+
         X, Y = torch.meshgrid(
             torch.arange(W, device=self.device),
             torch.arange(H, device=self.device),
             indexing="xy",
         )
-    
+        
+        self._validate_geometry(leaf_table)
+        leaf_table = self._cull_outside_canvas(leaf_table)
         for _, row in leaf_table.iterrows():
             generate_leaf_mask = leaf_mask_kw[row["leaf_shape"]]
             leaf_mask = generate_leaf_mask((X, Y), row.to_dict())
             mask = leaf_mask & (segmentation_map == 0)
             segmentation_map[mask] = int(row["leaf_idx"])
         return segmentation_map
+
+    def merge_leaf_tables(self, *leaf_tables: pd.DataFrame) -> pd.DataFrame:
+        """
+        Merge multiple leaf tables and assign fresh leaf_idx.
+        """
+        merged = pd.concat(leaf_tables, ignore_index=True)
+        merged = merged.copy()
+        merged["leaf_idx"] = np.arange(1, len(merged) + 1)
+        return merged
+
+    def reindex_by_group(
+        self,
+        leaf_table: pd.DataFrame,
+        groupby: str,
+        shuffle: bool = True,
+        seed: int | None = None,
+    ) -> pd.DataFrame:
+        """
+        Reassign leaf_idx within groups.
+        """
+        rng = np.random.default_rng(seed)
+        out = []
+        start = 1
+
+        for _, group in leaf_table.groupby(groupby, sort=False):
+            g = group.copy()
+            if shuffle:
+                g = g.sample(frac=1, random_state=rng.integers(1e9))
+            g["leaf_idx"] = np.arange(start, start + len(g))
+            start += len(g)
+            out.append(g)
+        leaf_table = pd.concat(out, ignore_index=True)
+        leaf_table = leaf_table.sort_values(by="leaf_idx", ascending=True)
+        return leaf_table
+    
+    def shuffle_index_within_group(
+        self,
+        leaf_table: pd.DataFrame,
+        groupby: str | list[str],
+        seed: int | None = None,
+    ) -> pd.DataFrame:
+        """
+        Shuffle rows within groups and reassign a contiguous index column.
+    
+        Args:
+            table (pd.DataFrame):
+                Input leaf table.
+            groupby (str or list[str]):
+                Column(s) defining groups (e.g. "type").
+            seed (int, optional):
+                Random seed for reproducibility.
+    
+        Returns:
+            pd.DataFrame:
+                Table with reassigned leaf_idx.
+        """
+        rng = np.random.default_rng(seed)
+        out = []
+        start = 1
+    
+        for _, group in leaf_table.groupby(groupby, sort=False):
+            g = group.copy().sample(frac=1, random_state=rng.integers(np.iinfo(np.int32).max))
+            g["leaf_idx"] = np.arange(start, start + len(g))
+            start += len(g)
+            out.append(g)
+        leaf_table = pd.concat(out, ignore_index=True)
+        leaf_table = leaf_table.sort_values(by="leaf_idx", ascending=True)
+        return leaf_table
+    
+    def randomize_index(
+        leaf_table: pd.DataFrame,
+        seed: int | None = None,
+    ) -> pd.DataFrame:
+        """
+        Randomly reassign a global index while preserving all row attributes.
+    
+        This shuffles depth ordering across all leaves, including across semantic
+        groups (e.g. target vs background), while keeping group labels intact.
+    
+        Args:
+            table (pd.DataFrame):
+                Input leaf table.
+            seed (int, optional):
+                Random seed for reproducibility.
+    
+        Returns:
+            pd.DataFrame:
+                Table with randomized index_col.
+        """
+        rng = np.random.default_rng(seed)
+        leaf_table = leaf_table.copy()
+        leaf_table["leaf_idx"] = rng.permutation(np.arange(1, len(leaf_table) + 1))
+        leaf_table = leaf_table.sort_values(by="leaf_idx", ascending=True)
+        return leaf_table
+
+
