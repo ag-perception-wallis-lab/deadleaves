@@ -1,3 +1,9 @@
 uv.lock
 *__pycache__
 *.egg-info
+_build
+paper_files
+*.html
+*.rst
+docs/gallery
+reference
