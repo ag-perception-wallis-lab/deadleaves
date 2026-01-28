@@ -25,15 +25,15 @@ The Dead Leaves Model [@Matheron1968] is a stochastic image generation model.
 The model creates images by sampling objects from a predefined family of distributions.
 Each object ("leaf") is typically a simple shape, such as a circle or ellipse, and its properties (e.g. position, size, orientation, color) are randomly drawn from these distributions.
 This sampling process allows precise control over image statistics, which makes it possible to vary or fix specific leaf properties as desired.
-
 As a consequence, Dead Leaves Models are widely adopted in the study of image statistics [@Ruderman1997;@Lee2001;@Zylberberg2012;@Madhusudana2022], visual function [@Morimoto2021;@Maiello2017;@Groen2012] and, most recently, as training data for machine learning algorithms [@Baradad2021;@Achddou2022].
+
 Leaves are drawn sequentially onto a two-dimensional canvas from front to back, so later leaves can be partially or fully occluded by earlier ones.
 This layering reproduces key statistical properties of natural scenes, including occlusion structure, heavy-tailed distributions of contrasts and edges, scale invariance, and higher-order spatial correlations [@Ruderman1997;@Lee2001].
 For these reasons, the model serves as an effective null model for studying natural image statistics and early visual processing.
-Yet, there is no publicly available software yet, which allows to generate dead leaves images in a systematic fashion.
+Yet, there is no publicly available software yet, which would allow to generate dead leaves images in a systematic fashion.
 This is where our package comes in.
 
-`dead_leaves` is an open-source Python package which facilitates the creation of dead leaves images in a flexible, yet systematic way.
+`dead_leaves` is an open-source Python package which can be used to create dead leaves images in a systematic, yet flexible way.
 Core functionalities are:
 
 - generating dead leaves images with properties (e.g. sizes, orientations, colors) drawn from a wide range of distributions (e.g. uniform, normal, Poisson, power-law, constant) or directly from an image.
@@ -100,7 +100,7 @@ Small differences in implementation or rendering choices can strongly affect the
 Combined with the stochastic nature of the model, this makes it challenging for researchers to reliably generate stimuli and precisely describe their statistical properties.
 In short, current practices create barriers to reproducibility and consistent use of dead leaves images.
 
-To address these issues, we developed `dead_leaves`, a free and open-source Python package that standardizes dead leaves generation.
+To address these issues, we developed `dead_leaves`, a free and open-source Python package that standardizes dead leaves image generation.
 The package can be installed via standard package managers or from GitHub [**add link**].
 It provides fully parameterized functions for flexible stimulus generation, along with extensive documentation which describes the model, its parameters, and its recommended usage.
 By simplifying and unifying dead leaves generation, `dead_leaves` improves reproducibility, reduces implementation errors, and increases accessibility for both experienced users and newcomers.
@@ -108,36 +108,50 @@ By simplifying and unifying dead leaves generation, `dead_leaves` improves repro
 
 # State of the field
 
-We have identified three major areas in research where dead leaves images have been used in previous studies.
-The main advantages of using dead leaves images in all cases is the option to generate images with some desired feature distribution, in particular those present in natural images which removes the dependence on natural images for some settings.
+Dead leaves images have been used across a wide range of disciplines as a controllable, generative model of natural image structure.
+A central advantage of dead leaves models is that they allow the synthesis of images with certain (naturalistic) statistical properties, while avoiding semantic content and a range of potential biases.
+Here, we group prior work into three main areas according to the methodological role dead leaves images play.
 
-## 1. Study of image statistics
-Many studies have analyzed the statistical properties of variations of dead leaves images with the goal of explaining regularities we can find in natural images through the properties of dead leaves images. 
-A lot of work in this direction was done in the late 1990s and early 2000s. 
-For example @Ruderman1997 argued that scaling in terms of the power spectrum in natural images can be explained by the presence of independent objects which have a power-law distribution of sizes, which he demonstrated using the dead leaves model. 
-This work was build on by @Balboa2001 who used dead leaves images to study the effect of occlusion on scaling properties and extended by @Hsiao2005 and @Zylberberg2012 who analyzed the effect of occlusion on the power spectrum by varying leaf opacity. 
- 
-@Lee2001 further studied the statistics of dead leaves images empirically to show the similarity of the resulting contrast/derivative statistic to that of natural images which was later further improved through the addition of texture [@Madhusudana2022]. 
-In particular, Lee et al. considered variations of the dead leaves model to generate images with difference statistics similar to images from different categories, e.g. *vegetation-like* vs. *man-made-like*.
-Later @Pitkow2010 derived an analytical solution to compute the distribution of specific features in dead leaves images providing a direct link between the generative model and the resulting difference statistic.
 
-Finally, Yann Gousseau and colleagues have done extensive work analysing the statistical properties of dead leaves models and extending the frame work [@Alvarez1999; @Gousseau2003; @Bordenave2006; @Gousseau2007].
+## 1. Study of (natural) image statistics
+A large body of work has used dead leaves models to study and explain statistical regularities commonly observed in natural images by treating them as an analytically tractable model of occlusion-dominated scene structure.
+A central question is whether the statistical regularities of natural images arise primarily from generic properties of scene composition, rather than from semantic image content.
 
-## 2. Visual stimuli for human experiments
+Early work demonstrated that scale-invariant properties of natural images, most notably the approximate power-law behavior of their power spectra, emerge from scenes composed of objects whose sizes follow a power-law distribution [@Ruderman1997].
+Subsequent studies demonstrated that these spectral properties are directly shaped by occlusion, with systematic effects of object overlap, transparency, and opacity [@Balboa2001; @Hsiao2005; @Zylberberg2012].
 
-The experimental vision science take advantage of the found statistical properties by using dead leaves images as stimuli which replicate some desired feature distribution. 
-In comparison to natural images they have the additional advantage that there are not semantic components.
+Later work showed that dead leaves models also reproduce other statistical properties of natural scenes -- most notably luminance, contrast and other derivative statistics [@Lee2001].
+Extensions of the model with object texture further improved this correspondence and enabled dead leaves variants to reproduce statistics characteristic of different scene classes, such as vegetation-like and man-made images [@Madhusudana2022].
 
-The generated stimuli replicate specific color distributions [@Morimoto2021] to study luminosity thresholds, power spectra [@Kaping2007] to adapt participants to, and various contrast statistics [@Groen2012] which were used in a categorization task with the goal of studying rapid image categorization. 
-@Taylor2015 and @Maiello2017 added blur either to parts of dead leaves images or to single leaves to study blur detection and discrimination.
-Finally, @Wallis2012 embedded dead leaves into natural images to study the effects of crowding. 
+Finally, several studies have formalized the relationship between the generative assumptions of the dead leaves model and the resulting image statistics.
+Analytical derivations link model parameters directly to feature distributions [@Pitkow2010], and complementary work has established a rigorous mathematical foundation using tools from stochastic geometry and probability theory [@Alvarez1999; @Gousseau2003; @Bordenave2006; @Gousseau2007].
 
-## 3. Synthetic training data for neural networks
 
-In recent years dead leaves models have been used to generate synthetic images to use as training data for the training of neural networks on disparity estimation [@Madhusudana2022], visual representations [@Baradad2021], and image restoration [@Achddou2022].
+## 2. Visual psychophysics
 
-Apart from these three main use cases dead leaves images have for example also been used to measure texture quality on a digital camera [@Cao2010].
-In conclusion there are many research areas for the application of dead leaves images and hence use cases for this package.
+In visual psychophysics, dead leaves images are primarily used as controlled stimuli that preserve selected statistical properties of natural scenes while avoiding semantic content.
+This allows researchers to study perceptual sensitivity to specific image statistics and image-level cues in isolation.
+For example, dead leaves stimuli have been used to investigate the conditions under which surfaces appear self-luminous, by carefully controlling luminance and color distributions [@Morimoto2021].
+
+A different line of research uses dead leaves stimuli to study rapid scene categorization under controlled image statistics.
+By manipulating orientation and spatial frequency content, dead leaves images have been used in adaptation paradigms to probe which image statistics support rapid scene-level judgments [@Kaping2007], while contrast and higher-order statistics derived from dead leaves images have been directly controlled in categorization tasks to isolate their contribution to rapid scene processing [@Groen2012].
+
+Finally, dead leaves images have been modified to selectively target specific perceptual cues while maintaining global image structure.
+Spatially localized or object-level blur has been introduced to study blur detection and discrimination [@Taylor2015; @Maiello2017], and dead leaves patterns have been embedded into natural images to study visual crowding while preserving control over local image statistics [@Wallis2012].
+
+Across these applications, dead leaves models function as semantically neutral, yet statistically structured stimuli that enable precise manipulation of image properties relevant to human visual perception.
+
+
+## 3. Synthetic data for computer vision
+
+Dead leaves models have recently been used to generate synthetic images with fully controlled statistical and generative structure, providing training and evaluation data for computer vision tasks and models.
+
+One application is in training computer vision models on synthetic data that bypasses costly real‑image collection. Dead leaves images have been used for tasks such as disparity estimation [@Madhusudana2022], learning visual representations that emphasize shape and occlusion cues [@Baradad2021], and image restoration including denoising and deblurring [@Achddou2022].
+
+Beyond training neural networks, dead leaves images have also been used as a benchmark for evaluating image quality, for example in assessing texture reproduction on digital cameras [@Cao2010].
+
+Overall, these applications illustrate that dead leaves models provide a flexible tool for generating semantically neutral yet statistically structured images, bridging the gap between highly simplified synthetic stimuli and the complexity of natural scenes.
+
 
 # Software Design
 
