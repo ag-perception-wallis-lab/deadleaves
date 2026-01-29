@@ -643,7 +643,7 @@ class ImageRenderer:
         self.texture_space = color_spaces.get(tuple(keys), None)
     
     def _get_texture_param_columns(self, channel: str) -> list[str]:
-        """Get all columns which contain texture parameters from leaf_table"""
+        """Get all columns which contain texture parameters from leaf_table."""
         prefix = f"texture_{channel}_"
         return [
             c for c in self.leaf_table.columns
