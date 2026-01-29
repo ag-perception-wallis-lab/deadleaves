@@ -651,7 +651,7 @@ class ImageRenderer:
         ]
     
     def _get_leaf_texture_params(self, leaf_row, channel: str) -> dict:
-        """Get values from columns with texture parameters in leaf_table"""
+        """Get values from columns with texture parameters in leaf_table."""
         prefix = f"texture_{channel}_"
         hyper_params = {}
     
