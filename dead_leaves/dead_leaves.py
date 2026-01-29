@@ -55,6 +55,7 @@ dist_params: dict[str, set[str]] = {
     "expcosine": {"frequency", "exponential_constant"},
     "image": {"dir"},
 }
+"""Dictionary connecting keys to required parameters for distributions."""
 
 color_spaces = {
     ("B", "G", "R"): ("R", "G", "B"),
@@ -63,6 +64,7 @@ color_spaces = {
     ("source",): ("source"),
     ("alpha", "source"): ("source"),
 }
+"""Dictionary connecting alphabetically sorted color channels to ordering in images."""
 
 
 class LeafGeometryGenerator:
@@ -75,16 +77,18 @@ class LeafGeometryGenerator:
         shape_param_distributions (dict[str, dict[str, [dict[str,float]]]):
             Leaf shape parameters and their distributions and distribution parameter values.
         image_shape (tuple[int, int]):
-            Height (y, M) and width (x, N) of the area to be partitioned.
-        position_mask (torch.Tensor, optional):
+            Height (y, M) and width (x, N) of the area to be partitioned, i.e. the canvas.
+        position_mask (torch.Tensor | np.ndarray | dict | None, optional):
             Boolean tensor containing allowed leaf positions to create images with
-            different shapes.
-        n_sample (int, optional):
+            different shapes. If None all positions on the canvas are allowed.
+            Defaults to None.
+        n_sample (int | None, optional):
             Number of leaves to sample. If None, the sampling will stop when the full
-            area is partitioned.
-            Default is None.
-        device (Literal["cuda", "mps", "cpu"]):
+            area is partitioned. Default is None.
+        device (Literal["cuda", "mps", "cpu"] | None, optional):
             Torch device to use, either 'cuda' or 'cpu'.
+            If None, device will be chosen automatically.
+            Defaults to None.
     """
 
     def __init__(
@@ -92,7 +96,7 @@ class LeafGeometryGenerator:
         leaf_shape: Literal["circular", "ellipsoid", "rectangular", "polygon"],
         shape_param_distributions: dict[str, dict[str, dict[str, float]]],
         image_shape: tuple[int, int],
-        position_mask: torch.Tensor | None = None,
+        position_mask: torch.Tensor | np.ndarray | dict | None = None,
         n_sample: int | None = None,
         device: Literal["cuda", "mps", "cpu"] | None = None,
     ) -> None:
@@ -137,7 +141,8 @@ class LeafGeometryGenerator:
     """Dictionary connecting keys to respective list of shape parameters."""
 
     def _resolve_dependencies(self) -> list[str]:
-        """Resolve model parameter dependencies.
+        """
+        Resolve model parameter dependencies.
 
         Raises:
             ValueError:
@@ -166,7 +171,8 @@ class LeafGeometryGenerator:
         return ordered_params
 
     def _unpack_parameters(self) -> None:
-        """Generate list of model parameters and distribution instances to sample from.
+        """
+        Generate list of model parameters and distribution instances to sample from.
 
         Raises:
             ValueError:
@@ -209,7 +215,8 @@ class LeafGeometryGenerator:
         self.params = list(self.distributions.keys())
 
     def _sample_parameters(self) -> dict[str, torch.Tensor]:
-        """Draw a sample from the model distributions.
+        """
+        Draw a sample from the model distributions.
 
         Returns:
             dict[str, torch.Tensor]:
@@ -258,7 +265,8 @@ class LeafGeometryGenerator:
     def _resolve_position_mask(
         self, position_mask: torch.Tensor | np.ndarray | dict
     ) -> None:
-        """Resolve position mask from tensor or geometric specification.
+        """
+        Resolve position mask from tensor or geometric specification.
 
         Args:
             position_mask (torch.Tensor | np.ndarray | dict):
@@ -318,11 +326,12 @@ class LeafGeometryGenerator:
             raise ValueError("Position mask is all zeros. No valid sampling positions.")
 
     def generate_segmentation(self) -> tuple[pd.DataFrame, torch.Tensor]:
-        """Generate a dead leaves segmentation from the model.
+        """
+        Generate a dead leaves segmentation from the model.
 
         Returns:
             tuple[pd.DataFrame, torch.Tensor]:
-                DataFrame listing the parameters of all generated leaves, along
+                Dataframe listing the parameters of all generated leaves, along
                 with an segmentation map assigning each image location to a leaf.
         """
         leaves_params = []
@@ -349,20 +358,16 @@ class LeafGeometryGenerator:
 
 
 class LeafAppearanceSampler:
-    """Setup color and texture model for a dead leaves partition.
+    """
+    Setup color and texture model for a dead leaves partition.
 
     Args:
         leaf_table (pd.DataFrame):
             Dataframe of leaves and their parameters.
-        color_param_distributions (dict[str, dict[str, dict[str, float]]])
-            Color parameters and their distribution setup.
-        texture_param_distributions (dict[str, dict[str, dict[str, float]]], optional):
-            Texture parameters and their distribution setup. Defaults to constant 0,
-            i.e. no texture.
-        background_color (torch.Tensor, optional):
-            For images which are not fully covered (due to a position mask or sparse
-            sampling) one can set a RGB background color. If None the back ground will
-            be black. Defaults to None.
+        device (Literal["cuda", "mps", "cpu"] | None, optional):
+            Torch device to use, either 'cuda' or 'cpu'.
+            If None, device will be chosen automatically.
+            Defaults to None.
     """
 
     def __init__(
@@ -376,13 +381,16 @@ class LeafAppearanceSampler:
         """Chosen compute backend."""
         self.leaf_table: pd.DataFrame = leaf_table.copy()
         """Dataframe of leaves and their parameters."""
-        self.n_leaves = len(self.leaf_table)
+        self.n_leaves: int = len(self.leaf_table)
+        """Number of leaves."""
 
     # -------------------------------------
     # Color
     # -------------------------------------
     def _unpack_color(self) -> None:
-        """Generate color distribution instances to sample from."""
+        """
+        Generate color distribution instances to sample from.
+        """
         with self.device:
             self.color_distributions = {}
             for param, dist_dict in self.color_param_distributions.items():
@@ -408,7 +416,8 @@ class LeafAppearanceSampler:
                 self.color_distributions[param] = dist_class(**hyper_params)
 
     def _sample_grayscale_colors(self) -> torch.Tensor:
-        """Sample a grayscale color for each leaf.
+        """
+        Sample a grayscale color for each leaf.
 
         Returns:
             torch.Tensor:
@@ -423,7 +432,8 @@ class LeafAppearanceSampler:
         return colors
 
     def _sample_3d_colors(self) -> torch.Tensor:
-        """Sample a 3d color for each leaf.
+        """
+        Sample a 3d color for each leaf.
 
         Returns:
             torch.Tensor:
@@ -442,7 +452,8 @@ class LeafAppearanceSampler:
         return color_tensor.cpu()
 
     def _sample_colors_from_images(self) -> torch.Tensor:
-        """Sample a pixel value for each leaf from a random image in folder.
+        """
+        Sample a pixel value for each leaf from a random image in folder.
 
         Returns:
             torch.Tensor:
@@ -463,7 +474,12 @@ class LeafAppearanceSampler:
         self,
         color_param_distributions: dict[str, dict[str, dict[str, float]]],
     ) -> torch.Tensor:
-        """Sample leaf colors according to the configured color space.
+        """
+        Sample leaf colors according to the configured color space.
+
+        Args:
+            color_param_distributions (dict[str, dict[str, dict[str, float]]]):
+                Color parameters and their distribution setup.
 
         Returns:
             pd.DataFrame:
@@ -505,7 +521,9 @@ class LeafAppearanceSampler:
     # Texture
     # -------------------------------------
     def _unpack_texture(self) -> None:
-        """Generate texture distribution instances to sample from."""
+        """
+        Generate texture distribution instances to sample from.
+        """
         with self.device:
             self.texture_distributions = {}
 
@@ -539,7 +557,7 @@ class LeafAppearanceSampler:
                     "params": resolved_params,
                 }
 
-    def _sample_texture_parameters(self) -> torch.Tensor:
+    def _sample_texture_parameters(self) -> pd.DataFrame:
         """
         Materialize per-leaf texture parameters and distribution metadata.
 
@@ -578,11 +596,20 @@ class LeafAppearanceSampler:
         texture_param_distributions: dict[
             str, dict[str, dict[str, float | dict[str, dict[str, float]]]]
         ],
-    ) -> torch.Tensor:
-        """Sample leaf textures according to the configured color space.
+    ) -> pd.DataFrame:
+        """
+        Sample leaf textures according to the configured color space.
 
-        pd.DataFrame:
-            Updated DataFrame with texture parameters added to each leaf
+        Args:
+            texture_param_distribution (dict[str, dict[str, dict[str, float | dict[str, dict[str, float]]]]]):
+                Texture parameters and their distribution setup.
+
+        Raises:
+            ValueError: Chosen texture space is not supported.
+
+        Return:
+            pd.DataFrame:
+                Updated DataFrame with texture parameters added to each leaf
         """
         self.texture_param_distributions: dict[
             str, dict[str, dict[str, float | dict[str, dict[str, float]]]]
@@ -604,17 +631,28 @@ class LeafAppearanceSampler:
 
 
 class ImageRenderer:
-    """Setup color and texture model for a dead leaves partition.
+    """
+    Setup leaf geometry and appearance for rendering.
 
     Args:
         leaf_table (pd.DataFrame):
             Dataframe of leaves and their parameters.
-        segmentation_map (torch.Tensor):
-            Partition which assigns image locations to a leaves
-        background_color (torch.Tensor, optional):
+        segmentation_map (torch.Tensor | None, optional):
+            Partition which assigns image locations to a leaf.
+            If None the segmentation map will be generated from the leaf table.
+            Defaults to None.
+        image_shape (tuple[int,int] | None, optional):
+            Height (y, M) and width (x, N) of the canvas.
+            If None the image_shape will be set based on the segmentation map.
+            Defaults to None. Either image_shape or segmentation_map need to be given.
+        background_color (torch.Tensor | None, optional):
             For images which are not fully covered (due to a position mask or sparse
-            sampling) one can set a RGB background color. If None the back ground will
+            sampling) one can set a RGB background color. If None the background will
             be black. Defaults to None.
+        device (Literal["cuda", "mps", "cpu"] | None, optional):
+            Torch device to use, either 'cuda' or 'cpu'.
+            If None, device will be chosen automatically.
+            Defaults to None.
     """
 
     def __init__(
@@ -635,9 +673,9 @@ class ImageRenderer:
             self.background_color = self.background_color.to(device=self.device)
         self.leaf_table: pd.DataFrame = leaf_table
         """Dataframe of leaves and their parameters."""
-        self.segmentation_map: torch.Tensor = segmentation_map
+        self.segmentation_map: torch.Tensor | None = segmentation_map
         """Partition of the image area."""
-        self.image_shape: torch.Size = image_shape
+        self.image_shape: tuple[int, int] | None = image_shape
         """Height (y, M) and width (x, N) of the canvas."""
         self._resolve_image_shape()
         if segmentation_map is None:
@@ -645,7 +683,12 @@ class ImageRenderer:
         self._infer_texture_space()
 
     def _resolve_image_shape(self) -> None:
-        """Resolve image shape from segmentation_map or explicit image_shape."""
+        """
+        Resolve image shape from segmentation_map or explicit image_shape.
+
+        Raises:
+            ValueError:
+        """
         if self.segmentation_map is not None:
             if (
                 self.image_shape is not None
@@ -676,7 +719,17 @@ class ImageRenderer:
         self.texture_space = color_spaces.get(tuple(keys), None)
 
     def _get_texture_param_columns(self, channel: str) -> list[str]:
-        """Get all columns which contain texture parameters from leaf_table."""
+        """
+        Get all columns which contain texture parameters from leaf_table.
+
+        Args:
+            channel (str):
+                Color channel to extract parameters for.
+
+        Returns:
+            list[str]:
+                Columns with parameters for channel texture.
+        """
         prefix = f"texture_{channel}_"
         return [
             c
@@ -684,8 +737,20 @@ class ImageRenderer:
             if c.startswith(prefix) and not c.endswith("_dist")
         ]
 
-    def _get_leaf_texture_params(self, leaf_row, channel: str) -> dict:
-        """Get values from columns with texture parameters in leaf_table."""
+    def _get_leaf_texture_params(self, leaf_row: pd.Series, channel: str) -> dict:
+        """
+        Get values from columns with texture parameters in leaf_table.
+
+        Args:
+            leaf_row (pd.Series):
+                Single row from leaf table.
+            channel (str):
+                Channel name.
+
+        Returns:
+            dict:
+                Parameters for leaf texture as dictionary.
+        """
         prefix = f"texture_{channel}_"
         hyper_params = {}
 
@@ -695,9 +760,13 @@ class ImageRenderer:
 
         return hyper_params
 
-    def _generate_leafwise_texture_1d(self, channel):
+    def _generate_leafwise_texture_1d(self, channel: str) -> torch.Tensor:
         """
         Generate grayscale texture from sampled distributions.
+
+        Args:
+            channel (str):
+                Color channel name.
 
         Returns:
             torch.Tensor
@@ -755,11 +824,16 @@ class ImageRenderer:
         return texture
 
     def _generate_leafwise_texture(self) -> torch.Tensor:
-        """Generate a per-pixel texture image from leafwise texture parameters.
+        """
+        Generate a per-pixel texture image from leafwise texture parameters.
+
+        Raises:
+            ValueError:
+                Fallback for unknown specifications.
 
         Returns:
             torch.Tensor
-                Texture image of shape (H, W, 3).
+                Texture RBG image of shape (H, W, 3).
         """
         H, W = self.image_shape
         texture = torch.zeros((H, W, 3), device=self.device)
@@ -786,7 +860,8 @@ class ImageRenderer:
             return texture
 
     def render_image(self) -> torch.Tensor:
-        """Generate a dead leaves image.
+        """
+        Generate a dead leaves image.
 
         Returns:
             torch.Tensor:
@@ -873,7 +948,8 @@ class ImageRenderer:
         return torch.clip(noisy_image, 0, 1)
 
     def show(self, image: torch.Tensor, figsize: tuple[int, int] | None = None) -> None:
-        """Show selected image.
+        """
+        Show selected image.
 
         Args:
             image (torch.Tensor):
@@ -890,7 +966,8 @@ class ImageRenderer:
         plt.show()
 
     def save(self, image: torch.Tensor, save_to: Path | str) -> None:
-        """Save image to path.
+        """
+        Save image to path.
 
         Args:
             image (torch.Tensor):
@@ -900,8 +977,11 @@ class ImageRenderer:
         """
         plt.imsave(save_to, image.cpu().numpy())
 
-    def animate(self, fps: int = 10, save_to: Path = None) -> animation.FuncAnimation:
-        """Generate animation of dead leaves partition generation.
+    def animate(
+        self, fps: int = 10, save_to: Path | None = None
+    ) -> animation.FuncAnimation:
+        """
+        Generate animation of dead leaves partition generation.
 
         Args:
             fps (int, optional):
@@ -955,6 +1035,14 @@ class LeafTopology:
     - Construct segmentation maps
     - Merge and relabel leaf tables
     - Manage leaf identities (leaf_idx)
+
+    Args:
+        image_shape (tuple[int, int] | None, optional):
+            Height (y, M) and width (x, N) of the area to be partitioned.
+        device (Literal["cuda", "mps", "cpu"] | None, optional):
+            Torch device to use, either 'cuda' or 'cpu'.
+            If None, device will be chosen automatically.
+            Defaults to None.
     """
 
     def __init__(
@@ -963,11 +1051,24 @@ class LeafTopology:
         device: Literal["cuda", "mps", "cpu"] | None = None,
     ):
         self.image_shape: tuple[int, int] | None = image_shape
+        """Height (y, M) and width (x, N) of the canvas."""
         self.device: torch.device = (
             torch.device(device) if device else choose_compute_backend()
         )
+        """Chosen compute backend."""
 
     def _validate_geometry(self, leaf_table: pd.DataFrame) -> None:
+        """
+        Check if leaf table contains parameters necessary for constructing the geometry.
+
+        Args:
+            leaf_table (pd.DataFrame):
+                Dataframe of leaves and their parameters.
+
+        Raises:
+            ValueError:
+                Parameters are missing.
+        """
         required = {"x_pos", "y_pos", "leaf_shape", "leaf_idx", "area"}
         missing = required - set(leaf_table.columns)
         if missing:
@@ -979,6 +1080,14 @@ class LeafTopology:
     ) -> pd.DataFrame:
         """
         Remove leaves whose centers are outside the canvas.
+
+        Args:
+            leaf_table (pd.DataFrame):
+                Dataframe of leaves and their parameters.
+
+        Returns:
+            pd.DataFrame:
+                Reduced table.
         """
         H, W = self.image_shape
         return leaf_table[
@@ -1001,7 +1110,7 @@ class LeafTopology:
 
         Returns:
             torch.Tensor:
-                Segementation map which assigns each image location to a leaf.
+                Segmentation map which assigns each image location to a leaf.
 
         """
         H, W = self.image_shape
@@ -1025,6 +1134,14 @@ class LeafTopology:
     def merge_leaf_tables(self, *leaf_tables: pd.DataFrame) -> pd.DataFrame:
         """
         Merge multiple leaf tables and assign fresh leaf_idx.
+
+        Args:
+            leaf_tables (pd.DataFrame):
+                List of tables to be merged.
+
+        Returns:
+            pd.DataFrame:
+                Merged table.
         """
         merged = pd.concat(leaf_tables, ignore_index=True)
         merged = merged.copy()
@@ -1040,6 +1157,22 @@ class LeafTopology:
     ) -> pd.DataFrame:
         """
         Reassign leaf_idx within groups.
+
+        Args:
+            leaf_table (pd.DataFrame):
+                Dataframe of leaves and their parameters.
+            groupby (str):
+                Column containing the groups.
+            shuffle (bool):
+                If true shuffle leaf index within group. Defaults to true.
+            seed (int | None):
+                Set value for generating a random seed for reproducibility.
+                If None a different random seed will be set at each execution.
+                Defaults to None.
+
+        Returns:
+            pd.DataFrame:
+                Reindexed (and shuffled) table.
         """
         rng = np.random.default_rng(seed)
         out = []
@@ -1092,6 +1225,7 @@ class LeafTopology:
         leaf_table = leaf_table.sort_values(by="leaf_idx", ascending=True)
         return leaf_table
 
+    @staticmethod
     def randomize_index(
         leaf_table: pd.DataFrame,
         seed: int | None = None,
