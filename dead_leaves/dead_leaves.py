@@ -662,12 +662,12 @@ class ImageRenderer:
             )
 
     def _generate_segmentation_map(self) -> None:
-        """Generate segmentation map if None is provided"""
+        """Generate segmentation map if None is provided."""
         topology = LeafTopology(image_shape=self.image_shape)
         self.segmentation_map = topology.segmentation_map_from_table(self.leaf_table)
 
     def _infer_texture_space(self) -> None:
-        """Infer which color space the texture parameters are defined in"""
+        """Infer which color space the texture parameters are defined in."""
         keys = sorted(
             col.removeprefix("texture_").split("_")[0]
             for col in self.leaf_table.columns
@@ -676,7 +676,7 @@ class ImageRenderer:
         self.texture_space = color_spaces.get(tuple(keys), None)
 
     def _get_texture_param_columns(self, channel: str) -> list[str]:
-        """Get all columns which contain texture parameters from leaf_table"""
+        """Get all columns which contain texture parameters from leaf_table."""
         prefix = f"texture_{channel}_"
         return [
             c
@@ -685,7 +685,7 @@ class ImageRenderer:
         ]
 
     def _get_leaf_texture_params(self, leaf_row, channel: str) -> dict:
-        """Get values from columns with texture parameters in leaf_table"""
+        """Get values from columns with texture parameters in leaf_table."""
         prefix = f"texture_{channel}_"
         hyper_params = {}
 
