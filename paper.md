@@ -121,7 +121,8 @@ Early work demonstrated that scale-invariant properties of natural images, most 
 Subsequent studies demonstrated that these spectral properties are directly shaped by occlusion, with systematic effects of object overlap, transparency, and opacity [@Balboa2001; @Hsiao2005; @Zylberberg2012].
 
 Later work showed that dead leaves models also reproduce other statistical properties of natural scenes -- most notably luminance, contrast and other derivative statistics [@Lee2001].
-Extensions of the model with object texture further improved this correspondence and enabled dead leaves variants to reproduce statistics characteristic of different scene classes, such as vegetation-like and man-made images [@Madhusudana2022].
+This includes the possibility to reproduce statistics characteristic of different scene classes, such as vegetation-like and man-made images [@Lee2001].
+Extensions of the model with object texture further improved this correspondence [@Madhusudana2022].
 
 Finally, several studies have formalized the relationship between the generative assumptions of the dead leaves model and the resulting image statistics.
 Analytical derivations link model parameters directly to feature distributions [@Pitkow2010], and complementary work has established a rigorous mathematical foundation using tools from stochastic geometry and probability theory [@Alvarez1999; @Gousseau2003; @Bordenave2006; @Gousseau2007].
