@@ -629,7 +629,7 @@ class ImageRenderer:
             )
 
     def _generate_segmentation_map(self) -> None:
-        """Generate segmentation map if None is provided"""
+        """Generate segmentation map if None is provided."""
         topology = LeafTopology(image_shape=self.image_shape)
         self.segmentation_map = topology.segmentation_map_from_table(self.leaf_table)
     
