@@ -255,8 +255,23 @@ class LeafGeometryGenerator:
                 samples[param] = dist.sample()
             return samples
 
-    def _resolve_position_mask(self, position_mask: torch.Tensor | dict) -> None:
-        """Resolve position mask from tensor or geometric specification."""
+    def _resolve_position_mask(
+        self, position_mask: torch.Tensor | np.ndarray | dict
+    ) -> None:
+        """Resolve position mask from tensor or geometric specification.
+
+        Args:
+            position_mask (torch.Tensor | np.ndarray | dict):
+                Boolean tensor or array with allowed sampling positions or
+                dictionary specifying a leaf shape and its parameters.
+
+        Raises:
+            ValueError: Position mask dict must contain 'shape' and 'params'.
+            ValueError: Check for unsupported leaf shapes in dict.
+            TypeError: Check argument type.
+            ValueError: Check that position mask has same size as canvas.
+            ValueError: Check that there are allowed positions.
+        """
 
         # Case 1: already a tensor
         if isinstance(position_mask, (torch.Tensor, np.ndarray)):
@@ -292,7 +307,9 @@ class LeafGeometryGenerator:
             self.position_mask = mask.to(device=self.device, dtype=int)
 
         else:
-            raise TypeError("position_mask must be a torch.Tensor, dict, or None.")
+            raise TypeError(
+                "position_mask must be a torch.Tensor, np.array, dict, or None."
+            )
 
         if self.position_mask.shape != self.image_shape:
             raise ValueError("Position mask must match image size.")
