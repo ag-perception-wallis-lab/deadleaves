@@ -317,13 +317,13 @@ class LeafGeometryGenerator:
         if not torch.any(self.position_mask):
             raise ValueError("Position mask is all zeros. No valid sampling positions.")
 
-    def generate_instance(self) -> tuple[pd.DataFrame, torch.Tensor]:
-        """Generate a dead leaves instance from the model.
+    def generate_segmentation(self) -> tuple[pd.DataFrame, torch.Tensor]:
+        """Generate a dead leaves segmentation from the model.
 
         Returns:
             tuple[pd.DataFrame, torch.Tensor]:
                 DataFrame listing the parameters of all generated leaves, along
-                with an segementation map assigning each image location to a leaf.
+                with an segmentation map assigning each image location to a leaf.
         """
         leaves_params = []
         segmentation_map = torch.zeros(self.image_shape, device=self.device, dtype=int)
