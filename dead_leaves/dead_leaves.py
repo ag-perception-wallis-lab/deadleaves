@@ -126,7 +126,7 @@ class LeafGeometryGenerator:
         if position_mask is not None:
             self._resolve_position_mask(position_mask)
         """Positions on canvas masked for sampling leaf positions."""
-        self._configure_parameters()
+        self._unpack_parameters()
 
     leaf_shape_kw: dict[str, list[str]] = {
         "circular": ["area"],
@@ -165,7 +165,7 @@ class LeafGeometryGenerator:
                 dependencies.pop(param)
         return ordered_params
 
-    def _configure_parameters(self) -> None:
+    def _unpack_parameters(self) -> None:
         """Generate list of model parameters and distribution instances to sample from.
 
         Raises:
@@ -361,7 +361,7 @@ class LeafAppearanceSampler:
     # -------------------------------------
     # Color
     # -------------------------------------
-    def _configure_color(self) -> None:
+    def _unpack_color(self) -> None:
         """Generate color distribution instances to sample from."""
         with self.device:
             self.color_distributions = {}
@@ -455,8 +455,8 @@ class LeafAppearanceSampler:
         self.color_space = color_spaces[
             tuple(sorted(list(self.color_param_distributions.keys())))
         ]
-        self._configure_color()
-        
+        self._unpack_color()
+
         color_columns = [f"color_{k}" for k in self.color_distributions]
         color_columns_rgb = ["color_R", "color_G", "color_B"]
         
@@ -483,8 +483,8 @@ class LeafAppearanceSampler:
 
     # -------------------------------------
     # Texture
-    # -------------------------------------    
-    def _configure_texture(self) -> None:
+    # -------------------------------------
+    def _unpack_texture(self) -> None:
         """Generate texture distribution instances to sample from."""
         with self.device:
             self.texture_distributions = {}
@@ -560,9 +560,9 @@ class LeafAppearanceSampler:
         self.texture_space = color_spaces[
             tuple(sorted(list(self.texture_param_distributions.keys())))
         ]
-        
-        self._configure_texture()
-        
+
+        self._unpack_texture()
+
         if self.texture_space in ("gray", ("R", "G", "B"), ("H", "S", "V"), "source"):
             df = self._sample_texture_parameters()
     
