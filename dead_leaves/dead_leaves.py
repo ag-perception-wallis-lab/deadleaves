@@ -126,7 +126,9 @@ class LeafGeometryGenerator:
         )
         self.generate_leaf_mask: Callable = leaf_mask_kw[leaf_shape]
         """Method to generate mask of leaf on canvas."""
-        self.position_mask = torch.ones(self.image_shape, dtype=int, device=self.device)
+        self.position_mask: torch.Tensor = torch.ones(
+            *self.image_shape, dtype=torch.int, device=self.device
+        )
         if position_mask is not None:
             self._resolve_position_mask(position_mask)
         """Positions on canvas masked for sampling leaf positions."""
@@ -335,7 +337,9 @@ class LeafGeometryGenerator:
                 with an segmentation map assigning each image location to a leaf.
         """
         leaves_params = []
-        segmentation_map = torch.zeros(self.image_shape, device=self.device, dtype=int)
+        segmentation_map = torch.zeros(
+            *self.image_shape, device=self.device, dtype=torch.int
+        )
         leaf_idx = 1
 
         while torch.any((segmentation_map == 0) & (self.position_mask == 1)):
@@ -800,7 +804,7 @@ class ImageRenderer:
             indexing="xy",
         )
 
-        for i, row in self.leaf_table.iterrows():
+        for _, row in self.leaf_table.iterrows():
             leaf_idx = row.leaf_idx
             leaf_mask = self.segmentation_map == leaf_idx
 
