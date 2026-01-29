@@ -859,6 +859,9 @@ class ImageRenderer:
             texture = gray.unsqueeze(-1).expand(-1, -1, 3)
             return texture
 
+        else:
+            raise ValueError("Unknown texture specifications.")
+
     def render_image(self) -> torch.Tensor:
         """
         Generate a dead leaves image.
