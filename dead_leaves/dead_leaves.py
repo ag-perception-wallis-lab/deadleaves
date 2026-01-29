@@ -634,7 +634,7 @@ class ImageRenderer:
         self.segmentation_map = topology.segmentation_map_from_table(self.leaf_table)
     
     def _infer_texture_space(self) -> None:
-        """Infer which color space the texture parameters are defined in"""
+        """Infer which color space the texture parameters are defined in."""
         keys = sorted(
             col.removeprefix("texture_").split("_")[0]
             for col in self.leaf_table.columns
