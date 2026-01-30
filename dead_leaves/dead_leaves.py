@@ -1029,32 +1029,39 @@ class ImageRenderer:
             animation.FuncAnimation:
                 Animation of partition generation.
         """
+        frames = []
+
+        for idx in self.leaf_table.index:
+            leaf_table = self.leaf_table.iloc[: idx + 1]
+            renderer = ImageRenderer(
+                leaf_table,
+                image_shape=self.image_shape,
+                background_color=self.background_color,
+            )
+            image = renderer.render_image()
+            frames.append(image)
+
         fig, ax = plt.subplots(frameon=False)
         fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=None, hspace=None)
+        im = ax.imshow(frames[0])
         ax.axis("off")
         ax.set_aspect("equal")
         ax.set_xlim(0, self.image_shape[1])
         ax.set_ylim(0, self.image_shape[0])
 
-        def add_leaf(frame):
-            leaf = self.leaf_table.iloc[frame]
-            circle = plt.Circle(
-                (leaf.y_pos.cpu(), leaf.x_pos.cpu()),
-                leaf.radius.cpu(),
-                zorder=-frame,
-                edgecolor="black",
-                facecolor="lightgray",
-            )
-            ax.add_patch(circle)
-            return ax
+        def update(i):
+            im.set_data(frames[i])
+            return [im]
 
         dl_animation = animation.FuncAnimation(
             fig,
-            add_leaf,
+            update,
             frames=len(self.leaf_table),
             interval=1000 / fps,
             repeat=False,
         )
+
+        plt.close(fig)
 
         if save_to:
             FFwriter = animation.FFMpegWriter(fps=fps)
