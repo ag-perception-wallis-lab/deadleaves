@@ -807,23 +807,50 @@ class ImageRenderer:
         for _, row in self.leaf_table.iterrows():
             leaf_idx = row.leaf_idx
             leaf_mask = self.segmentation_map == leaf_idx
+            texture_patch = torch.zeros((H, W), device=self.device)
 
-            unoccluded_mask = leaf_mask_kw[row["shape"]]((X, Y), row)
+            unoccluded_mask = leaf_mask_kw[row["leaf_shape"]]((X, Y), row)
             top, left, bottom, right = bounding_box(unoccluded_mask, 1)
             vh, vw = bottom - top, right - left
             if vh <= 0 or vw <= 0:
                 continue
-
-            patch = (
-                pil_to_tensor(
-                    PIL.Image.open(row["texture_source_dir"])
-                    .convert("L")
-                    .resize((vw, vh))
-                ).to(self.device)
-                / 255.0
-            )
-            texture_patch = torch.zeros((H, W), device=self.device)
-            texture_patch[top:bottom, left:right] = patch
+            if top == 0 or left == 0 or bottom == H or right == W:
+                centered_leaf = row.copy()
+                frac_leaf_x_pos = torch.frac(centered_leaf["x_pos"])
+                frac_leaf_y_pos = torch.frac(centered_leaf["y_pos"])
+                centered_leaf["x_pos"] = W // 2 + frac_leaf_x_pos
+                centered_leaf["y_pos"] = H // 2 + frac_leaf_y_pos
+                centered_leaf_mask = leaf_mask_kw[row["leaf_shape"]](
+                    (X, Y), centered_leaf
+                )
+                ctop, cleft, cbottom, cright = bounding_box(centered_leaf_mask, 1)
+                fw = cright - cleft
+                fh = cbottom - ctop
+                patch = (
+                    pil_to_tensor(
+                        PIL.Image.open(row["texture_source_dir"])
+                        .convert("L")
+                        .resize((fw, fh))
+                    ).to(self.device)
+                    / 255.0
+                )
+                offset_y = fh - vh if top == 0 else 0
+                offset_x = fw - vw if left == 0 else 0
+                texture_patch[top:bottom, left:right] = patch[
+                    :,
+                    offset_y : offset_y + vh,
+                    offset_x : offset_x + vw,
+                ]
+            else:
+                patch = (
+                    pil_to_tensor(
+                        PIL.Image.open(row["texture_source_dir"])
+                        .convert("L")
+                        .resize((vw, vh))
+                    ).to(self.device)
+                    / 255.0
+                )
+                texture_patch[top:bottom, left:right] = patch
             texture += leaf_mask * row["texture_alpha_alpha"] * texture_patch
         return texture
 
