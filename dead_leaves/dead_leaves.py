@@ -74,10 +74,10 @@ class LeafGeometryGenerator:
     Args:
         leaf_shape (Literal["circular", "ellipsoid", "rectangular", "polygon"]):
             Shape of leaves.
-        shape_param_distributions (dict[str, dict[str, [dict[str,float]]]):
-            Leaf shape parameters and their distributions and distribution parameter values.
+        shape_param_distributions (dict[str, dict[str, [dict[str, float | dict]]]):
+            Leaf shape parameters and their distributions and hyperparameter values.
         image_shape (tuple[int, int]):
-            Height (y, M) and width (x, N) of the area to be partitioned, i.e. the canvas.
+            Height (y, M) and width (x, N) of the canvas.
         position_mask (torch.Tensor | np.ndarray | dict | None, optional):
             Boolean tensor containing allowed leaf positions to create images with
             different shapes. If None all positions on the canvas are allowed.
@@ -94,7 +94,7 @@ class LeafGeometryGenerator:
     def __init__(
         self,
         leaf_shape: Literal["circular", "ellipsoid", "rectangular", "polygon"],
-        shape_param_distributions: dict[str, dict[str, dict[str, float]]],
+        shape_param_distributions: dict[str, dict[str, dict[str, float | dict]]],
         image_shape: tuple[int, int],
         position_mask: torch.Tensor | np.ndarray | dict | None = None,
         n_sample: int | None = None,
@@ -115,10 +115,8 @@ class LeafGeometryGenerator:
             | Literal["polygon"]
         ) = leaf_shape
         """Shape of the leaves."""
-        self.shape_param_distributions: dict[str, dict[str, dict[str, float]]] = (
-            shape_param_distributions
-        )
-        """Shape parameters and their distributions and distribution parameter values."""
+        self.shape_param_distributions = shape_param_distributions
+        """Shape parameters and their distributions and hyperparameter values."""
         self.X, self.Y = torch.meshgrid(
             torch.arange(self.image_shape[1], device=self.device),
             torch.arange(self.image_shape[0], device=self.device),
@@ -129,9 +127,9 @@ class LeafGeometryGenerator:
         self.position_mask: torch.Tensor = torch.ones(
             *self.image_shape, dtype=torch.int, device=self.device
         )
+        """Positions on canvas masked for sampling leaf positions."""
         if position_mask is not None:
             self._resolve_position_mask(position_mask)
-        """Positions on canvas masked for sampling leaf positions."""
         self._unpack_parameters()
 
     leaf_shape_kw: dict[str, list[str]] = {
@@ -187,7 +185,11 @@ class LeafGeometryGenerator:
                 f"{self.leaf_shape_kw[self.leaf_shape]} but received {self.params}"
             )
         sampling_box = bounding_box(self.position_mask, 1)
-        self.distributions = {
+        if sampling_box is None:
+            raise ValueError("No allowed positions found for sampling.")
+        self.distributions: dict[
+            str, torch.distributions.distribution.Distribution | None
+        ] = {
             "x_pos": torch.distributions.uniform.Uniform(
                 sampling_box[1], sampling_box[3]
             ),
@@ -276,11 +278,16 @@ class LeafGeometryGenerator:
                 dictionary specifying a leaf shape and its parameters.
 
         Raises:
-            ValueError: Position mask dict must contain 'shape' and 'params'.
-            ValueError: Check for unsupported leaf shapes in dict.
-            TypeError: Check argument type.
-            ValueError: Check that position mask has same size as canvas.
-            ValueError: Check that there are allowed positions.
+            ValueError:
+                Position mask dict must contain 'shape' and 'params'.
+            ValueError:
+                Check for unsupported leaf shapes in dict.
+            TypeError:
+                Check argument type.
+            ValueError:
+                Check that position mask has same size as canvas.
+            ValueError:
+                Check that there are allowed positions.
         """
 
         # Case 1: already a tensor
@@ -314,7 +321,7 @@ class LeafGeometryGenerator:
 
             generate_mask = leaf_mask_kw[leaf_shape]
             mask = generate_mask((self.X, self.Y), params)
-            self.position_mask = mask.to(device=self.device, dtype=int)
+            self.position_mask = mask.to(device=self.device, dtype=torch.int)
 
         else:
             raise TypeError(
@@ -347,7 +354,7 @@ class LeafGeometryGenerator:
             leaf_mask = self.generate_leaf_mask((self.X, self.Y), params)
             mask = leaf_mask & (segmentation_map == 0)
             if (mask.sum() > 0) & self.position_mask[
-                params["y_pos"].to(int), params["x_pos"].to(int)
+                params["y_pos"].to(torch.int), params["x_pos"].to(torch.int)
             ]:
                 segmentation_map[mask] = leaf_idx
                 leaves_params.append(params)
@@ -476,22 +483,24 @@ class LeafAppearanceSampler:
 
     def sample_color(
         self,
-        color_param_distributions: dict[str, dict[str, dict[str, float]]],
-    ) -> torch.Tensor:
+        color_param_distributions: (
+            dict[str, dict[str, dict[str, float]]]
+            | dict[str, dict[str, dict[str, dict]]]
+            | dict[str, dict[str, dict[str, str]]]
+        ),
+    ) -> pd.DataFrame:
         """
         Sample leaf colors according to the configured color space.
 
         Args:
-            color_param_distributions (dict[str, dict[str, dict[str, float]]]):
+            color_param_distributions (dict[str, dict[str, dict[str, float | dict | str]]]):
                 Color parameters and their distribution setup.
 
         Returns:
             pd.DataFrame:
                 Updated DataFrame with color parameters added to each leaf
         """
-        self.color_param_distributions: dict[str, dict[str, dict[str, float]]] = (
-            color_param_distributions
-        )
+        self.color_param_distributions = color_param_distributions
         self.color_space = color_spaces[
             tuple(sorted(list(self.color_param_distributions.keys())))
         ]
@@ -598,7 +607,7 @@ class LeafAppearanceSampler:
     def sample_texture(
         self,
         texture_param_distributions: dict[
-            str, dict[str, dict[str, float | dict[str, dict[str, float]]]]
+            str, dict[str, dict[str, float | str | dict[str, dict[str, float]]]]
         ],
     ) -> pd.DataFrame:
         """
@@ -609,15 +618,14 @@ class LeafAppearanceSampler:
                 Texture parameters and their distribution setup.
 
         Raises:
-            ValueError: Chosen texture space is not supported.
+            ValueError:
+                Chosen texture space is not supported.
 
         Return:
             pd.DataFrame:
                 Updated DataFrame with texture parameters added to each leaf
         """
-        self.texture_param_distributions: dict[
-            str, dict[str, dict[str, float | dict[str, dict[str, float]]]]
-        ] = texture_param_distributions
+        self.texture_param_distributions = texture_param_distributions
         self.texture_space = color_spaces[
             tuple(sorted(list(self.texture_param_distributions.keys())))
         ]
@@ -673,40 +681,46 @@ class ImageRenderer:
         """Chosen compute backend."""
         self.background_color: torch.Tensor | None = background_color
         """Color for pixels not belonging to any leaf."""
-        if isinstance(background_color, torch.Tensor):
+        if isinstance(self.background_color, torch.Tensor):
             self.background_color = self.background_color.to(device=self.device)
         self.leaf_table: pd.DataFrame = leaf_table
         """Dataframe of leaves and their parameters."""
         self.segmentation_map: torch.Tensor | None = segmentation_map
         """Partition of the image area."""
-        self.image_shape: tuple[int, int] | None = image_shape
+        self.image_shape: tuple[int, int] = self._resolve_image_shape(
+            image_shape, segmentation_map
+        )
         """Height (y, M) and width (x, N) of the canvas."""
-        self._resolve_image_shape()
         if segmentation_map is None:
             self._generate_segmentation_map()
         self._infer_texture_space()
 
-    def _resolve_image_shape(self) -> None:
+    def _resolve_image_shape(
+        self, image_shape: tuple[int, int] | None, segmentation_map: torch.Tensor | None
+    ) -> tuple[int, int]:
         """
         Resolve image shape from segmentation_map or explicit image_shape.
 
         Raises:
             ValueError:
+                Shape of segmentation map and provided image shape don't match.
+            ValueError:
+                Neither image_shape nor segmentation map are given.
         """
-        if self.segmentation_map is not None:
-            if (
-                self.image_shape is not None
-                and self.segmentation_map.shape != self.image_shape
-            ):
+        if segmentation_map is not None:
+            if image_shape is not None and segmentation_map.shape != image_shape:
                 raise ValueError(
-                    f"Segmentation map shape {self.segmentation_map.shape} "
-                    f"does not match provided image_shape {self.image_shape}"
+                    f"Segmentation map shape {segmentation_map.shape} "
+                    f"does not match provided image_shape {image_shape}"
                 )
-            self.image_shape = self.segmentation_map.shape
-        elif self.image_shape is None:
+            h, w = segmentation_map.shape[:2]
+            return (int(h), int(w))
+        elif image_shape is None:
             raise ValueError(
                 "Must provide at least one of 'segmentation_map' or 'image_shape'."
             )
+        else:
+            return image_shape
 
     def _generate_segmentation_map(self) -> None:
         """Generate segmentation map if None is provided."""
