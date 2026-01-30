@@ -2,11 +2,11 @@
 Leaves in natural images
 ===========================
 
-replication of Wallis and Bex, 2012
+Replication of Wallis and Bex, 2012
 """
 
 import torch
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 from dead_leaves.utils import choose_compute_backend
 from PIL import Image
 from torchvision.transforms.functional import pil_to_tensor
@@ -14,12 +14,11 @@ from torchvision.transforms.functional import pil_to_tensor
 reference_image = Image.open("../../examples/images/ulb_5136-2516.jpg").resize(
     (731, 512), box=(0, 0, 3810, 2667)
 )
-
 image_tensor = (
     pil_to_tensor(pic=reference_image).to(device=choose_compute_backend()) / 255
 )
 
-position_mask = torch.zeros((512, 731))
+position_mask = torch.zeros((512, 731), device=choose_compute_backend())
 Y, X = torch.meshgrid(
     torch.arange(731),
     torch.arange(512),
@@ -34,19 +33,17 @@ for radius in [50, 120, 200]:
         mask = dist_from_center <= torch.sqrt(area / torch.pi)
         position_mask += mask
 
-position_mask = position_mask.to(device=choose_compute_backend()).to(bool)
-
-model = DeadLeavesModel(
-    "ellipsoid",
-    {
+model = LeafGeometryGenerator(
+    leaf_shape="ellipsoid",
+    shape_param_distributions={
         "area": {"uniform": {"low": 100.0, "high": 200.0}},
         "aspect_ratio": {"uniform": {"low": 0.5, "high": 2}},
         "orientation": {"uniform": {"low": 0.0, "high": 2 * torch.pi}},
     },
-    (512, 731),
-    position_mask,
+    image_shape=(512, 731),
+    position_mask=position_mask,
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
 color_params = {
     "R": {
@@ -81,8 +78,13 @@ color_params = {
     },
 }
 
-colormodel = DeadLeavesImage(leaves, partition, color_params)
-image = colormodel.sample_image()
-mask = partition == 0
+colormodel = LeafAppearanceSampler(leaf_table=leaf_table)
+colormodel.sample_color(color_param_distributions=color_params)
+
+renderer = ImageRenderer(
+    leaf_table=colormodel.leaf_table, segmentation_map=segmentation_map
+)
+image = renderer.render_image()
+mask = segmentation_map == 0
 image[mask] = image_tensor.permute(1, 2, 0)[mask]
-colormodel.show(image)
+renderer.show(image)
