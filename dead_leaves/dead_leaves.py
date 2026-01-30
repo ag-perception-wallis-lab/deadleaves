@@ -351,7 +351,10 @@ class LeafGeometryGenerator:
 
         while torch.any((segmentation_map == 0) & (self.position_mask == 1)):
             params = self._sample_parameters()
-            leaf_mask = self.generate_leaf_mask((self.X, self.Y), params)
+            try:
+                leaf_mask = self.generate_leaf_mask((self.X, self.Y), params)
+            except ValueError:
+                continue
             mask = leaf_mask & (segmentation_map == 0)
             if (mask.sum() > 0) & self.position_mask[
                 params["y_pos"].to(torch.int), params["x_pos"].to(torch.int)
