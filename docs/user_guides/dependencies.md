@@ -41,19 +41,18 @@ If a parameter depends on a single feature, the value of `"from"` is  that featu
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
-model = DeadLeavesModel(
-    shape = "circular", 
-    param_distributions = {"area": {"powerlaw": {"low": 100.0, "high": 5000.0, "k": 1.5}}},
-    size = (512,512)
+model = LeafGeometryGenerator(
+    "circular", 
+    {"area": {"powerlaw": {"low": 100.0, "high": 5000.0, "k": 1.5}}},
+    (512,512)
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
-colormodel = DeadLeavesImage(
-    leaves = leaves, 
-    partition = partition, 
-    color_param_distributions = {
+colormodel = LeafAppearanceSampler(leaf_table)
+colormodel.sample_color(
+    {
         "H": {"normal": {
             "loc": {"from": "x_pos", "fn": lambda x: 1/512*x * 0.3 + (1-1/512*x) * 0.6}, 
             "scale": 0.05
@@ -61,10 +60,11 @@ colormodel = DeadLeavesImage(
         "S": {"normal": {"loc": 0.6, "scale": 0.1}},
         "V": {"normal": {"loc": 0.6, "scale": 0.1}}
         }
-    )
-image = colormodel.sample_image()
+)
 
-colormodel.show(image, figsize = (3,3))
+renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
+image = renderer.render_image()
+renderer.show(image, figsize = (3,3))
 ```
 
 ### Multi-Feature Dependencies
@@ -85,24 +85,23 @@ This enables defining complex dependencies between spatial, geometric, and visua
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
-import numpy
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+import torch
 
-model = DeadLeavesModel(
-    shape = "circular", 
-    param_distributions = {"area": {"powerlaw": {"low": 100.0, "high": 5000.0, "k": 1.5}}},
-    size = (512,512)
+model = LeafGeometryGenerator(
+    "circular", 
+    {"area": {"powerlaw": {"low": 100.0, "high": 5000.0, "k": 1.5}}},
+    (512,512)
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
 def fn(d):
-    distance_from_center = numpy.sqrt((256 - d["x_pos"]) ** 2 + (256 - d["y_pos"]) ** 2)
-    return numpy.where(distance_from_center <= 128, 0.5, 0.8)
+    distance_from_center = torch.sqrt(torch.tensor((256 - d["x_pos"]) ** 2 + (256 - d["y_pos"]) ** 2))
+    return torch.where(distance_from_center <= 128, 0.5, 0.8)
 
-colormodel = DeadLeavesImage(
-    leaves = leaves, 
-    partition = partition, 
-    color_param_distributions = {
+colormodel = LeafAppearanceSampler(leaf_table)
+colormodel.sample_color(
+    {
         "H": {"normal": {
             "loc": {"from": ["x_pos","y_pos"], "fn": fn}, 
             "scale": 0.05
@@ -110,8 +109,9 @@ colormodel = DeadLeavesImage(
         "S": {"normal": {"loc": 0.6, "scale": 0.1}},
         "V": {"normal": {"loc": 0.6, "scale": 0.1}}
         }
-    )
-image = colormodel.sample_image()
+)
 
-colormodel.show(image, figsize = (3,3))
+renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
+image = renderer.render_image()
+renderer.show(image, figsize = (3,3))
 ```

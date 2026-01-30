@@ -12,14 +12,14 @@ kernelspec:
 
 # Shapes
 
-The shape of the objects in a Dead Leaves image are specified via the `shape`argument of the `DeadLeavesModel`.
+The shape of the objects in a Dead Leaves image are specified via the `leaf_shape`argument of the `LeafGeometryGenerator`.
 Currently support shapes are:
 - `circular`
 - `ellipsoid`
 - `rectangular`
 - `polygon`
 
-Shape-specific parameters are passed through the `param_distributions`dictionary.
+Shape-specific parameters are passed through the `shape_param_distributions`dictionary.
 The required parameters depend on the chosen shape.
 
 ```{note}
@@ -28,7 +28,7 @@ For comparability all shape sizes are parameterized via an `area` parameter, whi
 
 ## Circles
 
-Circular leaves (`shape = "circular"`) are the simplest, requiring only the `area` distribution:
+Circular leaves (`leaf_shape = "circular"`) are the simplest, requiring only the `area` distribution:
 
 ```python
 {
@@ -53,30 +53,26 @@ To generate images with powerlaw distributed leaf radius (for a $1/f$ power spec
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
-model = DeadLeavesModel(
-    shape = "circular", 
-    param_distributions = {
-        "area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}
-        },
-    size = (512,512)
+model = LeafGeometryGenerator(
+    "circular", 
+    {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
+    (512,512)
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
-colormodel = DeadLeavesImage(
-    leaves = leaves, 
-    partition = partition, 
-    color_param_distributions = {"gray": {"uniform": {"low": 0.0, "high": 1.0}}}
-    )
-image = colormodel.sample_image()
+colormodel = LeafAppearanceSampler(leaf_table)
+colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
-colormodel.show(image, figsize = (3,3))
+renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
+image = renderer.render_image()
+renderer.show(image, figsize = (3,3))
 ```
 
 ## Ellipsoids
 
-Ellipsoidal leaves (`shape = "ellipsoid"`) require distributions for
+Ellipsoidal leaves (`leaf_shape = "ellipsoid"`) require distributions for
 - `area`: size of the ellipse
 - `aspect_ratio`: ratio of minor to major axis
 - `orientation`: rotation angle.
@@ -106,33 +102,32 @@ $$
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 import torch
 
-model = DeadLeavesModel(
-    shape = "ellipsoid", 
-    param_distributions = {
+
+model = LeafGeometryGenerator(
+    "ellipsoid", 
+    {
         "area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}},
         "orientation": {"uniform": {"low": 0.0, "high": 2 * torch.pi}},
         "aspect_ratio": {"uniform": {"low": 0.5, "high": 2}}
         },
-    size = (512,512)
+    (512,512)
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
-colormodel = DeadLeavesImage(
-    leaves = leaves, 
-    partition = partition, 
-    color_param_distributions = {"gray": {"uniform": {"low": 0.0, "high": 1.0}}}
-    )
-image = colormodel.sample_image()
+colormodel = LeafAppearanceSampler(leaf_table)
+colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
-colormodel.show(image, figsize = (3,3))
+renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
+image = renderer.render_image()
+renderer.show(image, figsize = (3,3))
 ```
 
 ## Rectangles
 
-Rectangular leaves (`shape = "rectangular"`) use the same parameters as ellipsoids:
+Rectangular leaves (`leaf_shape = "rectangular"`) use the same parameters as ellipsoids:
 
 ```python
 {
@@ -159,34 +154,31 @@ $$
 
 ```{code-cell}
 :tags: [hide-input]
-:class: output-scale-50
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 import torch
 
-model = DeadLeavesModel(
-    shape = "rectangular", 
-    param_distributions = {
+model = LeafGeometryGenerator(
+    "rectangular", 
+    {
         "area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}},
         "orientation": {"uniform": {"low": 0.0, "high": 2 * torch.pi}},
         "aspect_ratio": {"uniform": {"low": 0.5, "high": 2}}
         },
-    size = (512,512)
+    (512,512)
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
-colormodel = DeadLeavesImage(
-    leaves = leaves, 
-    partition = partition, 
-    color_param_distributions = {"gray": {"uniform": {"low": 0.0, "high": 1.0}}}
-    )
-image = colormodel.sample_image()
+colormodel = LeafAppearanceSampler(leaf_table)
+colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
-colormodel.show(image, figsize = (3,3))
+renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
+image = renderer.render_image()
+renderer.show(image, figsize = (3,3))
 ```
 
 ## Regular polygons
 
-Currently only regular polygons with fixed orientation are supported (`shape = "polygon"`).
+Currently only regular polygons with fixed orientation are supported (`leaf_shape = "polygon"`).
 The parameters are `area` and number of vertices `n_vertices`:
 
 ```python
@@ -210,25 +202,22 @@ We then use a simple [Ray-casting algorithm](https://rosettacode.org/wiki/Ray-ca
 
 ```{code-cell}
 :tags: [hide-input]
-:class: output-scale-50
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
-model = DeadLeavesModel(
-    shape = "polygon", 
-    param_distributions = {
+model = LeafGeometryGenerator(
+    "polygon", 
+    {
         "area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}},
         "n_vertices": {"poisson": {"rate": 5}},
         },
-    size = (512,512)
+    (512,512)
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
-colormodel = DeadLeavesImage(
-    leaves = leaves, 
-    partition = partition, 
-    color_param_distributions = {"gray": {"uniform": {"low": 0.0, "high": 1.0}}}
-    )
-image = colormodel.sample_image()
+colormodel = LeafAppearanceSampler(leaf_table)
+colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
-colormodel.show(image, figsize = (3,3))
+renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
+image = renderer.render_image()
+renderer.show(image, figsize = (3,3))
 ```
