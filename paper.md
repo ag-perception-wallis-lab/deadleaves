@@ -182,8 +182,7 @@ In addition, the `dead_leaves` package could be used to easily generate images w
 
 # AI usage disclosure
 
-Generative AI was used to aid in the setup of the documentation and for generating test cases for the package components.
-<!-- which genAI? -->
+ChatGPT 5 [@ChatGPT] was used to aid in the setup of the documentation and for generating test cases for the package components.
 No AI output was directly copied for usage. 
 All AI output was adjusted manually to fit the desired setting and be functional.
 
