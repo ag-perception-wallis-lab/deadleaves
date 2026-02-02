@@ -25,7 +25,7 @@ The Dead Leaves Model [@Matheron1968] is a stochastic image generation model.
 The model creates images by sampling objects from a predefined family of distributions.
 Each object ("leaf") is typically a simple shape, such as a circle or ellipse, and its properties (e.g. position, size, orientation, color) are randomly drawn from these distributions.
 This sampling process allows precise control over image statistics, which makes it possible to vary or fix specific leaf properties as desired.
-As a consequence, Dead Leaves Models are widely adopted in the study of image statistics [@Ruderman1997;@Lee2001;@Zylberberg2012;@Madhusudana2022], visual function [@Morimoto2021;@Maiello2017;@Groen2012] and, most recently, as training data for machine learning algorithms [@Baradad2021;@Achddou2022].
+As a consequence, Dead Leaves Models are widely adopted in the study of image statistics [@Ruderman1997;@Lee2001;@Zylberberg2012;@Madhusudana2022], visual function [@Morimoto2021;@Maiello2017;@Groen2012;@Taylor2015;@Wallis2012] and, most recently, as training data for machine learning algorithms [@Baradad2021;@Achddou2022].
 
 Leaves are drawn sequentially onto a two-dimensional canvas from front to back, so later leaves can be partially or fully occluded by earlier ones.
 This layering reproduces key statistical properties of natural scenes, including occlusion structure, heavy-tailed distributions of contrasts and edges, scale invariance, and higher-order spatial correlations [@Ruderman1997;@Lee2001].
@@ -43,7 +43,7 @@ Core functionalities are:
 - varying the image area covered by leaves, i.e. choosing between sparser or denser sampling and position mask.
 - creating arbitrarily complex leaf configurations by adding dependencies between leaf features (e.g. space-dependent color gradients).
 
-The package is build around `PyTorch` [@Paszke2017] which allows the use of GPU for a much faster sampling process.
+The package is build around `PyTorch` [@Paszke2017] which allows the use of GPU for a faster sampling process.
 Users can plug in various distributions for the different model parameters to create a variety of images (@fig-DeadLeaves).
 
 ::: {#fig-DeadLeaves layout-ncol=6}
@@ -96,7 +96,7 @@ Most researchers therefore implement their own generative code, which is time-co
 Moreover, reproducing existing stimuli is often difficult because the specifications used to generate dead leaves images are often too coarse.
 
 These gaps in standardization and documentation have practical consequences.
-Small differences in implementation or rendering choices can strongly affect the resulting image statistics [@Achddou2022], which are the primary objective in many dead leaves studies.
+Small differences in implementation or rendering choices can strongly affect the resulting image statistics [@Achddou2022], which are the primary scientific objective in many dead leaves studies.
 Combined with the stochastic nature of the model, this makes it challenging for researchers to reliably generate stimuli and precisely describe their statistical properties.
 In short, current practices create barriers to reproducibility and consistent use of dead leaves images.
 
@@ -130,7 +130,7 @@ Analytical derivations link model parameters directly to feature distributions [
 
 ## 2. Visual psychophysics
 
-In visual psychophysics, dead leaves images are primarily used as controlled stimuli that preserve selected statistical properties of natural scenes while avoiding semantic content.
+In visual psychophysics, dead leaves images are primarily used as controlled stimuli that preserve selected statistical properties of natural scenes while minimizing semantic content.
 This allows researchers to study perceptual sensitivity to specific image statistics and image-level cues in isolation.
 For example, dead leaves stimuli have been used to investigate the conditions under which surfaces appear self-luminous, by carefully controlling luminance and color distributions [@Morimoto2021].
 
@@ -157,30 +157,33 @@ Overall, these applications illustrate that dead leaves models provide a flexibl
 # Software Design
 
 `dead-leaves` is designed to provide a user-friendly, object-oriented module for generating dead leaves images. 
-The package is structured into two main classes which decouple the geometry from the rendering process.
+The package is structured into two main classes, which decouple the geometry from the rendering process.
 
-The geometry is generate in an interative process.
+The geometry is generated in an interative process.
 In each iteration $i$ we sample a uniform position $(x,y)$ on our canvas and shape parameters for the chosen shape, e.g. the area of a circle.
-The resulting object is what we call the leaf with index $i$. 
-Any pixel on our canvas which does not already belong to a leaf and is cover by our leaf $L_i$ will be labeled as $i$, i.e. we layer object from front to back onto our canvas.
+The resulting object is what we call the *leaf* with index $i$. 
+Any pixel on our canvas which does not already belong to a leaf and is covered by our leaf $L_i$ will be labeled as $i$, i.e. we layer object from front to back onto our canvas.
 We repeat this process for a given number of steps `n_samples` or until a given area is filled, either the full canvas or some specific unmasked area.
 As a result we get a segmentation or partition map `partition` of the canvas where each point belongs to exactly one leaf or the background.
 
 The rendering is then performed by sampling a color (and optionally texture) for each leaf from a given color (or texture) distribution and coloring the corresponding pixels of the canvas.
 Rendering the image by coloring pixels based on their object membership leads to a pixel perfect segmentation of the generated image, i.e. sharp edges.
 This generative process does not allow for decorations like blur or transparency.
-Both classes contain modular components which are plugged into the classes main methods such that it can fairly simple be extended to other geometries or rendering specifications.
+<!-- are you going to say whether this is a feature that could be added in future? Does the design permit extension? -->
+Both classes contain modular components which are plugged into the classes' main methods such that it can fairly simple be extended to other geometries or rendering specifications.
+<!-- can you give an example or be more specific here? what do you mean by "modular components"? Should you provide more detail about the "classes' main methods"? -->
 
 # Research Impact Statement
 
-The `dead-leaves` package allows to generate dead leaves images in a user friendly and well documented way.
-Many of the images used in the research listed before can be generated with our package.
-Since this model has been in use for research for decades and is still continuously used we expect this package to support more research along approaches covered so far.
-In addition, the `dead_leaves` package could be used to easily generate image with similar statistics to those of natural images as control stimuli for aesthetics research or for studying how different features are integrated in human perception (e.g. luminance and hue).
+The `dead-leaves` package allows one to generate dead leaves images in a user friendly and well documented way.
+Many of the images used prior work can be generated with our package.
+Since this model has been in use for research for decades and is still continuously used we expect this package to support more research extending the approaches covered so far.
+In addition, the `dead_leaves` package could be used to easily generate images with similar statistics to those of natural images, as control stimuli for aesthetics research or for studying how different features are integrated in human perception (e.g. luminance and hue).
 
 # AI usage disclosure
 
 Generative AI was used to aid in the setup of the documentation and for generating test cases for the package components.
+<!-- which genAI? -->
 No AI output was directly copied for usage. 
 All AI output was adjusted manually to fit the desired setting and be functional.
 
