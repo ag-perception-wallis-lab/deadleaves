@@ -160,20 +160,26 @@ Overall, these applications illustrate that dead leaves models provide a flexibl
 # Software Design
 
 `dead-leaves` is designed to provide a user-friendly, object-oriented module for generating dead leaves images. 
-The package is structured into two main classes, which decouple the geometry from the rendering process.
+The package is structured into four main classes, which decouple geometry and appearance of the leaves from rendering the image and manipulating sampled leaf parameters.
 
 The geometry is generated in an interative process.
-In each iteration $i$ we sample a uniform position $(x,y)$ on our canvas and shape parameters for the chosen shape, e.g. the area of a circle.
+In each iteration $i$ we sample a uniform position $(x_i,y_i)$ on our canvas and shape parameters for the chosen shape, e.g. the area of a circle.
 The resulting object is what we call the *leaf* with index $i$. 
-Any pixel on our canvas which does not already belong to a leaf and is covered by our leaf $L_i$ will be labeled as $i$, i.e. we layer object from front to back onto our canvas.
+Any pixel on our canvas which does not already belong to a leaf and is covered by our leaf $L_i$ will be labeled as $i$, i.e. we layer objects from front to back onto our canvas.
 We repeat this process for a given number of steps `n_samples` or until a given area is filled, either the full canvas or some specific unmasked area.
-As a result we get a segmentation or partition map `partition` of the canvas where each point belongs to exactly one leaf or the background.
+As a result we get a table with the sampled leaf parameters and a  `segmentation_map` of the canvas where each point belongs to exactly one leaf or the background.
 
-The rendering is then performed by sampling a color (and optionally texture) for each leaf from a given color (or texture) distribution and coloring the corresponding pixels of the canvas.
-Rendering the image by coloring pixels based on their object membership leads to a pixel perfect segmentation of the generated image, i.e. sharp edges.
-This generative process does not allow for decorations like blur or transparency.
+The appearance of each leaf is then determined by sampling a color (and optionally texture parameters) for each leaf from a given color (or texture) distribution and saving the information to the leaf table.
+
+To render the image we color the pixels of the canvas based on the `segmentation_map` and the corresponding appearance parameters in the leaf table.
+This rendering process leads to a pixel perfect segmentation of the generated image, i.e. sharp edges.
+
+Through the decoupling of the rendering for the sampling process we can also manipulate leaf parameters after sampling and regenerate the `segmentation_map`.
+This allows the addition of motion to the leaves or the combination of images generated from different distributions.
+
+Currently, the rendering process does not allow for decorations like blur or transparency, but the rendering class could be extended to include methods enabling these features.
 <!-- are you going to say whether this is a feature that could be added in future? Does the design permit extension? -->
-Both classes contain modular components which are plugged into the classes' main methods such that it can fairly simple be extended to other geometries or rendering specifications.
+In particular, all classes contain modular components which are plugged into the classes' main methods such that it can fairly simple be extended to other geometries (e.g. new leaf shapes), appearances (e.g. different color modes), distributions, or rendering specifications (e.g. with transparency).
 <!-- can you give an example or be more specific here? what do you mean by "modular components"? Should you provide more detail about the "classes' main methods"? -->
 
 # Research Impact Statement
