@@ -179,13 +179,13 @@ Both classes contain modular components which are plugged into the classes' main
 # Research Impact Statement
 
 The `dead-leaves` package allows one to generate dead leaves images in a user friendly and well documented way.
-Many of the images used prior work can be generated with our package.
+Many of the images used in prior work can be generated with our package.
 Since this model has been in use for research for decades and is still continuously used we expect this package to support more research extending the approaches covered so far.
 In addition, the `dead_leaves` package could be used to easily generate images with similar statistics to those of natural images, as control stimuli for aesthetics research or for studying how different features are integrated in human perception (e.g. luminance and hue).
 
 # AI usage disclosure
 
-ChatGPT 5 [@ChatGPT] was used to aid in the setup of the documentation and for generating test cases for the package components.
+ChatGPT 5 [@ChatGPT] was used to aid in the setup of the documentation and for generating test cases for package components.
 No AI output was directly copied for usage. 
 All AI output was adjusted manually to fit the desired setting and be functional.
 
