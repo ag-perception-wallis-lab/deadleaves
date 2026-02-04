@@ -934,10 +934,13 @@ class ImageRenderer:
                 )
             if self.background_color is not None:
                 image[self.segmentation_map == 0] = self.background_color
+            self.image = image
             return image
 
     def apply_image_noise(
-        self, image: torch.Tensor, noise: dict[str, dict | torch.Tensor]
+        self,
+        noise: dict[str, dict | torch.Tensor],
+        image: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """
         Apply global noise to an image.
@@ -955,6 +958,14 @@ class ImageRenderer:
             torch.Tensor:
                 Image with noise applied, clipped to [0,1].
         """
+        if image is None:
+            if hasattr(self, "image"):
+                image = self.image
+            else:
+                raise ValueError(
+                    "Either an image must be provided or the image needs to be "
+                    "rendered via the render_image method first."
+                )
         noisy_image = image.clone()
         H, W, C = noisy_image.shape
 
@@ -996,19 +1007,32 @@ class ImageRenderer:
                     "Should be 'gray', 'R', 'G', or 'B'."
                 )
 
-        return torch.clip(noisy_image, 0, 1)
+        self.noisy_image = torch.clip(noisy_image, 0, 1)
+        return self.noisy_image
 
-    def show(self, image: torch.Tensor, figsize: tuple[int, int] | None = None) -> None:
+    def show(
+        self, image: torch.Tensor | None = None, figsize: tuple[int, int] | None = None
+    ) -> None:
         """
         Show selected image.
 
         Args:
-            image (torch.Tensor):
-                Image to show.
+            image (torch.Tensor, optional):
+                Image to show. If None the self.image will be used.
             figsize (tuple[int,int], optional):
                 Figure size in inches (width, height). If None size is inferred from
                 image size. Defaults to None.
         """
+        if image is None:
+            if hasattr(self, "noisy_image"):
+                image = self.noisy_image
+            elif hasattr(self, "image"):
+                image = self.image
+            else:
+                raise ValueError(
+                    "Either an image must be provided or the image needs to be "
+                    "rendered via the render_image method first."
+                )
         fig, ax = plt.subplots(figsize=figsize, frameon=False)
         ax.imshow(image.cpu().numpy(), vmax=1, vmin=0)
         fig.tight_layout()
@@ -1016,16 +1040,26 @@ class ImageRenderer:
 
         plt.show()
 
-    def save(self, image: torch.Tensor, save_to: Path | str) -> None:
+    def save(self, save_to: Path | str, image: torch.Tensor | None = None) -> None:
         """
         Save image to path.
 
         Args:
-            image (torch.Tensor):
-                Image to save.
             save_to (Path):
                 Path to file to save image to.
+            image (torch.Tensor, optional):
+                Image to save. If None the self.image will be used.
         """
+        if image is None:
+            if hasattr(self, "noisy_image"):
+                image = self.noisy_image
+            elif hasattr(self, "image"):
+                image = self.image
+            else:
+                raise ValueError(
+                    "Either an image must be provided or the image needs to be "
+                    "rendered via the render_image method first."
+                )
         plt.imsave(save_to, image.cpu().numpy())
 
     def animate(
