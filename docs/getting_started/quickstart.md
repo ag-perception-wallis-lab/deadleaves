@@ -133,8 +133,8 @@ We can render the dead leaves image without texture by using our leaf table with
 
 ```{code-cell}
 renderer = ImageRenderer(leaf_table_w_o_texture, segmentation_map)
-image = renderer.render_image()
-renderer.show(image)
+renderer.render_image()
+renderer.show()
 ```
 
 To render the image with texture we use the leaf table which also contains texture information.
@@ -142,8 +142,8 @@ Since the texture adds pixelwise information we only resolve the texture at rend
 
 ```{code-cell}
 renderer = ImageRenderer(leaf_table_w_texture, segmentation_map)
-image = renderer.render_image()
-renderer.show(image)
+renderer.render_image()
+renderer.show()
 ```
 
 ```{note}
@@ -174,8 +174,8 @@ colormodel.sample_texture(texture_param_distributions = {"gray": {"normal": {"lo
 
 # Display the result
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-image = renderer.render_image()
-renderer.show(image)
+renderer.render_image()
+renderer.show()
 ```
 
 ```{note}

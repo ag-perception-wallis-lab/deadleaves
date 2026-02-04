@@ -22,6 +22,5 @@ colormodel.sample_texture(
 )
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-
-image = renderer.render_image()
-renderer.show(image)
+renderer.render_image()
+renderer.show()

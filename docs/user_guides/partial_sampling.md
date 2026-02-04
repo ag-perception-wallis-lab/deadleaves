@@ -38,8 +38,8 @@ colormodel = LeafAppearanceSampler(leaf_table)
 colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## Masking
@@ -71,8 +71,8 @@ colormodel = LeafAppearanceSampler(leaf_table)
 colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## Background color
@@ -99,6 +99,6 @@ colormodel = LeafAppearanceSampler(leaf_table)
 colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map, background_color=torch.tensor([0.1,0.5,0.1]))
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```

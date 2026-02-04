@@ -46,8 +46,8 @@ colormodel = LeafAppearanceSampler(leaf_table)
 colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## RGB
@@ -89,8 +89,8 @@ colormodel.sample_color(
 )
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## HSV
@@ -131,8 +131,8 @@ colormodel.sample_color(
 )
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## From Image
@@ -165,6 +165,6 @@ colormodel = LeafAppearanceSampler(leaf_table)
 colormodel.sample_color({"source": {"image": {"dir": "../../examples/images"}}})
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```

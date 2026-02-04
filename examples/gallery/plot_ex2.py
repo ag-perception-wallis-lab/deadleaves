@@ -61,5 +61,5 @@ colormodel.sample_color(color_param_distributions=color_params)
 renderer = ImageRenderer(
     leaf_table=colormodel.leaf_table, segmentation_map=segmentation_map
 )
-image = renderer.render_image()
-renderer.show(image)
+renderer.render_image()
+renderer.show()

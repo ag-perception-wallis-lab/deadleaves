@@ -63,8 +63,8 @@ colormodel.sample_color(
 )
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ### Multi-Feature Dependencies
@@ -112,6 +112,6 @@ colormodel.sample_color(
 )
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```

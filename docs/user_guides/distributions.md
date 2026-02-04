@@ -47,8 +47,8 @@ colormodel = LeafAppearanceSampler(leaf_table)
 colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## Uniform (from PyTorch)
@@ -87,8 +87,8 @@ colormodel = LeafAppearanceSampler(leaf_table)
 colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## Normal (from PyTorch)
@@ -153,8 +153,8 @@ colormodel = LeafAppearanceSampler(leaf_table)
 colormodel.sample_color({"gray": {"normal": {"loc": 0.5, "scale": 0.25}}})
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## Beta (from PyTorch)
@@ -224,8 +224,8 @@ colormodel = LeafAppearanceSampler(leaf_table)
 colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
 renderer = ImageRenderer(colormodel.leaf_table,segmentation_map)
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## Poisson (from PyTorch)
@@ -289,8 +289,8 @@ colormodel = LeafAppearanceSampler(leaf_table)
 colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## Powerlaw
@@ -371,8 +371,8 @@ colormodel.sample_color(
 )
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## Cosine
@@ -449,8 +449,8 @@ colormodel = LeafAppearanceSampler(leaf_table)
 colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## Expcosine
@@ -527,8 +527,8 @@ colormodel = LeafAppearanceSampler(leaf_table)
 colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## Image
@@ -576,6 +576,6 @@ colormodel.sample_texture({
     })
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```

@@ -47,5 +47,5 @@ renderer = ImageRenderer(
     segmentation_map=segmentation_map,
     background_color=torch.tensor([1.0, 1.0, 1.0]),
 )
-image = renderer.render_image()
-renderer.show(image)
+renderer.render_image()
+renderer.show()

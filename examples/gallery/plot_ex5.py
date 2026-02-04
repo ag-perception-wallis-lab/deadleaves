@@ -24,5 +24,5 @@ colormodel.sample_color(
 renderer = ImageRenderer(
     leaf_table=colormodel.leaf_table, segmentation_map=segmentation_map
 )
-image = renderer.render_image()
-renderer.show(image)
+renderer.render_image()
+renderer.show()

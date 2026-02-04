@@ -50,8 +50,8 @@ colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 colormodel.sample_texture({"gray": {"normal": {"loc": 0, "scale": {"uniform": {"low": 0.01, "high": 0.2}}}}})
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## From texture patches
@@ -92,6 +92,6 @@ colormodel.sample_texture(
 )
 
 renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
-image = renderer.render_image()
-renderer.show(image, figsize = (3,3))
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
