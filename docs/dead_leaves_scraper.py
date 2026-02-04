@@ -18,13 +18,15 @@ def dead_leaves_scraper(block, block_vars: dict, gallery_conf: dict):
     example_globals = block_vars["example_globals"]
 
     rst = []
+    animations = [v for v in example_globals.values() if isinstance(v, Animation)]
+    renderers = [v for v in example_globals.values() if isinstance(v, ImageRenderer)]
 
     # --------------------
     # 1. Handle animations
     # --------------------
-    animations = [v for v in example_globals.values() if isinstance(v, Animation)]
 
-    for ani in animations:
+    if animations:
+        ani = animations[0]
         image_path = Path(next(image_path_iterator)).with_suffix(".gif")
         # Save animation
         ani.save(image_path, writer="pillow", fps=10)
@@ -33,28 +35,18 @@ def dead_leaves_scraper(block, block_vars: dict, gallery_conf: dict):
     # -----------------------
     # 2. Handle static images
     # -----------------------
-    renderers = [v for v in example_globals.values() if isinstance(v, ImageRenderer)]
-
-    if renderers:
+    elif renderers:
         renderer = renderers[0]
+        image_path = Path(next(image_path_iterator))
 
         if "image" in example_globals and isinstance(
             example_globals["image"], torch.Tensor
         ):
             image = example_globals["image"]
+            renderer.save(image_path, image)
         else:
-            tensors = [
-                v for v in example_globals.values() if isinstance(v, torch.Tensor)
-            ]
-            if tensors:
-                image = tensors[-1]
-            else:
-                image = None
+            renderer.save(image_path)
 
-        if image is not None:
-            image_path = Path(next(image_path_iterator))
-            renderer.save(image, image_path)
-
-            rst.append(figure_rst([str(image_path)], gallery_conf["src_dir"]))
+        rst.append(figure_rst([str(image_path)], gallery_conf["src_dir"]))
 
     return "\n".join(rst)
