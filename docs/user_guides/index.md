@@ -90,9 +90,9 @@ Check out the gallery for inspiration on how to combine these features to genera
 :maxdepth: 1
 
 shapes
+distributions
 colors
 textures
 partial_sampling
 dependencies
-distributions
 ```
