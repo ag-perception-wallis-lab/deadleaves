@@ -187,5 +187,5 @@ Since the rendering process simply adds the color (and texture) based on the par
 See the documentation on [shape parameters](../user_guides/shapes.md).  
 Learn more about [color models](../user_guides/colors.md).  
 Learn more about [texture models](../user_guides/textures.md).  
-Browse examples in the Gallery (sphinx-gallery) for example scripts.  
+Browse examples in the [Gallery](../gallery/index.rst) for example scripts.  
 Consult the full list of available [distributions](../user_guides/distributions.md).  
