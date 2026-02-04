@@ -1,6 +1,53 @@
+from dataclasses import dataclass
+from typing import Callable
+
 import torch
 import pandas as pd
 
+# -------------------------------------------------------------------
+# Types and registry spec
+# -------------------------------------------------------------------
+
+MaskFn = Callable[
+    [tuple[torch.Tensor, torch.Tensor], dict[str, torch.Tensor] | pd.Series],
+    torch.Tensor,
+]
+
+@dataclass(frozen=True)
+class LeafMaskSpec:
+    fn: MaskFn
+    required: set[str]
+
+
+# -------------------------------------------------------------------
+# Registry function / Overview
+# -------------------------------------------------------------------
+
+def get_leaf_mask_kw() -> dict[str, LeafMaskSpec]:
+    """Return dictionary mapping leaf shapes to their mask functions and required parameters."""
+    return {
+        "circular": LeafMaskSpec(
+            fn=circular, 
+            required={"x_pos", "y_pos", "area"},
+        ),
+        "ellipsoid": LeafMaskSpec(
+            fn=ellipsoid, 
+            required={"x_pos", "y_pos", "area", "aspect_ratio", "orientation"},
+        ),
+        "rectangular": LeafMaskSpec(
+            fn=rectangular, 
+            required={"x_pos", "y_pos", "area", "aspect_ratio", "orientation"},
+        ),
+        "polygon": LeafMaskSpec(
+            fn=polygon, 
+            required={"x_pos", "y_pos", "area", "n_vertices"},
+        ),
+    }
+
+
+# -------------------------------------------------------------------
+# Individual functions
+# -------------------------------------------------------------------
 
 def circular(
     index_grid: tuple[torch.Tensor, torch.Tensor],
@@ -98,7 +145,7 @@ def ellipsoid(
     return mask
 
 
-def regular_polygon(
+def polygon(
     index_grid: tuple[torch.Tensor, torch.Tensor],
     params: dict[str, torch.Tensor] | pd.Series,
 ) -> torch.Tensor:

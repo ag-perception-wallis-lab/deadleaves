@@ -11,51 +11,15 @@ import pandas as pd
 import PIL.Image
 from torchvision.transforms.functional import pil_to_tensor
 
-from .distributions import PowerLaw, Constant, Cosine, ExpCosine, Image
-from .leaf_masks import circular, rectangular, ellipsoid, regular_polygon
+from .distributions import get_dist_kw
+from .leaf_masks import get_leaf_mask_kw
 from .utils import choose_compute_backend, bounding_box
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
-dist_kw: dict[str, type[torch.distributions.distribution.Distribution]] = {
-    "beta": torch.distributions.beta.Beta,
-    "uniform": torch.distributions.uniform.Uniform,
-    "normal": torch.distributions.normal.Normal,
-    "poisson": torch.distributions.poisson.Poisson,
-    "powerlaw": PowerLaw,
-    "constant": Constant,
-    "cosine": Cosine,
-    "expcosine": ExpCosine,
-    "image": Image,
-}
-"""Dictionary connecting keys to distribution classes."""
-
-leaf_mask_kw: dict[
-    str,
-    Callable[
-        [tuple[torch.Tensor, torch.Tensor], dict[str, torch.Tensor] | pd.Series],
-        torch.Tensor,
-    ],
-] = {
-    "circular": circular,
-    "ellipsoid": ellipsoid,
-    "rectangular": rectangular,
-    "polygon": regular_polygon,
-}
-"""Dictionary connecting keys to respective leaf mask generative function."""
-
-dist_params: dict[str, set[str]] = {
-    "beta": {"concentration0", "concentration1"},
-    "uniform": {"low", "high"},
-    "normal": {"loc", "scale"},
-    "poisson": {"rate"},
-    "powerlaw": {"low", "high", "k"},
-    "constant": {"value"},
-    "cosine": {"amplitude", "frequency"},
-    "expcosine": {"frequency", "exponential_constant"},
-    "image": {"dir"},
-}
-"""Dictionary connecting keys to required parameters for distributions."""
+# Initialize leaf mask registry and distribution registry
+leaf_mask_kw = get_leaf_mask_kw()
+dist_kw = get_dist_kw()
 
 color_spaces = {
     ("B", "G", "R"): ("R", "G", "B"),
@@ -122,7 +86,7 @@ class LeafGeometryGenerator:
             torch.arange(self.image_shape[0], device=self.device),
             indexing="xy",
         )
-        self.generate_leaf_mask: Callable = leaf_mask_kw[leaf_shape]
+        self.generate_leaf_mask: Callable = leaf_mask_kw[leaf_shape].fn
         """Method to generate mask of leaf on canvas."""
         self.position_mask: torch.Tensor = torch.ones(
             *self.image_shape, dtype=torch.int, device=self.device
@@ -204,12 +168,12 @@ class LeafGeometryGenerator:
                     f"{len(dist_dict)} keys, but 1 is required."
                 )
             dist_name = list(dist_dict.keys())[0]
-            dist_class = dist_kw[dist_name]
+            dist_class = dist_kw[dist_name].cls
             hyper_params = dist_dict[dist_name].copy()
-            if set(hyper_params.keys()) != dist_params[dist_name]:
+            if set(hyper_params.keys()) != dist_kw[dist_name].required:
                 raise ValueError(
                     f"Distribution dictionary for {param} with distribution "
-                    f"{dist_name} expects parameters: {dist_params[dist_name]} "
+                    f"{dist_name} expects parameters: {dist_kw[dist_name].required} "
                     f"but received {set(hyper_params.keys())}"
                 )
             if any([isinstance(p, dict) for p in hyper_params.values()]):
@@ -239,12 +203,12 @@ class LeafGeometryGenerator:
                             f"{len(dist_dict)} keys, but 1 is required."
                         )
                     dist_name = list(dist_dict.keys())[0]
-                    dist_class = dist_kw[dist_name]
+                    dist_class = dist_kw[dist_name].cls
                     hyper_params = dist_dict[dist_name].copy()
-                    if set(hyper_params.keys()) != dist_params[dist_name]:
+                    if set(hyper_params.keys()) != dist_kw[dist_name].required:
                         raise ValueError(
                             f"Distribution dictionary for {param} with distribution "
-                            f"{dist_name} expects parameters: {dist_params[dist_name]} "
+                            f"{dist_name} expects parameters: {dist_kw[dist_name].required} "
                             f"but received {set(hyper_params.keys())}"
                         )
                     for idx, hyper_param in hyper_params.items():
@@ -319,7 +283,7 @@ class LeafGeometryGenerator:
             if leaf_shape not in leaf_mask_kw:
                 raise ValueError(f"Unknown shape '{leaf_shape}' for position mask.")
 
-            generate_mask = leaf_mask_kw[leaf_shape]
+            generate_mask = leaf_mask_kw[leaf_shape].fn
             mask = generate_mask((self.X, self.Y), params)
             self.position_mask = mask.to(device=self.device, dtype=torch.int)
 
@@ -414,12 +378,12 @@ class LeafAppearanceSampler:
                         f"{len(dist_dict)} keys, but 1 is required."
                     )
                 dist_name = list(dist_dict.keys())[0]
-                dist_class = dist_kw[dist_name]
+                dist_class = dist_kw[dist_name].cls
                 hyper_params = dist_dict[dist_name].copy()
-                if set(hyper_params.keys()) != dist_params[dist_name]:
+                if set(hyper_params.keys()) != dist_kw[dist_name].required:
                     raise ValueError(
                         f"Distribution dictionary for {param} with distribution "
-                        f"{dist_name} expects parameters: {dist_params[dist_name]} "
+                        f"{dist_name} expects parameters: {dist_kw[dist_name].required} "
                         f"but received {set(hyper_params.keys())}"
                     )
                 for idx, hyper_param in hyper_params.items():
@@ -545,7 +509,7 @@ class LeafAppearanceSampler:
 
             for param, dist_dict in self.texture_param_distributions.items():
                 dist_name, hyper_params = next(iter(dist_dict.items()))
-                dist_class = dist_kw[dist_name]
+                dist_class = dist_kw[dist_name].cls
 
                 resolved_params = {}
                 if param == "alpha":
@@ -556,7 +520,7 @@ class LeafAppearanceSampler:
                     for key, value in hyper_params.items():
                         if isinstance(value, dict):
                             sub_dist_name, sub_params = next(iter(value.items()))
-                            sub_dist_class = dist_kw[sub_dist_name]
+                            sub_dist_class = dist_kw[sub_dist_name].cls
                             resolved_params[key] = sub_dist_class(**sub_params).sample(
                                 (self.n_leaves,)
                             )
@@ -796,7 +760,7 @@ class ImageRenderer:
         texture = torch.zeros(self.image_shape, device=self.device)
         for _, leaf in self.leaf_table.iterrows():
             dist_name = leaf[f"texture_{channel}_dist"]
-            dist_class = dist_kw[dist_name]
+            dist_class = dist_kw[dist_name].cls
             hyper_params = self._get_leaf_texture_params(leaf, channel)
             leaf_texture = dist_class(**hyper_params).sample(self.image_shape)
 
@@ -826,7 +790,7 @@ class ImageRenderer:
             leaf_mask = self.segmentation_map == leaf_idx
             texture_patch = torch.zeros((H, W), device=self.device)
 
-            unoccluded_mask = leaf_mask_kw[row["leaf_shape"]]((X, Y), row)
+            unoccluded_mask = leaf_mask_kw[row["leaf_shape"]].fn((X, Y), row)
             top, left, bottom, right = bounding_box(unoccluded_mask, 1)
             vh, vw = bottom - top, right - left
             if vh <= 0 or vw <= 0:
@@ -837,7 +801,7 @@ class ImageRenderer:
                 frac_leaf_y_pos = torch.frac(centered_leaf["y_pos"])
                 centered_leaf["x_pos"] = W // 2 + frac_leaf_x_pos
                 centered_leaf["y_pos"] = H // 2 + frac_leaf_y_pos
-                centered_leaf_mask = leaf_mask_kw[row["leaf_shape"]](
+                centered_leaf_mask = leaf_mask_kw[row["leaf_shape"]].fn(
                     (X, Y), centered_leaf
                 )
                 ctop, cleft, cbottom, cright = bounding_box(centered_leaf_mask, 1)
@@ -973,7 +937,7 @@ class ImageRenderer:
             # Case 1: distribution-based noise
             if isinstance(spec, dict):
                 dist_name = next(iter(spec.keys()))
-                dist_class = dist_kw[dist_name]
+                dist_class = dist_kw[dist_name].cls
                 channel_noise = (
                     dist_class(**spec[dist_name]).sample((H, W)).to(self.device)
                 )
@@ -1160,12 +1124,25 @@ class LeafTopology:
 
         Raises:
             ValueError:
-                Parameters are missing.
+                If required base columns are missing, an unknown shape is found,
+                or shape-specific parameters are missing.
         """
-        required = {"x_pos", "y_pos", "leaf_shape", "leaf_idx", "area"}
-        missing = required - set(leaf_table.columns)
+        base_required = {"leaf_shape", "leaf_idx"}
+        missing = base_required - set(leaf_table.columns)
         if missing:
-            raise ValueError(f"Missing required columns: {missing}")
+            raise ValueError(f"Missing base columns: {missing}")
+    
+        unknown = set(leaf_table["leaf_shape"]) - set(leaf_mask_kw)
+        if unknown:
+            raise ValueError(f"Unknown shapes: {unknown}")
+    
+        for i, shape in leaf_table["leaf_shape"].items():
+            spec = leaf_mask_kw[shape]
+            missing = spec.required - set(leaf_table.columns)
+            if missing:
+                raise ValueError(
+                    f"Row {i} ({shape}) missing required columns: {missing}"
+                )
 
     def _cull_outside_canvas(
         self,
@@ -1218,7 +1195,7 @@ class LeafTopology:
         self._validate_geometry(leaf_table)
         leaf_table = self._cull_outside_canvas(leaf_table)
         for _, row in leaf_table.iterrows():
-            generate_leaf_mask = leaf_mask_kw[row["leaf_shape"]]
+            generate_leaf_mask = leaf_mask_kw[row["leaf_shape"]].fn
             leaf_mask = generate_leaf_mask((X, Y), row.to_dict())
             mask = leaf_mask & (segmentation_map == 0)
             segmentation_map[mask] = int(row["leaf_idx"])
