@@ -18,7 +18,7 @@ The workflow consists of three steps:
 
 1. **Geometry**: A `LeafGeometryGenerator` defines the geometry of the leaves, e.g. shape, size, orientation.
 2. **Appearance**: The `LeafAppearanceSampler` defines the surfaces of the leaves, i.e. color and texture specifications.
-2. **Rendering**: The `ImageRenderer` is used to generate the final image.
+3. **Rendering**: The `ImageRenderer` is used to generate the final image.
 
 This Quickstart walks you through the basic usage.
 
