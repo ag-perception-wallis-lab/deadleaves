@@ -1,3 +1,6 @@
+from dataclasses import dataclass
+from typing import Type
+
 import torch
 import os
 import re
@@ -10,6 +13,65 @@ from pathlib import Path
 
 set_log_level("ERROR")
 
+
+# -------------------------------------------------------------------
+# Types and registry spec
+# -------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class DistSpec:
+    cls: Type[Distribution]
+    required: set[str]
+
+
+# -------------------------------------------------------------------
+# Registry function / Overview
+# -------------------------------------------------------------------
+
+def get_dist_kw() -> dict[str, DistSpec]:
+    """Return dictionary mapping keys to distribution classes and required parameters."""
+    return {
+        "beta": DistSpec(
+            cls=torch.distributions.beta.Beta,
+            required={"concentration0", "concentration1"},
+        ),
+        "uniform": DistSpec(
+            cls=torch.distributions.uniform.Uniform,
+            required={"low", "high"},
+        ),
+        "normal": DistSpec(
+            cls=torch.distributions.normal.Normal,
+            required={"loc", "scale"},
+        ),
+        "poisson": DistSpec(
+            cls=torch.distributions.poisson.Poisson,
+            required={"rate"},
+        ),
+        "powerlaw": DistSpec(
+            cls=PowerLaw,
+            required={"low", "high", "k"},
+        ),
+        "constant": DistSpec(
+            cls=Constant,
+            required={"value"},
+        ),
+        "cosine": DistSpec(
+            cls=Cosine,
+            required={"amplitude", "frequency"},
+        ),
+        "expcosine": DistSpec(
+            cls=ExpCosine,
+            required={"frequency", "exponential_constant"},
+        ),
+        "image": DistSpec(
+            cls=Image,
+            required={"dir"},
+        ),
+    }
+
+# -------------------------------------------------------------------
+# Individual functions
+# -------------------------------------------------------------------
 
 class BaseDistribution(Distribution):
     """Base class for custom distributions

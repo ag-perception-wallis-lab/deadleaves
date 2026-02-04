@@ -2,27 +2,33 @@
 Natural colors and textures
 ===========================
 
-replication of Madhusudana et al., 2022
+Replication of Madhusudana et al., 2022
 """
 
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
-model = DeadLeavesModel(
-    shape="circular",
-    param_distributions={
+model = LeafGeometryGenerator(
+    leaf_shape="circular",
+    shape_param_distributions={
         "area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}},
     },
-    size=(512, 731),
+    image_shape=(512, 731),
 )
-leaves, partition = model.sample_partition()
-colormodel = DeadLeavesImage(
-    leaves=leaves,
-    partition=partition,
-    color_param_distributions={"source": {"image": {"dir": "../../examples/images"}}},
+leaf_table, segmentation_map = model.generate_segmentation()
+
+colormodel = LeafAppearanceSampler(leaf_table=leaf_table)
+colormodel.sample_color(
+    color_param_distributions={"source": {"image": {"dir": "../../examples/images"}}}
+)
+colormodel.sample_texture(
     texture_param_distributions={
         "source": {"image": {"dir": "../../examples/textures/brodatz"}},
         "alpha": {"normal": {"loc": 0.0, "scale": 0.4}},
-    },
+    }
 )
-image = colormodel.sample_image()
-colormodel.show(image)
+
+renderer = ImageRenderer(
+    leaf_table=colormodel.leaf_table, segmentation_map=segmentation_map
+)
+renderer.render_image()
+renderer.show()

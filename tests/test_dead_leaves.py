@@ -1,6 +1,6 @@
 import pytest
 import torch
-from dead_leaves import DeadLeavesImage, DeadLeavesModel
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 
 test_shape_params = [
@@ -40,18 +40,20 @@ test_seeds = list(range(20))
 @pytest.mark.parametrize("seed", test_seeds)
 def test_DeadLeavesModel(shape, shape_params, size, color_params, texture_params, seed):
     torch.manual_seed(seed)
-    model = DeadLeavesModel(shape, shape_params, size)
-    leaves, partition = model.sample_partition()
+    geometry_model = LeafGeometryGenerator(shape, shape_params, size)
+    leaf_table, segmentation_map = geometry_model.generate_segmentation()
     # all pixel assigned to a leaf
-    assert (partition > 0).all()
+    assert (segmentation_map > 0).all()
     # leaf indices as integers
-    assert not torch.is_floating_point(partition)
+    assert not torch.is_floating_point(segmentation_map)
     # leaf indices in df and partition match
-    assert leaves.leaf_idx.max() == partition.max()
-    assert leaves.leaf_idx.min() == partition.min()
+    assert leaf_table.leaf_idx.max() == segmentation_map.max()
+    assert leaf_table.leaf_idx.min() == segmentation_map.min()
 
-    color_model = DeadLeavesImage(leaves, partition, color_params, texture_params)
-    image = color_model.sample_image()
+    color_model = LeafAppearanceSampler(leaf_table)
+    color_model.sample_color(color_params)
+
+    image = ImageRenderer(color_model.leaf_table, segmentation_map).render_image()
     # no empty pixel
     assert not torch.isnan(image).any()
     assert torch.all((0 <= image) & (image <= 1))

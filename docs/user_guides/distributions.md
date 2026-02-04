@@ -34,25 +34,21 @@ Use this when you want a parameter to remain unchanged.
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
-model = DeadLeavesModel(
-    shape = "circular", 
-    param_distributions = {
-        "area": {"constant": {"value": 1000.0}}
-        },
-    size = (512,512)
+model = LeafGeometryGenerator(
+    "circular", 
+    {"area": {"constant": {"value": 5000.0}}},
+    (512,512)
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
-colormodel = DeadLeavesImage(
-    leaves = leaves, 
-    partition = partition, 
-    color_param_distributions = {"gray": {"uniform": {"low": 0.0, "high": 1.0}}}
-    )
-image = colormodel.sample_image()
+colormodel = LeafAppearanceSampler(leaf_table)
+colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
-colormodel.show(image, figsize = (3,3))
+renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## Uniform (from PyTorch)
@@ -78,25 +74,21 @@ $$
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
-model = DeadLeavesModel(
-    shape = "circular", 
-    param_distributions = {
-        "area": {"uniform": {"low": 100.0, "high": 5000.0}}
-        },
-    size = (512,512)
+model = LeafGeometryGenerator(
+    "circular", 
+    {"area": {"uniform": {"low": 100.0, "high": 10000.0}}},
+    (512,512)
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
-colormodel = DeadLeavesImage(
-    leaves = leaves, 
-    partition = partition, 
-    color_param_distributions = {"gray": {"uniform": {"low": 0.0, "high": 1.0}}}
-    )
-image = colormodel.sample_image()
+colormodel = LeafAppearanceSampler(leaf_table)
+colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
-colormodel.show(image, figsize = (3,3))
+renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## Normal (from PyTorch)
@@ -148,25 +140,21 @@ plt.show()
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
-model = DeadLeavesModel(
-    shape = "circular", 
-    param_distributions = {
-        "area": {"normal": {"loc": 5000.0, "scale": 2000.0}}
-        },
-    size = (512,512)
+model = LeafGeometryGenerator(
+    "circular", 
+    {"area": {"normal": {"loc": 10000.0, "scale": 2000.0}}},
+    (512,512)
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
-colormodel = DeadLeavesImage(
-    leaves = leaves, 
-    partition = partition, 
-    color_param_distributions = {"gray": {"normal": {"loc": 0.5, "scale": 0.2}}}
-    )
-image = colormodel.sample_image()
+colormodel = LeafAppearanceSampler(leaf_table)
+colormodel.sample_color({"gray": {"normal": {"loc": 0.5, "scale": 0.25}}})
 
-colormodel.show(image, figsize = (3,3))
+renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## Beta (from PyTorch)
@@ -218,28 +206,26 @@ plt.show()
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 import torch
 
-model = DeadLeavesModel(
-    shape = "ellipsoid", 
-    param_distributions = {
-        "area": {"constant": {"value": 1000.0}},
+model = LeafGeometryGenerator(
+    "ellipsoid", 
+    {
+        "area": {"constant": {"value": 5000.0}},
         "orientation": {"uniform": {"low": 0.0, "high": 2*torch.pi}},
         "aspect_ratio": {"beta": {"concentration0": 5, "concentration1": 13}}
         },
-    size = (512,512)
+    (512,512)
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
-colormodel = DeadLeavesImage(
-    leaves = leaves, 
-    partition = partition, 
-    color_param_distributions = {"gray": {"uniform": {"low": 0.0, "high": 1.0}}}
-    )
-image = colormodel.sample_image()
+colormodel = LeafAppearanceSampler(leaf_table)
+colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
-colormodel.show(image, figsize = (3,3))
+renderer = ImageRenderer(colormodel.leaf_table,segmentation_map)
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## Poisson (from PyTorch)
@@ -287,27 +273,24 @@ plt.show()
 
 ```{code-cell}
 :tags: [hide-input]
-:class: output-scale-50
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
-model = DeadLeavesModel(
-    shape = "polygon", 
-    param_distributions = {
+model = LeafGeometryGenerator(
+    "polygon", 
+    {
         "area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}},
         "n_vertices": {"poisson": {"rate": 5}},
         },
-    size = (512,512)
+    (512,512)
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
-colormodel = DeadLeavesImage(
-    leaves = leaves, 
-    partition = partition, 
-    color_param_distributions = {"gray": {"uniform": {"low": 0.0, "high": 1.0}}}
-    )
-image = colormodel.sample_image()
+colormodel = LeafAppearanceSampler(leaf_table)
+colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
-colormodel.show(image, figsize = (3,3))
+renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## Powerlaw
@@ -367,29 +350,29 @@ plt.show()
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
-model = DeadLeavesModel(
-    shape = "circular", 
-    param_distributions = {
+model = LeafGeometryGenerator(
+    "circular", 
+    {
         "area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}
         },
-    size = (512,512)
+    (512,512)
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
-colormodel = DeadLeavesImage(
-    leaves = leaves, 
-    partition = partition, 
-    color_param_distributions = {
+colormodel = LeafAppearanceSampler(leaf_table)
+colormodel.sample_color(
+    {
         "H": {"normal": {"loc": 0.6, "scale": 0.1}},
         "S": {"powerlaw": {"low": 0.2, "high": 1.0, "k": 3}},
         "V": {"normal": {"loc": 0.6, "scale": 0.1}}
         }
-    )
-image = colormodel.sample_image()
+)
 
-colormodel.show(image, figsize = (3,3))
+renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## Cosine
@@ -449,27 +432,25 @@ Random variables with this distribution always produce values between $-\pi$ and
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
-model = DeadLeavesModel(
-    shape = "ellipsoid", 
-    param_distributions = {
+model = LeafGeometryGenerator(
+    "ellipsoid", 
+    {
         "area": {"constant": {"value": 1000.0}},
         "orientation": {"cosine": {"amplitude": 0.5, "frequency": 4}},
         "aspect_ratio": {"constant": {"value": 0.5}}
         },
-    size = (512,512)
+    (512,512)
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
-colormodel = DeadLeavesImage(
-    leaves = leaves, 
-    partition = partition, 
-    color_param_distributions = {"gray": {"uniform": {"low": 0.0, "high": 1.0}}}
-    )
-image = colormodel.sample_image()
+colormodel = LeafAppearanceSampler(leaf_table)
+colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
-colormodel.show(image, figsize = (3,3))
+renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## Expcosine
@@ -529,27 +510,25 @@ Random variables with this distribution always produce values between $-\pi$ and
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
-model = DeadLeavesModel(
-    shape = "ellipsoid", 
-    param_distributions = {
+model = LeafGeometryGenerator(
+    "ellipsoid", 
+    {
         "area": {"constant": {"value": 1000.0}},
         "orientation": {"expcosine": {"frequency": 4, "exponential_constant": 3}},
         "aspect_ratio": {"constant": {"value": 0.5}}
         },
-    size = (512,512)
+    (512,512)
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
-colormodel = DeadLeavesImage(
-    leaves = leaves, 
-    partition = partition, 
-    color_param_distributions = {"gray": {"uniform": {"low": 0.0, "high": 1.0}}}
-    )
-image = colormodel.sample_image()
+colormodel = LeafAppearanceSampler(leaf_table)
+colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
-colormodel.show(image, figsize = (3,3))
+renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## Image
@@ -576,29 +555,27 @@ In particular, it will **sample from all available image files** in the director
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
-model = DeadLeavesModel(
-    shape = "circular", 
-    param_distributions = {
+model = LeafGeometryGenerator(
+    "circular", 
+    {
         "area": {"constant": {"value": 5000.0}}
         },
-    size = (512,512)
+    (512,512)
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
-colormodel = DeadLeavesImage(
-    leaves = leaves, 
-    partition = partition, 
-    color_param_distributions={
+colormodel = LeafAppearanceSampler(leaf_table)
+colormodel.sample_color({
         "source": {"image": {"dir": "../../examples/images"}}
-    },
-    texture_param_distributions={
+    })
+colormodel.sample_texture({
         "source": {"image": {"dir": "../../examples/textures/brodatz"}},
         "alpha": {"normal": {"loc": 0.0, "scale": 0.4}},
-    },
-    )
-image = colormodel.sample_image()
+    })
 
-colormodel.show(image, figsize = (3,3))
+renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```

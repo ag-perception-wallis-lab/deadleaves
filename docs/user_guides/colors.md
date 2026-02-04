@@ -13,7 +13,7 @@ kernelspec:
 # Colors
 
 In the Dead Leaves Model, the color of each object can be sampled from different types of distributions.
-The colors are specified via the `color_param_distribution` dictionary when creating a `DeadLeavesImage`.
+The colors are specified via the `color_param_distribution` dictionary sampling color through a `LeafAppearanceSampler`.
 Different color spaces or sources are supported, as described below.
 
 ## Gray-scale
@@ -33,25 +33,21 @@ You can specify any supported [distribution](distributions.md) for the gray valu
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
-model = DeadLeavesModel(
-    shape = "circular", 
-    param_distributions = {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
-    size = (512,512)
+model = LeafGeometryGenerator(
+    "circular", 
+    {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
+    (512,512)
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
-colormodel = DeadLeavesImage(
-    leaves = leaves, 
-    partition = partition, 
-    color_param_distributions = {
-        "gray": {"uniform": {"low": 0.0, "high": 1.0}}
-        }
-    )
-image = colormodel.sample_image()
+colormodel = LeafAppearanceSampler(leaf_table)
+colormodel.sample_color({"gray": {"uniform": {"low": 0.0, "high": 1.0}}})
 
-colormodel.show(image, figsize = (3,3))
+renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## RGB
@@ -74,27 +70,27 @@ Each channel has its own distribution, allowing for fully random or correlated c
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
-model = DeadLeavesModel(
-    shape = "circular", 
-    param_distributions = {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
-    size = (512,512)
+model = LeafGeometryGenerator(
+    "circular", 
+    {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
+    (512,512)
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
-colormodel = DeadLeavesImage(
-    leaves = leaves, 
-    partition = partition, 
-    color_param_distributions = {
+colormodel = LeafAppearanceSampler(leaf_table)
+colormodel.sample_color(
+    {
         "R": {"uniform": {"low": 0.0, "high": 1.0}},
         "G": {"uniform": {"low": 0.0, "high": 1.0}},
         "B": {"uniform": {"low": 0.0, "high": 1.0}}
         }
-    )
-image = colormodel.sample_image()
+)
 
-colormodel.show(image, figsize = (3,3))
+renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## HSV
@@ -116,27 +112,27 @@ HSV is an alternative color space that can be useful for separating hue from sat
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
-model = DeadLeavesModel(
-    shape = "circular", 
-    param_distributions = {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
-    size = (512,512)
+model = LeafGeometryGenerator(
+    "circular", 
+    {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
+    (512,512)
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
-colormodel = DeadLeavesImage(
-    leaves = leaves, 
-    partition = partition, 
-    color_param_distributions = {
+colormodel = LeafAppearanceSampler(leaf_table)
+colormodel.sample_color(
+    {
         "H": {"normal": {"loc": 0.5, "scale": 0.1}},
         "S": {"normal": {"loc": 0.5, "scale": 0.1}},
         "V": {"normal": {"loc": 0.5, "scale": 0.1}}
         }
-    )
-image = colormodel.sample_image()
+)
 
-colormodel.show(image, figsize = (3,3))
+renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```
 
 ## From Image
@@ -156,23 +152,19 @@ You can also sample colors from an existing image. This allows the Dead Leaves t
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import DeadLeavesModel, DeadLeavesImage
+from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
-model = DeadLeavesModel(
-    shape = "circular", 
-    param_distributions = {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
-    size = (512,512)
+model = LeafGeometryGenerator(
+    "circular", 
+    {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
+    (512,512)
 )
-leaves, partition = model.sample_partition()
+leaf_table, segmentation_map = model.generate_segmentation()
 
-colormodel = DeadLeavesImage(
-    leaves = leaves, 
-    partition = partition, 
-    color_param_distributions = {
-        "source": {"image": {"dir": "../../examples/images"}},
-        }
-    )
-image = colormodel.sample_image()
+colormodel = LeafAppearanceSampler(leaf_table)
+colormodel.sample_color({"source": {"image": {"dir": "../../examples/images"}}})
 
-colormodel.show(image, figsize = (3,3))
+renderer = ImageRenderer(colormodel.leaf_table, segmentation_map)
+renderer.render_image()
+renderer.show(figsize = (3,3))
 ```

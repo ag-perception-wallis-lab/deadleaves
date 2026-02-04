@@ -20,9 +20,7 @@ def choose_compute_backend() -> torch.device:
     return torch.device("cpu")
 
 
-def bounding_box(
-    partition: torch.Tensor, leaf_idx: int
-) -> tuple[int, int, int, int] | None:
+def bounding_box(partition: torch.Tensor, leaf_idx: int) -> tuple[int, int, int, int]:
     """Generate boundaries for bounding box for leaf index in partition
 
     Args:
@@ -38,11 +36,11 @@ def bounding_box(
     Y, X = (partition == leaf_idx).nonzero(as_tuple=True)
 
     if len(Y) == 0:
-        return None
+        raise ValueError(f"No elements match the required leaf index {leaf_idx}")
 
-    top = Y.min().item()
-    bottom = Y.max().item() + 1
-    left = X.min().item()
-    right = X.max().item() + 1
+    top = int(Y.min().item())
+    bottom = int(Y.max().item() + 1)
+    left = int(X.min().item())
+    right = int(X.max().item() + 1)
 
     return top, left, bottom, right
