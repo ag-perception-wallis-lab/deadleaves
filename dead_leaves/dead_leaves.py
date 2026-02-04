@@ -1149,7 +1149,8 @@ class LeafTopology:
         )
         """Chosen compute backend."""
 
-    def _validate_geometry(self, leaf_table: pd.DataFrame) -> None:
+    @staticmethod
+    def _validate_geometry(leaf_table: pd.DataFrame) -> None:
         """
         Check if leaf table contains parameters necessary for constructing the geometry.
 
@@ -1223,7 +1224,8 @@ class LeafTopology:
             segmentation_map[mask] = int(row["leaf_idx"])
         return segmentation_map
 
-    def merge_leaf_tables(self, *leaf_tables: pd.DataFrame) -> pd.DataFrame:
+    @staticmethod
+    def merge_leaf_tables(*leaf_tables: pd.DataFrame) -> pd.DataFrame:
         """
         Merge multiple leaf tables and assign fresh leaf_idx.
 
@@ -1240,8 +1242,8 @@ class LeafTopology:
         merged["leaf_idx"] = np.arange(1, len(merged) + 1)
         return merged
 
+    @staticmethod
     def reindex_by_group(
-        self,
         leaf_table: pd.DataFrame,
         groupby: str,
         shuffle: bool = True,
@@ -1281,8 +1283,8 @@ class LeafTopology:
         leaf_table = leaf_table.sort_values(by="leaf_idx", ascending=True)
         return leaf_table
 
+    @staticmethod
     def shuffle_index_within_group(
-        self,
         leaf_table: pd.DataFrame,
         groupby: str | list[str],
         seed: int | None = None,
