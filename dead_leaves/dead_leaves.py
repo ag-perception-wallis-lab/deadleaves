@@ -1124,24 +1124,40 @@ class LeafTopology:
 
         Raises:
             ValueError:
-                If required base columns are missing, an unknown shape is found,
-                or shape-specific parameters are missing.
+                If required columns are missing, unknown shapes are present,
+                or required parameters contain NaNs.
         """
+        cols = set(leaf_table.columns)
+    
+        # --- base columns ---
         base_required = {"leaf_shape", "leaf_idx"}
-        missing = base_required - set(leaf_table.columns)
+        missing = base_required - cols
         if missing:
             raise ValueError(f"Missing base columns: {missing}")
     
+        # --- unknown shapes ---
         unknown = set(leaf_table["leaf_shape"]) - set(leaf_mask_kw)
         if unknown:
             raise ValueError(f"Unknown shapes: {unknown}")
     
-        for i, shape in leaf_table["leaf_shape"].items():
+        # --- per-shape validation ---
+        for shape, group in leaf_table.groupby("leaf_shape"):
             spec = leaf_mask_kw[shape]
-            missing = spec.required - set(leaf_table.columns)
-            if missing:
+    
+            # missing required columns
+            missing_cols = spec.required - cols
+            if missing_cols:
                 raise ValueError(
-                    f"Row {i} ({shape}) missing required columns: {missing}"
+                    f"Shape '{shape}' missing required columns: {missing_cols}"
+                )
+    
+            # NaN check in required columns for rows of this shape
+            nan_mask = group[list(spec.required)].isna().any(axis=1)
+            if nan_mask.any():
+                bad_rows = group.index[nan_mask].tolist()
+                raise ValueError(
+                    f"Shape '{shape}' has NaNs in required columns "
+                    f"for rows: {bad_rows}"
                 )
 
     def _cull_outside_canvas(
