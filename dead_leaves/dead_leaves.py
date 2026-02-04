@@ -586,9 +586,9 @@ class LeafAppearanceSampler:
             for leaf_idx in self.leaf_table.leaf_idx:
                 row = {"leaf_idx": leaf_idx}
 
-                for channel_name, channel_cfg in self.texture_distributions.items():
-                    dist_name = channel_cfg["dist_name"]
-                    params = channel_cfg["params"]
+                for channel_name, channel_dist in self.texture_distributions.items():
+                    dist_name = channel_dist["dist_name"]
+                    params = channel_dist["params"]
 
                     # distribution metadata
                     row[f"texture_{channel_name}_dist"] = dist_name
