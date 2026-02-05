@@ -10,7 +10,7 @@ kernelspec:
   name: python3
 ---
 
-# Leaf topology and leaf table manipulations
+# Leaf table manipulations
 
 As previously outlined, the deadleaves package separates  
 (1) leaf geometry, (2) appearance, and (3) rendering into independent stages.
@@ -120,8 +120,7 @@ them to create a scene where both regimes coexist. Because all attributes are
 preserved, the merged table still contains the full parametric description of
 every leaf and can immediately be turned back into a segmentation map.
 
-See the proto-object example (link) for a complete workflow.
-
+See below examples for a full workflow.
 
 ---
 
