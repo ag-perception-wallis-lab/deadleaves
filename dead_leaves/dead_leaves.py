@@ -1313,4 +1313,4 @@ class LeafTopology:
         leaf_table = leaf_table.copy()
         leaf_table["leaf_idx"] = rng.permutation(np.arange(1, len(leaf_table) + 1))
         leaf_table = leaf_table.sort_values(by="leaf_idx", ascending=True)
-        return leaf_table
+        return leaf_table.reset_index(drop=True)
