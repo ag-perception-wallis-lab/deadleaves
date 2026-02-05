@@ -8,6 +8,8 @@ DOCS = ROOT / "docs"
 BUILD = DOCS / "_build"
 HTML = DOCS / "_build" / "html"
 
+HTML.mkdir(exist_ok=True)
+
 # Build the Jupyter Book
 print("📚 Building HTML files...")
 subprocess.run(["sphinx-build", "-M", "html", str(DOCS), str(BUILD)])
