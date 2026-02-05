@@ -1240,6 +1240,7 @@ class LeafTopology:
         leaf_table: pd.DataFrame,
         groupby: str,
         shuffle: bool = True,
+        group_order: str = None,
         seed: int | None = None,
     ) -> pd.DataFrame:
         """
@@ -1252,6 +1253,8 @@ class LeafTopology:
                 Column containing the groups.
             shuffle (bool):
                 If true shuffle leaf index within group. Defaults to true.
+            group_order (str):
+                Order of groups: "ascending", or "descending", or random (None).
             seed (int | None):
                 Set value for generating a random seed for reproducibility.
                 If None a different random seed will be set at each execution.
@@ -1264,47 +1267,20 @@ class LeafTopology:
         rng = np.random.default_rng(seed)
         out = []
         start = 1
+        
+        groups = list(leaf_table.groupby(groupby, sort=False))
 
-        for _, group in leaf_table.groupby(groupby, sort=False):
+        if group_order == "ascending":
+            groups.sort(key=lambda x: x[0])
+        elif group_order == "descending":
+            groups.sort(key=lambda x: x[0], reverse=True)
+        elif group_order != None:
+            raise ValueError("group_order must be None, 'ascending', or 'descending'")
+
+        for _, group in groups:
             g = group.copy()
             if shuffle:
                 g = g.sample(frac=1, random_state=rng.integers(1e9))
-            g["leaf_idx"] = np.arange(start, start + len(g))
-            start += len(g)
-            out.append(g)
-        leaf_table = pd.concat(out, ignore_index=True)
-        leaf_table = leaf_table.sort_values(by="leaf_idx", ascending=True)
-        return leaf_table
-
-    @staticmethod
-    def shuffle_index_within_group(
-        leaf_table: pd.DataFrame,
-        groupby: str | list[str],
-        seed: int | None = None,
-    ) -> pd.DataFrame:
-        """
-        Shuffle rows within groups and reassign a contiguous index column.
-
-        Args:
-            table (pd.DataFrame):
-                Input leaf table.
-            groupby (str or list[str]):
-                Column(s) defining groups (e.g. "type").
-            seed (int, optional):
-                Random seed for reproducibility.
-
-        Returns:
-            pd.DataFrame:
-                Table with reassigned leaf_idx.
-        """
-        rng = np.random.default_rng(seed)
-        out = []
-        start = 1
-
-        for _, group in leaf_table.groupby(groupby, sort=False):
-            g = group.copy().sample(
-                frac=1, random_state=rng.integers(np.iinfo(np.int32).max)
-            )
             g["leaf_idx"] = np.arange(start, start + len(g))
             start += len(g)
             out.append(g)
