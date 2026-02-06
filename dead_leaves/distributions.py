@@ -18,15 +18,21 @@ set_log_level("ERROR")
 # Types and registry spec
 # -------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class DistSpec:
+    """Distribution data class"""
+
     cls: Type[Distribution]
+    """Distribution class"""
     required: set[str]
+    """Parameters of the distribution"""
 
 
 # -------------------------------------------------------------------
 # Registry function / Overview
 # -------------------------------------------------------------------
+
 
 def get_dist_kw() -> dict[str, DistSpec]:
     """Return dictionary mapping keys to distribution classes and required parameters."""
@@ -69,9 +75,11 @@ def get_dist_kw() -> dict[str, DistSpec]:
         ),
     }
 
+
 # -------------------------------------------------------------------
 # Individual functions
 # -------------------------------------------------------------------
+
 
 class BaseDistribution(Distribution):
     """Base class for custom distributions
@@ -458,7 +466,7 @@ class Image(Distribution):
         file_list = []
         for root, _, files in os.walk(self.dir):
             file_list += [os.path.join(root, f) for f in files]
-        self.files: list[str] = [
+        self.files: list[Path] = [
             file for file in file_list if re.search(r"\.(png|jpg|gif|tiff|jpeg)$", file)
         ]
         """List of image files in the directory."""
