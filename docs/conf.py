@@ -10,7 +10,7 @@ import sys
 import os
 
 project = "Dead Leaves"
-author = "Swantje Mahncke"
+author = "Swantje Mahncke, Lynn Schmittwilken"
 copyright = f"2025, {author}"
 release = "0.1"
 

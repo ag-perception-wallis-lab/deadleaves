@@ -1,7 +1,10 @@
 [project]
 name = "deadleaves"
 version = "0.1.0"
-authors = [{ name = "Swantje Mahncke", email = "swantje.mahncke@tu-darmstadt.de" }]
+authors = [
+    { name = "Lynn Schmittwilken", email = "lynn.schmittwilken@tu-darmstadt.de" },
+    { name = "Swantje Mahncke", email = "swantje.mahncke@tu-darmstadt.de" },
+]
 description = "A package to generate dead leaves images."
 readme = "README.md"
 requires-python = ">=3.12"
