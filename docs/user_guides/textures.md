@@ -36,7 +36,7 @@ For example, Gaussian noise per leaf in gray-scale:
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     "circular", 
@@ -73,7 +73,7 @@ Each leaf is assigned a patch and blended with its color using an alpha value:
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     "circular", 

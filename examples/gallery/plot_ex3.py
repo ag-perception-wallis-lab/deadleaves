@@ -5,7 +5,7 @@ RGB squares
 Replication of Baradad et al., 2022
 """
 
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     leaf_shape="rectangular",

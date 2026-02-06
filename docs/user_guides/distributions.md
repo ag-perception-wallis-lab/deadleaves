@@ -34,7 +34,7 @@ Use this when you want a parameter to remain unchanged.
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     "circular", 
@@ -74,7 +74,7 @@ $$
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     "circular", 
@@ -140,7 +140,7 @@ plt.show()
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     "circular", 
@@ -206,7 +206,7 @@ plt.show()
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 import torch
 
 model = LeafGeometryGenerator(
@@ -273,7 +273,7 @@ plt.show()
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     "polygon", 
@@ -307,7 +307,7 @@ $$
 
 import matplotlib.pyplot as plt
 import torch
-from dead_leaves.distributions import PowerLaw
+from deadleaves.distributions import PowerLaw
 
 params = [
     (10,150,1.5),
@@ -350,7 +350,7 @@ plt.show()
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     "circular", 
@@ -391,7 +391,7 @@ The `amplitude`, $A$ changes the intensity between `0.0` and `1.0`.
 
 import matplotlib.pyplot as plt
 import torch
-from dead_leaves.distributions import Cosine
+from deadleaves.distributions import Cosine
 
 params = [
     (1,4),
@@ -432,7 +432,7 @@ Random variables with this distribution always produce values between $-\pi$ and
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     "ellipsoid", 
@@ -469,7 +469,7 @@ The positive `exponential_constant`, $c$ sets the strength of the peak.
 
 import matplotlib.pyplot as plt
 import torch
-from dead_leaves.distributions import ExpCosine
+from deadleaves.distributions import ExpCosine
 
 params = [
     (4, 3),
@@ -510,7 +510,7 @@ Random variables with this distribution always produce values between $-\pi$ and
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     "ellipsoid", 
@@ -555,7 +555,7 @@ In particular, it will **sample from all available image files** in the director
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     "circular", 

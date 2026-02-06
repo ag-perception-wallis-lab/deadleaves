@@ -53,7 +53,7 @@ To generate images with powerlaw distributed leaf radius (for a $1/f$ power spec
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     "circular", 
@@ -102,7 +102,7 @@ $$
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 import torch
 
 
@@ -154,7 +154,7 @@ $$
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 import torch
 
 model = LeafGeometryGenerator(
@@ -202,7 +202,7 @@ We then use a simple [Ray-casting algorithm](https://rosettacode.org/wiki/Ray-ca
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     "polygon", 

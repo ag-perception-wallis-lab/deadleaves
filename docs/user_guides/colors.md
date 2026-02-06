@@ -33,7 +33,7 @@ You can specify any supported [distribution](distributions.md) for the gray valu
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     "circular", 
@@ -70,7 +70,7 @@ Each channel has its own distribution, allowing for fully random or correlated c
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     "circular", 
@@ -112,7 +112,7 @@ HSV is an alternative color space that can be useful for separating hue from sat
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     "circular", 
@@ -152,7 +152,7 @@ You can also sample colors from an existing image. This allows the Dead Leaves t
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     "circular", 

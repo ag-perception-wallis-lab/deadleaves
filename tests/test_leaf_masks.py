@@ -1,7 +1,7 @@
 import pytest
 import torch
 import pandas as pd
-from dead_leaves.leaf_masks import circular, rectangular, ellipsoid, polygon
+from deadleaves.leaf_masks import circular, rectangular, ellipsoid, polygon
 
 X, Y = torch.meshgrid(torch.arange(10), torch.arange(10), indexing="ij")
 

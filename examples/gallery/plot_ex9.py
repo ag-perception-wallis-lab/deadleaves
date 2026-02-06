@@ -5,7 +5,7 @@
 Replication of Groen et al., 2012
 """
 
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     leaf_shape="circular",

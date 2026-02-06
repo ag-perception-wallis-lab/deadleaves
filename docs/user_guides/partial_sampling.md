@@ -23,7 +23,7 @@ If the sampling stops before the entire image is filled, the resulting segmentat
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 import torch
 
 model = LeafGeometryGenerator(
@@ -54,7 +54,7 @@ Alternatively, a dictionary can be passed which contains a `shape` key to select
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     "circular", 
@@ -84,7 +84,7 @@ The background color can be specified explicitly via the `ImageRenderer` argumen
 
 ```{code-cell}
 :tags: [hide-input]
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 import torch
 
 model = LeafGeometryGenerator(

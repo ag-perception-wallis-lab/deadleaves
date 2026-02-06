@@ -1,6 +1,6 @@
 import pytest
 import torch
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 
 test_shape_params = [

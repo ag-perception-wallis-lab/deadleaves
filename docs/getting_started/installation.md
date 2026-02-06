@@ -15,7 +15,7 @@ This should work for Mac and Linux without any adjustments. For usage on Windows
 ## Dependencies
 
 We recommend using a Python version `3.12` or newer.
-The dependencies should be automatically installed (at least using `pip`). `dead_leaves`s required dependencies are: 
+The dependencies should be automatically installed (at least using `pip`). `deadleaves`s required dependencies are: 
 
 - [PyTorch](https://pytorch.org/)
 - [Torchquad](https://torchquad.readthedocs.io/en/main/)

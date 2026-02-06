@@ -6,8 +6,8 @@ Replication of Wallis and Bex, 2012
 """
 
 import torch
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
-from dead_leaves.utils import choose_compute_backend
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves.utils import choose_compute_backend
 from PIL import Image
 from torchvision.transforms.functional import pil_to_tensor
 

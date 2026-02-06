@@ -57,7 +57,7 @@ sphinx_gallery_conf = {
 }
 
 # Auto API
-autoapi_dirs = ["../dead_leaves"]  # path to package
+autoapi_dirs = ["../deadleaves"]  # path to package
 autoapi_root = "reference"  # path to where to save the auto api generated output
 autoapi_keep_files = True
 

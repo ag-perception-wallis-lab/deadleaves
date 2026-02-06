@@ -14,7 +14,7 @@ kernelspec:
 
 This section focusses on *working with existing scenes* rather than generating new ones.
 
-In `dead_leaves`, each scene is represented by a *leaf table*: a pandas DataFrame where each row contains a single leaf's geometry parameters (and optionally appearance).
+In `deadleaves`, each scene is represented by a *leaf table*: a pandas DataFrame where each row contains a single leaf's geometry parameters (and optionally appearance).
 The `LeafTopology` class treats this table as a mutable scene description, allowing you ti rebuild or modify segmentation maps directly from the stored parameters - without resampling leaves.
 
 `LeafTopology` is designed for advanced workflows where scenes need to be edited, combined, or reinterpreted after generation,
@@ -47,7 +47,7 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 from IPython.display import HTML
 
-from dead_leaves import (
+from deadleaves import (
     LeafGeometryGenerator,
     LeafAppearanceSampler,
     ImageRenderer,
@@ -180,7 +180,7 @@ Because all attributes are preserved, the merged table still contains the full p
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from dead_leaves import (
+from deadleaves import (
     LeafGeometryGenerator,
     LeafAppearanceSampler,
     ImageRenderer,

@@ -1,5 +1,5 @@
 [project]
-name = "dead-leaves"
+name = "deadleaves"
 version = "0.1.0"
 authors = [{ name = "Swantje Mahncke", email = "swantje.mahncke@tu-darmstadt.de" }]
 description = "A package to generate dead leaves images."
@@ -14,7 +14,7 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where   = ["."]
-include = ["dead_leaves*"]
+include = ["deadleaves*"]
 exclude = ["examples*", "test*"]
 
 [dependency-groups]

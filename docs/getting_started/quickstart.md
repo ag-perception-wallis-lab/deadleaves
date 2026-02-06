@@ -27,7 +27,7 @@ This Quickstart walks you through the basic usage.
 Begin by importing the two core classes:
 
 ```{code-cell}
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 ```
 
 ## Setting up a Model

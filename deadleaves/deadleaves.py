@@ -11,11 +11,8 @@ import pandas as pd
 import PIL.Image
 from torchvision.transforms.functional import pil_to_tensor
 
-from dead_leaves.distributions import DistSpec
-from dead_leaves.leaf_masks import LeafMaskSpec
-
-from .distributions import get_dist_kw
-from .leaf_masks import get_leaf_mask_kw
+from .distributions import get_dist_kw, DistSpec
+from .leaf_masks import get_leaf_mask_kw, LeafMaskSpec
 from .utils import choose_compute_backend, bounding_box
 
 warnings.filterwarnings("ignore", category=UserWarning)

@@ -3,7 +3,7 @@ Example 2
 ===========================
 """
 
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 from PIL import Image
 from torchvision.transforms.functional import pil_to_tensor
 

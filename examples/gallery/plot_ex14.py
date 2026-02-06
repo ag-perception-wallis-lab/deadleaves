@@ -3,7 +3,7 @@ Sampling animation
 ===========================
 """
 
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 from IPython.display import HTML
 import torch
 

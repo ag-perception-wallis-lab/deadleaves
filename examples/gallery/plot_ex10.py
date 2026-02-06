@@ -4,8 +4,8 @@ Example 10
 """
 
 import torch
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
-from dead_leaves.utils import choose_compute_backend
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves.utils import choose_compute_backend
 
 position_mask = torch.zeros((512, 731), device=choose_compute_backend())
 Y, X = torch.meshgrid(

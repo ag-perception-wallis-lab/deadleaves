@@ -5,7 +5,7 @@ Natural colors and textures
 Replication of Madhusudana et al., 2022
 """
 
-from dead_leaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
+from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 
 model = LeafGeometryGenerator(
     leaf_shape="circular",

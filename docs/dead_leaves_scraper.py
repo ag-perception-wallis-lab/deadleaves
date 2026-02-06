@@ -1,6 +1,6 @@
 from pathlib import Path
 import torch
-from dead_leaves import ImageRenderer
+from deadleaves import ImageRenderer
 from sphinx_gallery.scrapers import figure_rst
 
 from matplotlib.animation import Animation

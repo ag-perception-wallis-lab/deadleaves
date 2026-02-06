@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 from IPython.display import HTML
 
-from dead_leaves import (
+from deadleaves import (
     LeafGeometryGenerator,
     LeafAppearanceSampler,
     ImageRenderer,
