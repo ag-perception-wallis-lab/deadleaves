@@ -105,7 +105,7 @@ for t in range(20):
         background_color=torch.tensor(1.0),
     )
     image = renderer.render_image()
-    frames.append(image)
+    frames.append(image.cpu())
 
 
 # Generate gif

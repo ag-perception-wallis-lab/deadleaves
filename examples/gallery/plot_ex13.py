@@ -121,7 +121,7 @@ for t in range(n_frames):
         background_color=torch.tensor(1.0),
     )
     image = renderer.render_image()
-    frames.append(image)
+    frames.append(image.cpu())
 
 fig, ax = plt.subplots(figsize=(7.31, 5.12))
 im = ax.imshow(frames[0])
