@@ -3,7 +3,6 @@ Proto-object in motion
 ===========================
 """
 
-import numpy as np
 import pandas as pd
 import torch
 
@@ -68,8 +67,8 @@ def move_leaves_one_step(
     image_shape: tuple[int, int],
     radius: float = 5.0,
     target_velocity: tuple[float, float] = (1.0, 0.0),
-    bg_angles: np.ndarray | None = None,
-    bg_angular_velocities: np.ndarray | None = None,
+    bg_angles: torch.Tensor | None = None,
+    bg_angular_velocities: torch.Tensor | None = None,
 ) -> pd.DataFrame:
     table = leaf_table.copy()
 
@@ -82,15 +81,17 @@ def move_leaves_one_step(
 
     # Initialize angles and angular velocities if not provided
     if bg_angles is None:
-        bg_angles = np.random.uniform(0, 2 * np.pi, size=(n_bg,))
+        bg_angles = torch.distributions.uniform.Uniform(0, 2 * torch.pi).sample((n_bg,))
     if bg_angular_velocities is None:
-        bg_angular_velocities = np.random.uniform(0.02, 0.05, size=(n_bg,))
+        bg_angular_velocities = torch.distributions.uniform.Uniform(0.02, 0.05).sample(
+            (n_bg,)
+        )
 
     # Move background leaves
     for i, idx in enumerate(bg_indices):
         angle = bg_angles[i] + frame_idx * bg_angular_velocities[i]
-        dx = radius * np.cos(angle)
-        dy = radius * np.sin(angle)
+        dx = radius * torch.cos(angle)
+        dy = radius * torch.sin(angle)
         table.loc[idx, "x_pos"] = table.loc[idx, "x_pos"] + dx
         table.loc[idx, "y_pos"] = table.loc[idx, "y_pos"] + dy
 
