@@ -118,7 +118,7 @@ for t in range(n_frames):
     renderer = ImageRenderer(
         leaf_table=table,
         image_shape=image_shape,
-        background_color=torch.tensor(1),
+        background_color=torch.tensor(1.0),
     )
     image = renderer.render_image()
     frames.append(image)

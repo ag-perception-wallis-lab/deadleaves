@@ -22,7 +22,7 @@ colormodel.sample_color(
 )
 
 renderer = ImageRenderer(
-    colormodel.leaf_table, segmentation_map, background_color=torch.tensor(1)
+    colormodel.leaf_table, segmentation_map, background_color=torch.tensor(1.0)
 )
 
 ani = renderer.animate()
