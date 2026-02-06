@@ -11,14 +11,13 @@ from dead_leaves.utils import choose_compute_backend
 from PIL import Image
 from torchvision.transforms.functional import pil_to_tensor
 
+device = choose_compute_backend()
 reference_image = Image.open("../../examples/images/ulb_5136-2516.jpg").resize(
     (731, 512), box=(0, 0, 3810, 2667)
 )
-image_tensor = (
-    pil_to_tensor(pic=reference_image).to(device=choose_compute_backend()) / 255
-)
+image_tensor = pil_to_tensor(pic=reference_image).to(device=device) / 255
 
-position_mask = torch.zeros((512, 731), device=choose_compute_backend())
+position_mask = torch.zeros((512, 731), device=device)
 Y, X = torch.meshgrid(
     torch.arange(731),
     torch.arange(512),
@@ -30,7 +29,7 @@ for radius in [50, 120, 200]:
         y_pos = int(radius * torch.sin(torch.Tensor([angle]))) + 365.5
         area = torch.Tensor([radius * 10])
         dist_from_center = torch.sqrt((X - x_pos) ** 2 + (Y - y_pos) ** 2)
-        mask = dist_from_center <= torch.sqrt(area / torch.pi)
+        mask = (dist_from_center <= torch.sqrt(area / torch.pi)).to(device)
         position_mask += mask
 
 model = LeafGeometryGenerator(
