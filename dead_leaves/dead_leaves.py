@@ -410,10 +410,12 @@ class LeafAppearanceSampler:
         """
         with self.device:
             for dist in self.color_distributions.values():
-                if len(dist.batch_shape) == 0:
+                if len(dist.batch_shape) == 0 and not hasattr(dist, "value"):
+                    colors = dist.sample((self.n_leaves, 1))
+                elif hasattr(dist, "value") and isinstance(dist.value, float):
                     colors = dist.sample((self.n_leaves, 1))
                 else:
-                    colors = dist.sample().expand(1, -1).permute(1, 0)
+                    colors = dist.sample().reshape(-1, 1)
         return colors
 
     def _sample_3d_colors(self) -> torch.Tensor:
