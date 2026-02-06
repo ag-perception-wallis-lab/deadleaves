@@ -1,7 +1,7 @@
 import pytest
 import torch
 import pandas as pd
-from dead_leaves.leaf_masks import circular, rectangular, ellipsoid, regular_polygon
+from dead_leaves.leaf_masks import circular, rectangular, ellipsoid, polygon
 
 X, Y = torch.meshgrid(torch.arange(10), torch.arange(10), indexing="ij")
 
@@ -447,7 +447,7 @@ def test_polygon():
         "area": torch.tensor(9),
         "n_vertices": torch.tensor(4),
     }
-    mask = regular_polygon((X, Y), params)
+    mask = polygon((X, Y), params)
 
     # output shape and type
     assert mask.shape == X.shape
@@ -472,7 +472,7 @@ def test_polygon_small_area():
         "area": torch.tensor(1e-6),
         "n_vertices": torch.tensor(4),
     }
-    mask = regular_polygon((X, Y), params)
+    mask = polygon((X, Y), params)
 
     assert mask.sum() == 1
     assert mask[4, 4]
@@ -485,7 +485,7 @@ def test_polygon_large_area():
         "area": torch.tensor(1000),
         "n_vertices": torch.tensor(4),
     }
-    mask = regular_polygon((X, Y), params)
+    mask = polygon((X, Y), params)
     assert mask.all()
 
 
@@ -496,7 +496,7 @@ def test_polygon_non_integer_center():
         "area": torch.tensor(9),
         "n_vertices": torch.tensor(4),
     }
-    mask = regular_polygon((X, Y), params)
+    mask = polygon((X, Y), params)
     assert mask[4, 4]
     assert mask[5, 5]
     assert not mask[7, 7]
@@ -509,7 +509,7 @@ def test_polygon_empty():
         "area": torch.tensor(1e-6),
         "n_vertices": torch.tensor(4),
     }
-    mask = regular_polygon((X, Y), params)
+    mask = polygon((X, Y), params)
     assert not mask.any()
 
 
@@ -522,7 +522,7 @@ def test_polygon_pandas():
             "n_vertices": torch.tensor(4),
         }
     )
-    mask = regular_polygon((X, Y), params)
+    mask = polygon((X, Y), params)
     assert mask.shape == X.shape
     assert mask.dtype == torch.bool
     assert mask[5, 5]
@@ -540,4 +540,4 @@ def test_polygon_invalid_args(area, n_vertices):
         "n_vertices": torch.tensor(n_vertices),
     }
     with pytest.raises(ValueError):
-        regular_polygon((X, Y), params)
+        polygon((X, Y), params)
