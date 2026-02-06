@@ -4,7 +4,6 @@ Circular motion
 """
 
 import pandas as pd
-import numpy as np
 import torch
 
 import matplotlib.pyplot as plt
@@ -66,26 +65,28 @@ def apply_circular_motion(
     cy = image_size[0] / 2
     cx = image_size[1] / 2
 
-    # convert to numpy for vectorized math
-    x = table["x_pos"].to_numpy(dtype=float) - cx
-    y = table["y_pos"].to_numpy(dtype=float) - cy
+    x = torch.tensor(table["x_pos"]) - cx
+    y = torch.tensor(table["y_pos"]) - cy
 
-    r = np.sqrt(x**2 + y**2)
-    theta = np.arctan2(y, x)
+    # Polar coordinates
+    r = torch.sqrt(x**2 + y**2)
+    theta = torch.arctan2(y, x)
 
     # update angle
     theta += angle_step
     if angular_jitter > 0:
-        theta += np.random.normal(0.0, angular_jitter, size=len(theta))
+        theta += torch.distributions.normal.Normal(0.0, angular_jitter).sample(
+            (len(theta),)
+        )
 
     # update radius
     if radial_jitter > 0:
-        r += np.random.normal(0.0, radial_jitter, size=len(r))
-        r = np.clip(r, 0.0, None)
+        r += torch.distributions.normal.Normal(0.0, radial_jitter).sample((len(r),))
+        r = torch.clip(r, 0.0, None)
 
     # back to Cartesian
-    table["x_pos"] = cx + r * np.cos(theta)
-    table["y_pos"] = cy + r * np.sin(theta)
+    table["x_pos"] = cx + r * torch.cos(theta)
+    table["y_pos"] = cy + r * torch.sin(theta)
 
     return table
 
@@ -95,7 +96,7 @@ for t in range(20):
     table = apply_circular_motion(
         leaf_table=table,
         image_size=segmentation_map.shape,
-        angle_step=np.pi / 10,
+        angle_step=torch.pi / 10,
         angular_jitter=0.1,
     )
 
