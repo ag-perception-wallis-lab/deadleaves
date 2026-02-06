@@ -2,7 +2,7 @@ import pytest
 import torch
 from torchquad import Trapezoid
 from pathlib import Path
-from dead_leaves.distributions import PowerLaw, Cosine, ExpCosine, Constant, Image
+from deadleaves.distributions import PowerLaw, Cosine, ExpCosine, Constant, Image
 
 torch.manual_seed(1)  # set seed for reproducibility
 
@@ -135,22 +135,19 @@ def test_Cosine_invalid_args(amplitude, frequency):
 
 test_parameters_ExpCosine = [
     (
-        1.0,
         1,
         1.0,
     ),  # minimal parameters
-    (1.0, 4, 3.0),  # default values
-    (0.1, 2, 0.5),  # small positive values
-    (8.0, 5, 3.0),  # larger valid values
-    (1e-6, 1, 1e-6),  # very small positive values, boundary test
+    (4, 3.0),  # default values
+    (2, 0.5),  # small positive values
+    (5, 3.0),  # larger valid values
+    (1, 1e-6),  # very small positive values, boundary test
 ]
 
 
-@pytest.mark.parametrize(
-    "amplitude, frequency, exponential_constant", test_parameters_ExpCosine
-)
-def test_ExpCosine(amplitude, frequency, exponential_constant):
-    dist = ExpCosine(amplitude, frequency, exponential_constant)
+@pytest.mark.parametrize("frequency, exponential_constant", test_parameters_ExpCosine)
+def test_ExpCosine(frequency, exponential_constant):
+    dist = ExpCosine(frequency, exponential_constant)
     x_values = torch.linspace(-4, 4, steps=1000)
     # test density function
     # non-negativity
@@ -185,22 +182,20 @@ def test_ExpCosine(amplitude, frequency, exponential_constant):
 
 
 test_invalid_parameters_ExpCosine = [
-    (0.0, 4, 3.0),  # amplitude zero
-    (-1.0, 4, 3.0),  # amplitude negative
-    (1.0, 0, 3.0),  # frequency zero
-    (1.0, -2, 3.0),  # frequency negative
-    (1.0, 2.5, 3.0),  # frequency not integer
-    (1.0, 4, 0.0),  # exponential_constant zero
-    (1.0, 4, -1.0),  # exponential_constant negative
+    (0, 3.0),  # frequency zero
+    (-2, 3.0),  # frequency negative
+    (2.5, 3.0),  # frequency not integer
+    (4, 0.0),  # exponential_constant zero
+    (4, -1.0),  # exponential_constant negative
 ]
 
 
 @pytest.mark.parametrize(
-    "amplitude, frequency, exponential_constant", test_invalid_parameters_ExpCosine
+    "frequency, exponential_constant", test_invalid_parameters_ExpCosine
 )
-def test_ExpCosine_invalid_args(amplitude, frequency, exponential_constant):
+def test_ExpCosine_invalid_args(frequency, exponential_constant):
     with pytest.raises(ValueError):
-        ExpCosine(amplitude, frequency, exponential_constant)
+        ExpCosine(frequency, exponential_constant)
 
 
 # --- Test: Constant distribution ---------------------------------------------
