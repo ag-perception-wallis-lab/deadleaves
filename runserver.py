@@ -8,6 +8,7 @@ DOCS = ROOT / "docs"
 BUILD = DOCS / "_build"
 HTML = DOCS / "_build" / "html"
 
+BUILD.mkdir(exist_ok=True)
 HTML.mkdir(exist_ok=True)
 
 # Build the Jupyter Book
