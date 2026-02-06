@@ -11,6 +11,9 @@ import pandas as pd
 import PIL.Image
 from torchvision.transforms.functional import pil_to_tensor
 
+from dead_leaves.distributions import DistSpec
+from dead_leaves.leaf_masks import LeafMaskSpec
+
 from .distributions import get_dist_kw
 from .leaf_masks import get_leaf_mask_kw
 from .utils import choose_compute_backend, bounding_box
@@ -18,10 +21,14 @@ from .utils import choose_compute_backend, bounding_box
 warnings.filterwarnings("ignore", category=UserWarning)
 
 # Initialize leaf mask registry and distribution registry
-leaf_mask_kw = get_leaf_mask_kw()
-dist_kw = get_dist_kw()
+leaf_mask_kw: dict[str, LeafMaskSpec] = get_leaf_mask_kw()
+"""Dictionary mapping leaf shapes to their mask functions and required parameters."""
 
-color_spaces = {
+dist_kw: dict[str, DistSpec] = get_dist_kw()
+"""Dictionary mapping keys to distribution classes and required parameters."""
+
+
+color_spaces: dict = {
     ("B", "G", "R"): ("R", "G", "B"),
     ("H", "S", "V"): ("H", "S", "V"),
     ("gray",): ("gray"),
@@ -1128,29 +1135,29 @@ class LeafTopology:
                 or required parameters contain NaNs.
         """
         cols = set(leaf_table.columns)
-    
+
         # --- base columns ---
         base_required = {"leaf_shape", "leaf_idx"}
         missing = base_required - cols
         if missing:
             raise ValueError(f"Missing base columns: {missing}")
-    
+
         # --- unknown shapes ---
         unknown = set(leaf_table["leaf_shape"]) - set(leaf_mask_kw)
         if unknown:
             raise ValueError(f"Unknown shapes: {unknown}")
-    
+
         # --- per-shape validation ---
         for shape, group in leaf_table.groupby("leaf_shape"):
             spec = leaf_mask_kw[shape]
-    
+
             # missing required columns
             missing_cols = spec.required - cols
             if missing_cols:
                 raise ValueError(
                     f"Shape '{shape}' missing required columns: {missing_cols}"
                 )
-    
+
             # NaN check in required columns for rows of this shape
             nan_mask = group[list(spec.required)].isna().any(axis=1)
             if nan_mask.any():
@@ -1267,7 +1274,7 @@ class LeafTopology:
         rng = np.random.default_rng(seed)
         out = []
         start = 1
-        
+
         groups = list(leaf_table.groupby(groupby, sort=False))
 
         if group_order == "ascending":
