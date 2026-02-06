@@ -488,11 +488,11 @@ class LeafAppearanceSampler:
 
         elif self.color_space == ("H", "S", "V"):
             color = self._sample_3d_colors()
-            self.leaf_table[color_columns_rgb] = hsv_to_rgb(color)
+            self.leaf_table[color_columns_rgb] = hsv_to_rgb(color.cpu())
 
         elif self.color_space == "gray":
             color = self._sample_grayscale_colors()
-            self.leaf_table[color_columns_rgb] = color.expand(-1, 3)
+            self.leaf_table[color_columns_rgb] = color.expand(-1, 3).cpu()
 
         elif self.color_space == "source":
             color = self._sample_colors_from_images()
@@ -501,7 +501,7 @@ class LeafAppearanceSampler:
         else:
             raise ValueError(f"Unsupported color space: {self.color_space}")
 
-        self.leaf_table[color_columns] = color
+        self.leaf_table[color_columns] = color.cpu()
         return self.leaf_table
 
     # -------------------------------------
@@ -1061,7 +1061,7 @@ class ImageRenderer:
                 background_color=self.background_color,
             )
             image = renderer.render_image()
-            frames.append(image)
+            frames.append(image.cpu())
 
         fig, ax = plt.subplots(frameon=False)
         fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=None, hspace=None)
