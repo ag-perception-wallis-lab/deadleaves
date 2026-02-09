@@ -7,3 +7,5 @@ paper_files
 *.rst
 docs/gallery
 reference
+
+!examples/gallery/GALLERY_HEADER.rst

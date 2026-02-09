@@ -2,7 +2,7 @@ import pytest
 import torch
 from torchquad import Trapezoid
 from pathlib import Path
-from dead_leaves.distributions import PowerLaw, Cosine, ExpCosine, Constant, Image
+from deadleaves.distributions import PowerLaw, Cosine, ExpCosine, Constant, Image
 
 torch.manual_seed(1)  # set seed for reproducibility
 

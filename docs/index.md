@@ -10,7 +10,7 @@
 🚀 
 ^^^
 
-Install `dead_leaves` and follow an introductory tutorial 
+Install `deadleaves` and follow an introductory tutorial 
 :::
 
 :::{grid-item-card} Learn more 
@@ -20,11 +20,11 @@ Install `dead_leaves` and follow an introductory tutorial
 👨‍💻 
 ^^^
 
-Learn more about design decisions and particular conventions and topics within `dead_leaves` 
+Learn more about design decisions and particular conventions and topics within `deadleaves` 
 :::
 
 :::{grid-item-card} Reference 
-:link: reference/dead_leaves/index 
+:link: reference/deadleaves/index 
 :link-type: doc 
 :text-align: center 
 📖 
@@ -52,6 +52,6 @@ Ask a question, report a bug, request a feature, or contribute.
 getting_started/index
 user_guides/index
 Gallery <gallery/index>
-Reference <reference/dead_leaves/index>
+Reference <reference/deadleaves/index>
 Development <development/contributing>
 ```

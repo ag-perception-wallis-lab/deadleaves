@@ -72,6 +72,17 @@ Reduce the number of leaves or exclude leaf positions from sampling.
 Learn how to introduce feature dependencies into your model.
 :::
 
+:::{grid-item-card} Leaf topology
+:link: leaf_topology
+:link-type: doc 
+:text-align: center 
+<img src="../_static/figures/circular_motion.gif" width="95"/>
+<img src="../_static/figures/protoobject.gif" width="95"/>
+^^^
+
+Learn how to use the leaf topology class to edit leaf tables and generate compound or animated scenes.
+::: 
+
 :::{grid-item-card} Gallery
 :link: ../gallery/index
 :link-type: doc 
@@ -90,9 +101,10 @@ Check out the gallery for inspiration on how to combine these features to genera
 :maxdepth: 1
 
 shapes
+distributions
 colors
 textures
 partial_sampling
 dependencies
-distributions
+leaf_topology
 ```

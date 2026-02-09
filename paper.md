@@ -1,5 +1,5 @@
 ---
-title: '`dead_leaves`: Creating cluttered visual stimuli in Python'
+title: '`deadleaves`: Creating cluttered visual stimuli in Python'
 tags:
     - Python package
     - vision science
@@ -39,7 +39,7 @@ For these reasons, the model serves as an effective null model for studying natu
 Yet, there is no publicly available software yet, which would allow to generate dead leaves images in a systematic fashion.
 This is where our package comes in.
 
-`dead_leaves` is an open-source Python package which can be used to create dead leaves images in a systematic, yet flexible way.
+`deadleaves` is an open-source Python package which can be used to create dead leaves images in a systematic, yet flexible way.
 Core functionalities are:
 
 - generating dead leaves images with properties (e.g. sizes, orientations, colors) drawn from a wide range of distributions (e.g. uniform, normal, Poisson, power-law, constant) or directly from an image.
@@ -89,7 +89,7 @@ Users can plug in various distributions for the different model parameters to cr
 
 ![](docs/_static/figures/texture_patch.png){width=100%}
 
-Example images generated with the `dead_leaves` package.
+Example images generated with the `deadleaves` package.
 :::
 
 
@@ -106,10 +106,10 @@ Small differences in implementation or rendering choices can strongly affect the
 Combined with the stochastic nature of the model, this makes it challenging for researchers to reliably generate stimuli and precisely describe their statistical properties.
 In short, current practices create barriers to reproducibility and consistent use of dead leaves images.
 
-To address these issues, we developed `dead_leaves`, a free and open-source Python package that standardizes dead leaves image generation.
+To address these issues, we developed `deadleaves`, a free and open-source Python package that standardizes dead leaves image generation.
 The package can be installed via standard package managers or from GitHub [**add link**].
 It provides fully parameterized functions for flexible stimulus generation, along with extensive documentation which describes the model, its parameters, and its recommended usage.
-By simplifying and unifying dead leaves generation, `dead_leaves` improves reproducibility, reduces implementation errors, and increases accessibility for both experienced users and newcomers.
+By simplifying and unifying dead leaves generation, `deadleaves` improves reproducibility, reduces implementation errors, and increases accessibility for both experienced users and newcomers.
 
 
 # State of the field
@@ -190,7 +190,7 @@ In particular, all classes contain modular components which are plugged into the
 The `dead-leaves` package allows one to generate dead leaves images in a user friendly and well documented way.
 Many of the images used in prior work can be generated with our package.
 Since this model has been in use for research for decades and is still continuously used we expect this package to support more research extending the approaches covered so far.
-In addition, the `dead_leaves` package could be used to easily generate images with similar statistics to those of natural images, as control stimuli for aesthetics research or for studying how different features are integrated in human perception (e.g. luminance and hue).
+In addition, the `deadleaves` package could be used to easily generate images with similar statistics to those of natural images, as control stimuli for aesthetics research or for studying how different features are integrated in human perception (e.g. luminance and hue).
 
 # AI usage disclosure
 
