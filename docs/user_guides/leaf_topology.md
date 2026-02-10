@@ -193,7 +193,7 @@ area = image_shape[0] * image_shape[1]
 geometry = LeafGeometryGenerator(
     leaf_shape="circular",
     shape_param_distributions={
-        "area": {"uniform": {"low": area * 0.005, "high": area * 0.01}},
+        "area": {"uniform": {"low": 1000.0, "high": 10000.0}},
     },
     image_shape=image_shape,
 )
@@ -267,7 +267,7 @@ area = image_shape[0] * image_shape[1]
 geometry = LeafGeometryGenerator(
     leaf_shape="circular",
     shape_param_distributions={
-        "area": {"uniform": {"low": area * 0.005, "high": area * 0.01}},
+        "area": {"uniform": {"low": 1000.0, "high": 10000.0}},
     },
     image_shape=image_shape,
 )
@@ -335,7 +335,7 @@ area = image_shape[0] * image_shape[1]
 geometry = LeafGeometryGenerator(
     leaf_shape="polygon",
     shape_param_distributions={
-        "area": {"uniform": {"low": area * 0.005, "high": area * 0.01}},
+        "area": {"uniform": {"low": 1000.0, "high": 10000.0}},
         "n_vertices": {"poisson": {"rate": 5}}
     },
     image_shape=image_shape,
