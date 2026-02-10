@@ -1,0 +1,33 @@
+name: Tests
+
+on:
+    push:
+    pull_request:
+        branches: [ main ]
+
+jobs:
+    test:
+        name: ${{ matrix.os}} / py${{ matrix.python_version }}
+        runs-on: ${{ matrix.os }}-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                os: [Ubuntu, macOS]
+                python_version: ['3.12', '3.13']
+        steps:
+            # Checkout repository
+            - uses: actions/checkout@v4
+            # Install uv with python version
+            - name: Install the latest version of uv and set the python version
+              uses: astral-sh/setup-uv@v6
+              with:
+                enable-cache: true
+                python-version: ${{ matrix.python_version }}
+
+            - name: Install dependencies for py==${{ matrix.python_version }}
+              run: uv sync --group test
+
+            # Run testing through pytest for the current version
+            # uv automatically install all required dependencies from pyproject.toml
+            - name: Test, for py==${{ matrix.python_version }}
+              run: uv run pytest
