@@ -1,6 +1,6 @@
 """
 HSV color and leaf-wise noise
-===========================
+=============================
 """
 
 from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
