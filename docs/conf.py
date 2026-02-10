@@ -40,7 +40,7 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build"]  # avoid recursive rebuilding on change
 
 # MyST-NB
-nb_execution_mode = "auto"  # always rerun notebooks
+nb_execution_mode = "auto"
 
 myst_enable_extensions = ["dollarmath", "colon_fence"]
 
