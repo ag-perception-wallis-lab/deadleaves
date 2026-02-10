@@ -24,13 +24,11 @@ An open-source Python package for creating dead leaves images in a systematic, y
 
 ## Installation
 
-You can install this package directly from gitlab through
-```
-pip install git+https://git.rwth-aachen.de/ag-perception-tuda/research/dead_leaves.git
-```
-This will prompt a username and password request.
+You can install this package directly from github through
 
-This should work for Mac and Linux without any adjustments. For usage on Windows make sure you have the [**Git credential manager (GCM)**](github.com/git-ecosystem/git-credential-manager) setup as part of the git for Windows installation, otherwise the installation will fail without allowing you to put in credentials.
+```
+pip install git+https://github.com/ag-perception-wallis-lab/deadleaves.git
+```
 
 ## Dependencies
 
