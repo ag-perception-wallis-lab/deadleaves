@@ -39,7 +39,7 @@ from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRender
 model = LeafGeometryGenerator(
     "circular", 
     {"area": {"constant": {"value": 5000.0}}},
-    (512,512)
+    (256,256)
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 
@@ -79,7 +79,7 @@ from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRender
 model = LeafGeometryGenerator(
     "circular", 
     {"area": {"uniform": {"low": 100.0, "high": 10000.0}}},
-    (512,512)
+    (256,256)
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 
@@ -145,7 +145,7 @@ from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRender
 model = LeafGeometryGenerator(
     "circular", 
     {"area": {"normal": {"loc": 10000.0, "scale": 2000.0}}},
-    (512,512)
+    (256,256)
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 
@@ -216,7 +216,7 @@ model = LeafGeometryGenerator(
         "orientation": {"uniform": {"low": 0.0, "high": 2*torch.pi}},
         "aspect_ratio": {"beta": {"concentration0": 5, "concentration1": 13}}
         },
-    (512,512)
+    (256,256)
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 
@@ -281,7 +281,7 @@ model = LeafGeometryGenerator(
         "area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}},
         "n_vertices": {"poisson": {"rate": 5}},
         },
-    (512,512)
+    (256,256)
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 
@@ -357,7 +357,7 @@ model = LeafGeometryGenerator(
     {
         "area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}
         },
-    (512,512)
+    (256,256)
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 
@@ -441,7 +441,7 @@ model = LeafGeometryGenerator(
         "orientation": {"cosine": {"amplitude": 0.5, "frequency": 4}},
         "aspect_ratio": {"constant": {"value": 0.5}}
         },
-    (512,512)
+    (256,256)
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 
@@ -519,7 +519,7 @@ model = LeafGeometryGenerator(
         "orientation": {"expcosine": {"frequency": 4, "exponential_constant": 3}},
         "aspect_ratio": {"constant": {"value": 0.5}}
         },
-    (512,512)
+    (256,256)
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 
@@ -562,7 +562,7 @@ model = LeafGeometryGenerator(
     {
         "area": {"constant": {"value": 5000.0}}
         },
-    (512,512)
+    (256,256)
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 

@@ -124,7 +124,7 @@ def apply_circular_motion(
 
 
 frames = []
-for t in range(20):
+for t in range(10):
     table = apply_circular_motion(
         leaf_table=table,
         image_size=segmentation_map.shape,
@@ -335,7 +335,7 @@ area = image_shape[0] * image_shape[1]
 geometry = LeafGeometryGenerator(
     leaf_shape="polygon",
     shape_param_distributions={
-        "area": {"uniform": {"low": 1000.0, "high": 10000.0}},
+        "area": {"uniform": {"low": 5000.0, "high": 10000.0}},
         "n_vertices": {"poisson": {"rate": 5}}
     },
     image_shape=image_shape,
