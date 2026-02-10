@@ -8,6 +8,7 @@
 
 import sys
 import os
+import warnings
 
 project = "Dead Leaves"
 author = "Swantje Mahncke, Lynn Schmittwilken"
@@ -39,9 +40,15 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build"]  # avoid recursive rebuilding on change
 
 # MyST-NB
-nb_execution_mode = "force"  # always rerun notebooks
+nb_execution_mode = "auto"  # always rerun notebooks
 
 myst_enable_extensions = ["dollarmath", "colon_fence"]
+
+warnings.filterwarnings(
+    "ignore",
+    category=DeprecationWarning,
+    module="myst_nb",
+)
 
 # LaTeX
 latex_engine = "lualatex"
@@ -54,6 +61,7 @@ sphinx_gallery_conf = {
     "gallery_dirs": "gallery",  # path to where to save gallery generated output
     "image_scrapers": ("dead_leaves_scraper.dead_leaves_scraper"),
     "within_subsection_order": "FileNameSortKey",
+    "download_all_examples": False,
 }
 
 # Auto API
