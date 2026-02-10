@@ -4,6 +4,10 @@
 An open-source Python package for creating dead leaves images in a systematic, yet flexible way.
 </p>
 
+[![Tests](https://github.com/ag-perception-wallis-lab/deadleaves/actions/workflows/test.yml/badge.svg)](https://github.com/ag-perception-wallis-lab/deadleaves/actions/workflows/test.yml)
+[![Py versions](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Documentation Status](https://readthedocs.org/projects/deadleaves/badge/?version=latest)](https://deadleaves.readthedocs.io/en/latest/?badge=latest)
+
 <p align=center>
 <img src=docs/_static/logo_dead_leaves.png width=300>
 </p>
