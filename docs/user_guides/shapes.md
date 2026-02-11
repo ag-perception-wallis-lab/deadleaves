@@ -58,7 +58,7 @@ from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRender
 model = LeafGeometryGenerator(
     "circular", 
     {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
-    (512,512)
+    (256, 256)
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 
@@ -113,7 +113,7 @@ model = LeafGeometryGenerator(
         "orientation": {"uniform": {"low": 0.0, "high": 2 * torch.pi}},
         "aspect_ratio": {"uniform": {"low": 0.5, "high": 2}}
         },
-    (512,512)
+    (256, 256)
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 
@@ -164,7 +164,7 @@ model = LeafGeometryGenerator(
         "orientation": {"uniform": {"low": 0.0, "high": 2 * torch.pi}},
         "aspect_ratio": {"uniform": {"low": 0.5, "high": 2}}
         },
-    (512,512)
+    (256, 256)
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 
@@ -210,7 +210,7 @@ model = LeafGeometryGenerator(
         "area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}},
         "n_vertices": {"poisson": {"rate": 5}},
         },
-    (512,512)
+    (256, 256)
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 

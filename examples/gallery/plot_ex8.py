@@ -6,6 +6,7 @@ Replication of Wallis and Bex, 2012
 """
 
 import torch
+import pandas as pd
 from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
 from deadleaves.utils import choose_compute_backend
 from PIL import Image
@@ -17,12 +18,13 @@ reference_image = Image.open("../../examples/images/ulb_5136-2516.jpg").resize(
 )
 image_tensor = pil_to_tensor(pic=reference_image).to(device=device) / 255
 
-position_mask = torch.zeros((512, 731), device=device)
 Y, X = torch.meshgrid(
     torch.arange(731),
     torch.arange(512),
     indexing="xy",
 )
+
+combined_leaf_table = pd.DataFrame()
 for radius in [50, 120, 200]:
     for angle in [0, 0.5 * torch.pi, torch.pi, 1.5 * torch.pi]:
         x_pos = int(radius * torch.cos(torch.Tensor([angle]))) + 256
@@ -30,19 +32,23 @@ for radius in [50, 120, 200]:
         area = torch.Tensor([radius * 10])
         dist_from_center = torch.sqrt((X - x_pos) ** 2 + (Y - y_pos) ** 2)
         mask = (dist_from_center <= torch.sqrt(area / torch.pi)).to(device)
-        position_mask += mask
 
-model = LeafGeometryGenerator(
-    leaf_shape="ellipsoid",
-    shape_param_distributions={
-        "area": {"uniform": {"low": 100.0, "high": 200.0}},
-        "aspect_ratio": {"uniform": {"low": 0.5, "high": 2}},
-        "orientation": {"uniform": {"low": 0.0, "high": 2 * torch.pi}},
-    },
-    image_shape=(512, 731),
-    position_mask=position_mask,
-)
-leaf_table, segmentation_map = model.generate_segmentation()
+        model = LeafGeometryGenerator(
+            leaf_shape="ellipsoid",
+            shape_param_distributions={
+                "area": {"uniform": {"low": 100.0, "high": 200.0}},
+                "aspect_ratio": {"uniform": {"low": 0.5, "high": 2}},
+                "orientation": {"uniform": {"low": 0.0, "high": 2 * torch.pi}},
+            },
+            image_shape=(512, 731),
+            position_mask=mask,
+        )
+        leaf_table, segmentation_map = model.generate_segmentation()
+        combined_leaf_table = pd.concat(
+            [combined_leaf_table, leaf_table], ignore_index=True
+        )
+
+combined_leaf_table.leaf_idx = combined_leaf_table.index + 1
 
 color_params = {
     "R": {
@@ -77,13 +83,11 @@ color_params = {
     },
 }
 
-colormodel = LeafAppearanceSampler(leaf_table=leaf_table)
+colormodel = LeafAppearanceSampler(leaf_table=combined_leaf_table)
 colormodel.sample_color(color_param_distributions=color_params)
 
-renderer = ImageRenderer(
-    leaf_table=colormodel.leaf_table, segmentation_map=segmentation_map
-)
+renderer = ImageRenderer(leaf_table=colormodel.leaf_table, image_shape=(512, 731))
 image = renderer.render_image()
-mask = segmentation_map == 0
+mask = renderer.segmentation_map == 0
 image[mask] = image_tensor.permute(1, 2, 0)[mask]
 renderer.show(image)

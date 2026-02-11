@@ -13,7 +13,7 @@ model = LeafGeometryGenerator(
         "area": {"powerlaw": {"low": 5000.0, "high": 10000.0, "k": 1.5}}
     },
     image_shape=(512, 731),
-    n_sample=500,
+    n_sample=50,
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 colormodel = LeafAppearanceSampler(leaf_table=leaf_table)

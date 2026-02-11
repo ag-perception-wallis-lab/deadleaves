@@ -34,6 +34,7 @@ model = LeafGeometryGenerator(
     },
     image_shape=(512, 731),
     position_mask=position_mask,
+    n_sample=1000,
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 

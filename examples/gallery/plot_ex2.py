@@ -16,7 +16,7 @@ image_tensor = pil_to_tensor(pic=reference_image) / 255
 model = LeafGeometryGenerator(
     leaf_shape="circular",
     shape_param_distributions={
-        "area": {"powerlaw": {"low": 100.0, "high": 5000.0, "k": 1.5}}
+        "area": {"powerlaw": {"low": 1000.0, "high": 5000.0, "k": 1.5}}
     },
     image_shape=(512, 731),
 )

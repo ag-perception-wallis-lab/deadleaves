@@ -41,7 +41,7 @@ from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRender
 model = LeafGeometryGenerator(
     "circular", 
     {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
-    (512,512)
+    (256, 256)
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 
@@ -78,7 +78,7 @@ from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRender
 model = LeafGeometryGenerator(
     "circular", 
     {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
-    (512,512)
+    (256, 256)
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 
@@ -86,7 +86,7 @@ colormodel = LeafAppearanceSampler(leaf_table)
 colormodel.sample_color({"gray": {"uniform": {"low": 0.1, "high": 0.9}}})
 colormodel.sample_texture(
     {
-        "source": {"image": {"dir": "/home/swantje/datasets/brodatz"}},
+        "source": {"image": {"dir": "../../examples/textures/brodatz"}},
         "alpha": {"normal": {"loc": 0.0, "scale": 0.5}},
     }
 )

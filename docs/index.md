@@ -1,5 +1,70 @@
 # Dead Leaves
 
+```{include} ../README.md
+:start-line: 3
+:end-line: 4
+```
+
+:::::{card}
+:text-align: center
+:width: auto
+:margin: 3
+:link: gallery/index.html
+
+::::{grid} 10
+:margin: 0
+:padding: 0
+:gutter: 1
+![](_static/figures/annulus.png)
+
+![](_static/figures/circles.png)
+
+![](_static/figures/constant_size.png)
+
+![](_static/figures/dual_feature_dependency.png)
+
+![](_static/figures/ellipsoids.png)
+
+![](_static/figures/HSV.png)
+
+![](_static/figures/leafwise_texture.png)
+
+![](_static/figures/leafy_image.png)
+
+![](_static/figures/natural_color.png)
+
+![](_static/figures/normal_size.png)
+
+![](_static/figures/polygons.png)
+
+![](_static/figures/position_mask.png)
+
+![](_static/figures/rectangles.png)
+
+![](_static/figures/RGB.png)
+
+![](_static/figures/single_feature_dependency.png)
+
+![](_static/figures/sparse_sampling.png)
+
+![](_static/figures/spheres.png)
+
+![](_static/figures/texture_patch.png)
+
+![](_static/figures/circular_motion.gif)
+
+![](_static/figures/protoobject.gif)
+::::
+:::::
+
+Core features are
+```{include} ../README.md
+:start-line: 16
+:end-line: 24
+```
+
+---
+
 ::::{grid} 2 
 :gutter: 3
 
