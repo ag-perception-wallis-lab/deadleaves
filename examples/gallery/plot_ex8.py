@@ -48,7 +48,7 @@ for radius in [50, 120, 200]:
             [combined_leaf_table, leaf_table], ignore_index=True
         )
 
-combined_leaf_table.leaf_idx = combined_leaf_table.index
+combined_leaf_table.leaf_idx = combined_leaf_table.index + 1
 
 color_params = {
     "R": {
