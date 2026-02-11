@@ -26,6 +26,8 @@ dependencies = [
     "torchquad>=0.5.0",
     "torchvision>=0.23.0",
 ]
+license = "EUPL-1.2"
+license-files = ["LICENCE.txt"]
 
 [tool.setuptools.packages.find]
 where   = ["."]
