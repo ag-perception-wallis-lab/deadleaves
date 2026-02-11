@@ -5,6 +5,10 @@ authors = [
     { name = "Lynn Schmittwilken", email = "lynn.schmittwilken@tu-darmstadt.de" },
     { name = "Swantje Mahncke", email = "swantje.mahncke@tu-darmstadt.de" },
 ]
+maintainers = [
+    { name = "Lynn Schmittwilken", email = "lynn.schmittwilken@tu-darmstadt.de" },
+    { name = "Swantje Mahncke", email = "swantje.mahncke@tu-darmstadt.de" },
+]
 description = "A package to generate dead leaves images."
 readme = "README.md"
 requires-python = ">=3.12"
