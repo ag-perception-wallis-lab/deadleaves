@@ -79,12 +79,14 @@ html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
 html_theme_options = {
-    "collapse_navigation": True,
-    "header_links_before_dropdown": 6,
-    "navbar_end": [
-        "search-button",
-        "theme-switcher",
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/ag-perception-wallis-lab/deadleaves",
+            "icon": "fa-brands fa-github",
+        },
     ],
+    "navbar_end": ["search-button", "theme-switcher", "navbar-icon-links"],
     "navbar_persistent": [],
 }
 html_title = f"{project} v{release} Manual"
