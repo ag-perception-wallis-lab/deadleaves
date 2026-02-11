@@ -52,43 +52,8 @@ Core functionalities are:
 The package is build around `PyTorch` [@Paszke2017] which allows the use of GPU for a faster sampling process.
 Users can plug in various distributions for the different model parameters to create a variety of images (@fig-DeadLeaves).
 
-::: {#fig-DeadLeaves layout-ncol=6}
-![](docs/_static/figures/annulus.png){width=100%}
-
-![](docs/_static/figures/circles.png){width=100%}
-
-![](docs/_static/figures/constant_size.png){width=100%}
-
-![](docs/_static/figures/dual_feature_dependency.png){width=100%}
-
-![](docs/_static/figures/ellipsoids.png){width=100%}
-
-![](docs/_static/figures/HSV.png){width=100%}
-
-![](docs/_static/figures/leafwise_texture.png){width=100%}
-
-![](docs/_static/figures/leafy_image.png){width=100%}
-
-![](docs/_static/figures/natural_color.png){width=100%}
-
-![](docs/_static/figures/normal_size.png){width=100%}
-
-![](docs/_static/figures/polygons.png){width=100%}
-
-![](docs/_static/figures/position_mask.png){width=100%}
-
-![](docs/_static/figures/rectangles.png){width=100%}
-
-![](docs/_static/figures/RGB.png){width=100%}
-
-![](docs/_static/figures/single_feature_dependency.png){width=100%}
-
-![](docs/_static/figures/sparse_sampling.png){width=100%}
-
-![](docs/_static/figures/spheres.png){width=100%}
-
-![](docs/_static/figures/texture_patch.png){width=100%}
-
+::: {#fig-DeadLeaves}
+![](examples.png)
 Example images generated with the `deadleaves` package.
 :::
 
