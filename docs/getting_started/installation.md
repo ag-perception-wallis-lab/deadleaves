@@ -2,15 +2,11 @@
 
 ## Installing
 
-You can install this package directly from gitlab through
+You can install this package directly from github through
 
 ```
-pip install git+https://git.rwth-aachen.de/ag-perception-tuda/research/dead_leaves.git
+pip install git+https://github.com/ag-perception-wallis-lab/deadleaves.git
 ```
-
-This will prompt a username and password request.
-
-This should work for Mac and Linux without any adjustments. For usage on Windows make sure you have the [**Git credential manager (GCM)**](https://github.com/git-ecosystem/git-credential-manager) setup as part of the git for Windows installation, otherwise the installation will fail without allowing you to put in credentials.
 
 ## Dependencies
 
