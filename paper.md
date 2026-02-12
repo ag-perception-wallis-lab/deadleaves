@@ -68,7 +68,7 @@ Combined with the stochastic nature of the model, this makes it challenging for 
 In short, current practices create barriers to reproducibility and consistent use of dead leaves images.
 
 To address these issues, we developed `deadleaves`, a free and open-source Python package that standardizes dead leaves image generation.
-The package can be installed via standard package managers or from GitHub [**add link**].
+The package can be installed via standard package managers or from [GitHub](https://github.com/ag-perception-wallis-lab/deadleaves).
 It provides fully parameterized functions for flexible stimulus generation, along with extensive documentation which describes the model, its parameters, and its recommended usage.
 By simplifying and unifying dead leaves generation, `deadleaves` improves reproducibility, reduces implementation errors, and increases accessibility for both experienced users and newcomers.
 
