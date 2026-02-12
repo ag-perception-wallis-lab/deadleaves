@@ -46,7 +46,7 @@ Core functionalities are:
 - picking from various leaf shapes (circles, ellipsoids, rectangles, regular polygons).
 - sampling in different color spaces (RGB, HSV, grayscale).
 - applying different noise or image textures, either to the entire image or per-leaf.
-- varying the image area covered by leaves, i.e. choosing between sparser or denser sampling or by applying position masks.
+- varying the image area covered by leaves, either by adjusting leaf count (controlling density) or by applying spatial masks to restrict coverage to selected regions.
 - creating arbitrarily complex leaf configurations by adding dependencies between leaf features (e.g. space-dependent color gradients).
 
 The package is build around `PyTorch` [@Paszke2017] which allows the use of GPU for a faster sampling process.
@@ -112,7 +112,7 @@ Across these applications, Dead Leaves Models function as semantically neutral, 
 
 ## 3. Synthetic data for computer vision
 
-Dead leaves models have recently been used to generate synthetic images with fully controlled statistical and generative structure, providing training and evaluation data for computer vision tasks and models.
+Dead Leaves Models have recently been used to generate synthetic images with fully controlled statistical and generative structure, providing training and evaluation data for computer vision tasks and models.
 
 One application is in training computer vision models on synthetic data that bypasses costly real‑image collection. Dead leaves images have been used for tasks such as disparity estimation [@Madhusudana2022], learning visual representations that emphasize shape and occlusion cues [@Baradad2021], and image restoration including denoising and deblurring [@Achddou2022].
 
