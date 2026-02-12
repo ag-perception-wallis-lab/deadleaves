@@ -4,7 +4,7 @@ from typing import Literal, Callable
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from matplotlib.colors import hsv_to_rgb
+from matplotlib.colors import hsv_to_rgb, rgb_to_hsv
 import torch
 import numpy as np
 import pandas as pd
@@ -867,9 +867,6 @@ class ImageRenderer:
             for channel in self.texture_space:
                 idx = {"R": 0, "G": 1, "B": 2, "H": 0, "S": 1, "V": 2}[channel]
                 texture[:, :, idx] = self._generate_leafwise_texture_1d(channel)
-
-            if self.texture_space == ("H", "S", "V"):
-                texture = torch.tensor(hsv_to_rgb(texture.cpu()), device=self.device)
             return texture
 
         if self.texture_space == "source":
@@ -895,6 +892,8 @@ class ImageRenderer:
                 dtype=torch.float32,
                 device=self.device,
             )
+            if self.texture_space == ("H", "S", "V"):
+                colors = torch.tensor(rgb_to_hsv(colors.cpu()), device=self.device)
             texture = self._generate_leafwise_texture()
             for leaf_idx in self.leaf_table.leaf_idx:
                 image[self.segmentation_map == leaf_idx] = torch.clip(
@@ -902,6 +901,8 @@ class ImageRenderer:
                     0,
                     1,
                 )
+            if self.texture_space == ("H", "S", "V"):
+                image = torch.tensor(hsv_to_rgb(image.cpu()), device=self.device)
             if self.background_color is not None:
                 image[self.segmentation_map == 0] = self.background_color
             self.image = image
