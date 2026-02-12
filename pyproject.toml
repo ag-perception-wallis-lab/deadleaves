@@ -5,15 +5,29 @@ authors = [
     { name = "Lynn Schmittwilken", email = "lynn.schmittwilken@tu-darmstadt.de" },
     { name = "Swantje Mahncke", email = "swantje.mahncke@tu-darmstadt.de" },
 ]
+maintainers = [
+    { name = "Lynn Schmittwilken", email = "lynn.schmittwilken@tu-darmstadt.de" },
+    { name = "Swantje Mahncke", email = "swantje.mahncke@tu-darmstadt.de" },
+]
 description = "A package to generate dead leaves images."
 readme = "README.md"
 requires-python = ">=3.12"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: GPU :: NVIDIA CUDA",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+]
 dependencies = [
     "pandas>=2.3.2",
     "torch>=2.8.0",
     "torchquad>=0.5.0",
     "torchvision>=0.23.0",
 ]
+license = "EUPL-1.2"
+license-files = ["LICENCE.txt"]
 
 [tool.setuptools.packages.find]
 where   = ["."]
@@ -34,7 +48,9 @@ docs = [
 dev = [{ include-group = "docs" }, { include-group = "test" }]
 
 [project.urls]
-repository = "https://github.com/ag-perception-wallis-lab/deadleaves.git"
+Repository    = "https://github.com/ag-perception-wallis-lab/deadleaves.git"
+Issues        = "https://github.com/ag-perception-wallis-lab/deadleaves/issues"
+Documentation = "https://deadleaves.readthedocs.io/"
 
 [build-system]
 requires      = ["setuptools >= 77.0.3"]

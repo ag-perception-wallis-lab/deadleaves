@@ -22,6 +22,8 @@ An open-source Python package for creating dead leaves images in a systematic, y
 - varying the image area covered by leaves, i.e. choosing between sparser or denser sampling and position mask.
 - creating arbitrarily complex leaf configurations by adding dependencies between leaf features (e.g. space-dependent color gradients).
 
+![](docs/_static/figures/examples.png)
+
 ## Installation
 
 You can install this package directly from github through
