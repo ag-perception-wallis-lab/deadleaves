@@ -9,12 +9,12 @@ authors:
       orcid: 0009-0006-2761-0038
       corresponding: true
       affiliations: "1, 2"
-    - name: Lynn Schmittwilken
-      orcid: 0000-0003-3621-9576
-      affiliations: 1
     - name: Thomas S. A. Wallis
       orcid: 0000-0001-7431-4852
       affiliations: "1, 2"
+    - name: Lynn Schmittwilken
+      orcid: 0000-0003-3621-9576
+      affiliations: 1
 affiliations:
     - index: 1
       name: Centre for Cognitive Science, Institute of Psychology, TU Darmstadt, Germany
