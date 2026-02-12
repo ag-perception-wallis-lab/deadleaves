@@ -9,19 +9,19 @@ authors:
       orcid: 0009-0006-2761-0038
       corresponding: true
       affiliations: "1, 2"
-    - name: Lynn Schmittwilken
-      orcid: 0000-0003-3621-9576
-      affiliations: 1
     - name: Thomas S. A. Wallis
       orcid: 0000-0001-7431-4852
       affiliations: "1, 2"
+    - name: Lynn Schmittwilken
+      orcid: 0000-0003-3621-9576
+      affiliations: 1
 affiliations:
-    - index: 1
-      name: Centre for Cognitive Science, Institute of Psychology, TU Darmstadt, Germany
-      ror: "05n911h24"
-    - index: 2
-      name: Center for Mind, Brain, and Behavior (CMBB), Universities of Marburg, Gießen, and Darmstadt, Germany
-date: TBD
+    - name: Centre for Cognitive Science, Institute of Psychology, TU Darmstadt, Germany
+      index: 1
+      ror: 05n911h24
+    - name: Center for Mind, Brain, and Behavior (CMBB), Universities of Marburg, Gießen, and Darmstadt, Germany
+      index: 2
+date: 13 February 2026
 bibliography: paper.bib
 ---
 
@@ -50,13 +50,9 @@ Core functionalities are:
 - creating arbitrarily complex leaf configurations by adding dependencies between leaf features (e.g. space-dependent color gradients).
 
 The package is build around `PyTorch` [@Paszke2017] which allows the use of GPU for a faster sampling process.
-Users can plug in various distributions for the different model parameters to create a variety of images (@fig-DeadLeaves).
+Users can plug in various distributions for the different model parameters to create a variety of images (\autoref{fig:deadleaves}).
 
-::: {#fig-DeadLeaves}
-![](examples.png)
-Example images generated with the `deadleaves` package.
-:::
-
+![Example images generated with the `deadleaves` package.\label{fig:deadleaves}](docs/_static/figures/examples.png)
 
 # Statement of need
 
@@ -72,7 +68,7 @@ Combined with the stochastic nature of the model, this can make it challenging f
 In short, current practices create barriers to reproducibility and consistent use of dead leaves images.
 
 To address these issues, we developed `deadleaves`, a free and open-source Python package that standardizes dead leaves image generation.
-The package can be installed via standard package managers or from GitHub.
+The package can be installed via standard package managers or from [GitHub](https://github.com/ag-perception-wallis-lab/deadleaves).
 It provides fully parameterized functions for flexible stimulus generation, along with extensive documentation which describes the model, its parameters, and its recommended usage.
 By simplifying and unifying dead leaves generation, `deadleaves` improves reproducibility, reduces implementation errors, and increases accessibility for both experienced users and newcomers.
 
