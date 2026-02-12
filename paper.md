@@ -52,7 +52,7 @@ Core functionalities are:
 The package is build around `PyTorch` [@Paszke2017] which allows the use of GPU for a faster sampling process.
 Users can plug in various distributions for the different model parameters to create a variety of images (\autoref{fig:deadleaves}).
 
-![Example images generated with the `deadleaves` package.\label{fig:deadleaves}](examples.png)
+![Example images generated with the `deadleaves` package.\label{fig:deadleaves}](docs/_static/figures/examples.png)
 
 # Statement of need
 
