@@ -50,13 +50,9 @@ Core functionalities are:
 - creating arbitrarily complex leaf configurations by adding dependencies between leaf features (e.g. space-dependent color gradients).
 
 The package is build around `PyTorch` [@Paszke2017] which allows the use of GPU for a faster sampling process.
-Users can plug in various distributions for the different model parameters to create a variety of images (@fig-DeadLeaves).
+Users can plug in various distributions for the different model parameters to create a variety of images (\autoref{fig:deadleaves}).
 
-::: {#fig-DeadLeaves}
-![](examples.png)
-Example images generated with the `deadleaves` package.
-:::
-
+![Example images generated with the `deadleaves` package.\label{fig:deadleaves}](examples.png)
 
 # Statement of need
 
