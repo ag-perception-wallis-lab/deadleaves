@@ -1,26 +1,26 @@
 ---
 title: '`deadleaves`: Creating cluttered visual stimuli in Python'
 tags:
-    - Python package
-    - vision science
-    - stimulus creation
+  - Python package
+  - vision science
+  - stimulus creation
 authors:
-    - name: Swantje Mahncke
-      orcid: 0009-0006-2761-0038
-      corresponding: true
-      affiliations: "1, 2"
-    - name: Thomas S. A. Wallis
-      orcid: 0000-0001-7431-4852
-      affiliations: "1, 2"
-    - name: Lynn Schmittwilken
-      orcid: 0000-0003-3621-9576
-      affiliations: 1
+  - name: Swantje Mahncke
+    orcid: 0009-0006-2761-0038
+    corresponding: true
+    affiliation: "1, 2"
+  - name: Thomas S. A. Wallis
+    orcid: 0000-0001-7431-4852
+    affiliation: "1, 2"
+  - name: Lynn Schmittwilken
+    orcid: 0000-0003-3621-9576
+    affiliation: 1
 affiliations:
-    - name: Centre for Cognitive Science, Institute of Psychology, TU Darmstadt, Germany
-      index: 1
-      ror: 05n911h24
-    - name: Center for Mind, Brain, and Behavior (CMBB), Universities of Marburg, Gießen, and Darmstadt, Germany
-      index: 2
+ - name: Centre for Cognitive Science, Institute of Psychology, TU Darmstadt, Germany
+   index: 1
+   ror: 05n911h24
+ - name: Center for Mind, Brain, and Behavior (CMBB), Universities of Marburg, Gießen, and Darmstadt, Germany
+   index: 2
 date: 13 February 2026
 bibliography: paper.bib
 ---
