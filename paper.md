@@ -16,12 +16,12 @@ authors:
       orcid: 0000-0003-3621-9576
       affiliations: 1
 affiliations:
-    - index: 1
-      name: Centre for Cognitive Science, Institute of Psychology, TU Darmstadt, Germany
-      ror: "05n911h24"
-    - index: 2
-      name: Center for Mind, Brain, and Behavior (CMBB), Universities of Marburg, Gießen, and Darmstadt, Germany
-date: TBD
+    - name: Centre for Cognitive Science, Institute of Psychology, TU Darmstadt, Germany
+      index: 1
+      ror: 05n911h24
+    - name: Center for Mind, Brain, and Behavior (CMBB), Universities of Marburg, Gießen, and Darmstadt, Germany
+      index: 2
+date: 13 February 2026
 bibliography: paper.bib
 ---
 
