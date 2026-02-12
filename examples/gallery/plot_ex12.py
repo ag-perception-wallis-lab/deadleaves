@@ -92,7 +92,7 @@ def apply_circular_motion(
 
 
 frames = []
-for t in range(20):
+for t in range(10):
     table = apply_circular_motion(
         leaf_table=table,
         image_size=segmentation_map.shape,

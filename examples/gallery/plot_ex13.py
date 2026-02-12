@@ -106,7 +106,7 @@ def move_leaves_one_step(
 
 
 frames = []
-n_frames = 80
+n_frames = 10
 for t in range(n_frames):
     table = move_leaves_one_step(
         leaf_table=table_merged,

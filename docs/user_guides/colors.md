@@ -38,7 +38,7 @@ from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRender
 model = LeafGeometryGenerator(
     "circular", 
     {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
-    (512,512)
+    (256,256)
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 
@@ -75,7 +75,7 @@ from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRender
 model = LeafGeometryGenerator(
     "circular", 
     {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
-    (512,512)
+    (256,256)
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 
@@ -117,7 +117,7 @@ from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRender
 model = LeafGeometryGenerator(
     "circular", 
     {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
-    (512,512)
+    (256,256)
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 
@@ -157,7 +157,7 @@ from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRender
 model = LeafGeometryGenerator(
     "circular", 
     {"area": {"powerlaw": {"low": 100.0, "high": 10000.0, "k": 1.5}}},
-    (512,512)
+    (256,256)
 )
 leaf_table, segmentation_map = model.generate_segmentation()
 

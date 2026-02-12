@@ -8,6 +8,7 @@
 
 import sys
 import os
+import warnings
 
 project = "Dead Leaves"
 author = "Swantje Mahncke, Lynn Schmittwilken"
@@ -39,9 +40,15 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build"]  # avoid recursive rebuilding on change
 
 # MyST-NB
-nb_execution_mode = "force"  # always rerun notebooks
+nb_execution_mode = "auto"
 
 myst_enable_extensions = ["dollarmath", "colon_fence"]
+
+warnings.filterwarnings(
+    "ignore",
+    category=DeprecationWarning,
+    module="myst_nb",
+)
 
 # LaTeX
 latex_engine = "lualatex"
@@ -54,6 +61,7 @@ sphinx_gallery_conf = {
     "gallery_dirs": "gallery",  # path to where to save gallery generated output
     "image_scrapers": ("dead_leaves_scraper.dead_leaves_scraper"),
     "within_subsection_order": "FileNameSortKey",
+    "download_all_examples": False,
 }
 
 # Auto API
@@ -71,12 +79,14 @@ html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
 html_theme_options = {
-    "collapse_navigation": True,
-    "header_links_before_dropdown": 6,
-    "navbar_end": [
-        "search-button",
-        "theme-switcher",
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/ag-perception-wallis-lab/deadleaves",
+            "icon": "fa-brands fa-github",
+        },
     ],
+    "navbar_end": ["search-button", "theme-switcher", "navbar-icon-links"],
     "navbar_persistent": [],
 }
 html_title = f"{project} v{release} Manual"

@@ -8,7 +8,7 @@ from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRender
 model = LeafGeometryGenerator(
     leaf_shape="rectangular",
     shape_param_distributions={
-        "area": {"powerlaw": {"low": 100.0, "high": 5000.0, "k": 1.5}},
+        "area": {"powerlaw": {"low": 1000.0, "high": 10000.0, "k": 1.5}},
         "aspect_ratio": {"uniform": {"low": 0.001, "high": 10}},
         "orientation": {"constant": {"value": 0.0}},
     },
