@@ -154,6 +154,8 @@ All suggestions were manually adapted to ensure correctness and fit the intended
 
 # Acknowledgements
 
+The authors thank Benjamin Beilharz for reviewing portions of the codebase and for providing helpful suggestions on the design of the user-facing API.
+
 This work was supported by the Deutsche Forschungsgemeinschaft (German Research Foundation, DFG) under Germany’s Excellence Strategy (EXC 3066/1 “The Adaptive Mind”, Project No. 533717223).
 This work was co-funded by the European Union (ERC, SEGMENT, 101086774). Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Research Council. Neither the European Union nor the granting authority can be held responsible for them.
 
