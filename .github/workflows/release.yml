@@ -58,3 +58,27 @@ jobs:
         --index-url https://test.pypi.org/simple/ \
         --extra-intex-url https://pypi.org/simple \
         deadleaves
+
+  publish:
+    name: Publish to PyPI
+    needs: 
+      - build
+      - test_publish
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v6
+      with: 
+        name: python-package-distributions
+        path: dist/
+    - name: Publish distribution to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+    - name: Test install from PyPI
+      run: |
+          pip install \
+          --index-url https://pypi.org/simple/ \
+          deadleaves
