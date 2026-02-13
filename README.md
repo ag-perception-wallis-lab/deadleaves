@@ -26,7 +26,7 @@ An open-source Python package for creating dead leaves images in a systematic, y
 
 ## Installation
 
-You my install `deadleaves` from PyPI using `pip`:
+You may install `deadleaves` from PyPI using `pip`:
 
 ```
 pip install deadleaves
