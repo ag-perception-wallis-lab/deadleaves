@@ -61,9 +61,7 @@ jobs:
 
   publish:
     name: Publish to PyPI
-    needs: 
-      - build
-      - test_publish
+    needs: [build, test_publish]
     runs-on: ubuntu-latest
 
     permissions:
