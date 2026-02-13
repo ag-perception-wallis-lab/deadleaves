@@ -43,6 +43,7 @@ docs = [
     "sphinx-autoapi",
     "sphinx-design",
     "sphinx-gallery",
+    "sphinx-togglebutton",
     "sphinx_copybutton",
 ]
 dev = [{ include-group = "docs" }, { include-group = "test" }]
