@@ -26,11 +26,25 @@ An open-source Python package for creating dead leaves images in a systematic, y
 
 ## Installation
 
-You can install this package directly from github through
+You may install `deadleaves` from PyPI using `pip`:
 
 ```
-pip install git+https://github.com/ag-perception-wallis-lab/deadleaves.git
+pip install deadleaves
 ```
+
+OR (for developers), install from source:
+
+1. Clone the repository from GitHub:
+```
+git clone git@github.com:ag-perception-wallis-lab/deadleaves.git
+```
+2. Install `deadleaves` to your local python library using pip, by running from the top-level directory:
+```
+pip install .
+```
+To install in developer/editable mode run `pip install -e .` at the root directory. 
+This makes changes to files immediately usable, rather than having to reinstall the package after every change.
+
 
 ## Dependencies
 

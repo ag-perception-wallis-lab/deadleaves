@@ -28,6 +28,7 @@ extensions = [
     "autoapi.extension",  # automatic api reference from docstrings
     "sphinx_design",  # allow sphinx style in markdown files
     "sphinx_copybutton",  # copy buttons on code cells
+    "sphinx_togglebutton",
 ]
 
 source_suffix = {
