@@ -1,6 +1,6 @@
 [project]
 name = "deadleaves"
-version = "0.1.0"
+version = "0.1.1"
 authors = [
     { name = "Lynn Schmittwilken", email = "lynn.schmittwilken@tu-darmstadt.de" },
     { name = "Swantje Mahncke", email = "swantje.mahncke@tu-darmstadt.de" },
