@@ -56,7 +56,7 @@ jobs:
       run: |
         pip install \
         --index-url https://test.pypi.org/simple/ \
-        --extra-intex-url https://pypi.org/simple \
+        --extra-index-url https://pypi.org/simple \
         deadleaves
 
   publish:
