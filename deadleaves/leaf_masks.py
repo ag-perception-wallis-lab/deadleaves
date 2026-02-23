@@ -31,7 +31,10 @@ class LeafMaskSpec:
 
 
 def get_leaf_mask_kw() -> dict[str, LeafMaskSpec]:
-    """Return dictionary mapping leaf shapes to their mask functions and required parameters."""
+    """
+    Return dictionary mapping leaf shapes to their mask functions
+    and required parameters.
+    """
     return {
         "circular": LeafMaskSpec(
             fn=circular,
