@@ -74,12 +74,19 @@ def circular(
             Leaf mask.
     """
     X, Y = index_grid
-    if params["area"] < 0:
-        raise ValueError("Provided area must be non-negative.")
+    keys = params.keys() if isinstance(params, dict) else params.index
+    if not (("area" in keys) ^ ("radius" in keys)):
+        raise ValueError("Either radius or area must be provided.")
+    for key in ("area", "radius"):
+        if key in keys and params[key] < 0:
+            raise ValueError(f"Provided {key} must be non-negative.")
     dist_from_center = torch.sqrt(
         (X - params["x_pos"]) ** 2 + (Y - params["y_pos"]) ** 2
     )
-    mask = dist_from_center <= torch.sqrt(params["area"] / torch.pi)
+    if "area" in keys:
+        mask = dist_from_center <= torch.sqrt(params["area"] / torch.pi)
+    else:
+        mask = dist_from_center <= params["radius"]
     return mask
 
 
