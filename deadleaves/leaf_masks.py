@@ -21,7 +21,7 @@ class LeafMaskSpec:
 
     fn: MaskFn
     """Leaf mask function, mapping shape parameters to a leaf mask."""
-    required: set[str]
+    required: set[str] | list[set[str]]
     """Parameters of the leaf shape."""
 
 
@@ -35,7 +35,7 @@ def get_leaf_mask_kw() -> dict[str, LeafMaskSpec]:
     return {
         "circular": LeafMaskSpec(
             fn=circular,
-            required={"x_pos", "y_pos", "area"},
+            required=[{"x_pos", "y_pos", "area"}, {"x_pos", "y_pos", "radius"}],
         ),
         "ellipsoid": LeafMaskSpec(
             fn=ellipsoid,
