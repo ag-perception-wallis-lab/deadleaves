@@ -7,12 +7,15 @@ X, Y = torch.meshgrid(torch.arange(10), torch.arange(10), indexing="ij")
 
 # --- Test: Circular leaf mask --------------------------------------------------------
 
+test_circle_params = [("area", torch.pi * 4), ("radius", 2)]
 
-def test_circles():
+
+@pytest.mark.parametrize("key, value", test_circle_params)
+def test_circles(key, value):
     params = {
         "x_pos": torch.tensor(5.0),
         "y_pos": torch.tensor(5.0),
-        "area": torch.tensor(torch.pi * 4),
+        key: torch.tensor(value),
     }
     mask = circular((X, Y), params)
 
@@ -32,22 +35,30 @@ def test_circles():
     assert mask[5, 5 - 2] == mask[5, 5 + 2]
 
 
-def test_circles_zero_area():
+test_circle_params = [("area", 0.0), ("radius", 0.0)]
+
+
+@pytest.mark.parametrize("key, value", test_circle_params)
+def test_circles_zero_area(key, value):
     params = {
         "x_pos": torch.tensor(4.0),
         "y_pos": torch.tensor(6.0),
-        "area": torch.tensor(0.0),
+        key: torch.tensor(value),
     }
     mask = circular((X, Y), params)
     assert mask.sum() == 1
     assert mask[4, 6]
 
 
-def test_circles_small_area():
+test_circle_params = [("area", 1e-6), ("radius", 1e-6)]
+
+
+@pytest.mark.parametrize("key, value", test_circle_params)
+def test_circles_small_area(key, value):
     params = {
         "x_pos": torch.tensor(4.0),
         "y_pos": torch.tensor(4.0),
-        "area": torch.tensor(1e-6),
+        key: torch.tensor(value),
     }
     mask = circular((X, Y), params)
 
@@ -55,21 +66,29 @@ def test_circles_small_area():
     assert mask[4, 4]
 
 
-def test_circles_large_area():
+test_circle_params = [("area", torch.pi * 100), ("radius", 10)]
+
+
+@pytest.mark.parametrize("key, value", test_circle_params)
+def test_circles_large_area(key, value):
     params = {
         "x_pos": torch.tensor(5.0),
         "y_pos": torch.tensor(5.0),
-        "area": torch.tensor(torch.pi * 100),
+        key: torch.tensor(value),
     }
     mask = circular((X, Y), params)
     assert mask.all()
 
 
-def test_circles_non_integer_center():
+test_circle_params = [("area", torch.pi * 4), ("radius", 2)]
+
+
+@pytest.mark.parametrize("key, value", test_circle_params)
+def test_circles_non_integer_center(key, value):
     params = {
         "x_pos": torch.tensor(4.5),
         "y_pos": torch.tensor(4.5),
-        "area": torch.tensor(torch.pi * 4),
+        key: torch.tensor(value),
     }
     mask = circular((X, Y), params)
     assert mask[4, 4]
@@ -77,22 +96,30 @@ def test_circles_non_integer_center():
     assert not mask[7, 7]
 
 
-def test_circles_empty():
+test_circle_params = [("area", 0.0), ("radius", 0.0)]
+
+
+@pytest.mark.parametrize("key, value", test_circle_params)
+def test_circles_empty(key, value):
     params = {
         "x_pos": torch.tensor(4.5),
         "y_pos": torch.tensor(4.5),
-        "area": torch.tensor(0.0),
+        key: torch.tensor(value),
     }
     mask = circular((X, Y), params)
     assert not mask.any()
 
 
-def test_circles_pandas():
+test_circle_params = [("area", torch.pi * 4), ("radius", 2)]
+
+
+@pytest.mark.parametrize("key, value", test_circle_params)
+def test_circles_pandas(key, value):
     params = pd.Series(
         {
             "x_pos": torch.tensor(5.0),
             "y_pos": torch.tensor(5.0),
-            "area": torch.tensor(torch.pi * 4),
+            key: torch.tensor(value),
         }
     )
     mask = circular((X, Y), params)
@@ -101,11 +128,15 @@ def test_circles_pandas():
     assert mask[5, 5]
 
 
-def test_circles_invalid_args():
+test_circle_params = [("area", -1), ("radius", -1)]
+
+
+@pytest.mark.parametrize("key, value", test_circle_params)
+def test_circles_invalid_args(key, value):
     params = {
         "x_pos": torch.tensor(5.0),
         "y_pos": torch.tensor(5.0),
-        "area": torch.tensor(-1.0),
+        key: torch.tensor(value),
     }
     with pytest.raises(ValueError):
         circular((X, Y), params)
