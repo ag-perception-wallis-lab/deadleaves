@@ -1283,7 +1283,7 @@ class LeafTopology:
         leaf_table: pd.DataFrame,
         groupby: str,
         shuffle: bool = True,
-        group_order: str = None,
+        group_order: str | None = None,
         seed: int | None = None,
     ) -> pd.DataFrame:
         """
@@ -1296,8 +1296,9 @@ class LeafTopology:
                 Column containing the groups.
             shuffle (bool):
                 If true shuffle leaf index within group. Defaults to true.
-            group_order (str):
+            group_order (str | None):
                 Order of groups: "ascending", or "descending", or random (None).
+                Defaults to None.
             seed (int | None):
                 Set value for generating a random seed for reproducibility.
                 If None a different random seed will be set at each execution.
@@ -1346,7 +1347,7 @@ class LeafTopology:
             table (pd.DataFrame):
                 Input leaf table.
             seed (int, optional):
-                Random seed for reproducibility.
+                Random seed for reproducibility. Default to None.
 
         Returns:
             pd.DataFrame:
