@@ -209,7 +209,7 @@ class PowerLaw(BaseDistribution):
     @property
     def arg_constraints(self) -> dict:
         return {
-            "k": constraints.positive,
+            "k": constraints.real,
             "low": constraints.positive,
             "high": constraints.greater_than(self.low),
         }
