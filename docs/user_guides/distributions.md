@@ -302,6 +302,12 @@ $$
 f(x) = \begin{cases} \frac{k-1}{x_{\min}^{1-k}-x_{\max}^{1-k}}\cdot x^{-k}, & \text{for } x\in[x_{\min}, x_{\max}] \\ 0, & \text{else.}  \end{cases}
 $$
 
+For continuity with respect to $k$ the distribution for $k=1$ is given by
+$$
+f(x) = \begin{cases} \frac{1}{\ln(x_{\max})-\ln(x_{\min})}\cdot x^{-1}, & \text{for } x\in[x_{\min}, x_{\max}] \\ 0, & \text{else.}  \end{cases}
+$$
+For $k=0$ the distribution equals a uniform distribution between the lower and the upper bound.
+
 ```{code-cell}
 :tags: [remove-input]
 
@@ -312,8 +318,8 @@ from deadleaves.distributions import PowerLaw
 params = [
     (10,150,1.5),
     (10,150,3),
-    (20,150,1.5),
-    (20,300,3)
+    (20,150,-2),
+    (20,300,0)
 ]
 
 fig, ax = plt.subplots(ncols=2, figsize=(10,3))
