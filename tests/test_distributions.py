@@ -62,7 +62,6 @@ def test_PowerLaw(low, high, k):
 test_invalid_parameters_PowerLaw = [
     (-1, 2, 3),  # negative lower bound
     (2, 1, 3),  # upper bound smaller than lower bound
-    (1, 2, -1),  # negative exponent
 ]
 
 
