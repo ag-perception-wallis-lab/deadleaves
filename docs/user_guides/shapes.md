@@ -28,7 +28,7 @@ For comparability all shape sizes are parameterized via an `area` parameter, whi
 
 ## Circles
 
-Circular leaves (`leaf_shape = "circular"`) are the simplest, requiring only the `area` distribution:
+Circular leaves (`leaf_shape = "circular"`) are the simplest, requiring only the `area` <u>or</u> `radius` distribution:
 
 ```python
 {
@@ -36,17 +36,26 @@ Circular leaves (`leaf_shape = "circular"`) are the simplest, requiring only the
 }
 ```
 
-The leaf mask for a circular leaf with position $(\bar{x},\bar{y})$ and area $A$ is then generated via
+or
+
+```python
+{
+    "radius": <distribution>
+}
+```
+
+The leaf mask for a circular leaf with position $(\bar{x},\bar{y})$ and area $A$ or radius $r$ is then generated via
 
 $$
     L(x,y) = \begin{cases} 
-    1, & \text{if } \sqrt{(x-\bar{x})^2 + (y-\bar{y})^2} \leq \sqrt{\frac{A}{\pi}} \\
+    1, & \text{if } \sqrt{(x-\bar{x})^2 + (y-\bar{y})^2} \leq \sqrt{\frac{A}{\pi}} = r \\
     0, & \text{else.}
     \end{cases}
 $$
 
 ```{tip}
-To generate images with powerlaw distributed leaf radius (for a $1/f$ power spectrum) simply use a powerlaw distributed area with exponent `k` half of the value you would use for the radius.
+To generate images with powerlaw distributed leaf radius (for a $1/f$ power spectrum) simply use a powerlaw distributed area with exponent `k`.
+For parameterization via the area the value of `k` should be half of what you would use for the radius to achieve the same distribution.
 ```
 
 **Example**

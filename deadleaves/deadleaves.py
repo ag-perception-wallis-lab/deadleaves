@@ -100,14 +100,6 @@ class LeafGeometryGenerator:
             self._resolve_position_mask(position_mask)
         self._unpack_parameters()
 
-    leaf_shape_kw: dict[str, list[str]] = {
-        "circular": ["area"],
-        "ellipsoid": ["area", "aspect_ratio", "orientation"],
-        "rectangular": ["area", "aspect_ratio", "orientation"],
-        "polygon": ["area", "n_vertices"],
-    }
-    """Dictionary connecting keys to respective list of shape parameters."""
-
     def _resolve_dependencies(self) -> list[str]:
         """
         Resolve model parameter dependencies.
@@ -146,11 +138,17 @@ class LeafGeometryGenerator:
             ValueError:
                 Provided parameters don't match provided leaf shape.
         """
-        self.params = list(self.shape_param_distributions.keys())
-        if set(self.params) != set(self.leaf_shape_kw[self.leaf_shape]):
+        self.params = set(self.shape_param_distributions.keys()).union(
+            {"x_pos", "y_pos"}
+        )
+        if isinstance(leaf_mask_kw[self.leaf_shape].required, set):
+            required: list[set[str]] = [leaf_mask_kw[self.leaf_shape].required]
+        else:
+            required: list[set[str]] = leaf_mask_kw[self.leaf_shape].required
+        if not any(req <= self.params for req in required):
             raise ValueError(
                 f"Model with {self.leaf_shape} shapes expects parameters: "
-                f"{self.leaf_shape_kw[self.leaf_shape]} but received {self.params}"
+                f"{leaf_mask_kw[self.leaf_shape].required} but received {self.params}"
             )
         sampling_box = bounding_box(self.position_mask, 1)
         if sampling_box is None:
@@ -1134,38 +1132,76 @@ class LeafTopology:
                 If required columns are missing, unknown shapes are present,
                 or required parameters contain NaNs.
         """
+        errors = []
         cols = set(leaf_table.columns)
 
         # --- base columns ---
         base_required = {"leaf_shape", "leaf_idx"}
         missing = base_required - cols
         if missing:
-            raise ValueError(f"Missing base columns: {missing}")
+            errors.append(f"Missing base columns: {missing}")
+
+        if "leaf_shape" not in cols:
+            raise ValueError("\n".join(errors))
 
         # --- unknown shapes ---
         unknown = set(leaf_table["leaf_shape"]) - set(leaf_mask_kw)
         if unknown:
-            raise ValueError(f"Unknown shapes: {unknown}")
+            errors.append(f"Unknown shapes: {unknown}")
 
         # --- per-shape validation ---
         for shape, group in leaf_table.groupby("leaf_shape"):
+            if shape not in leaf_mask_kw:
+                continue
             spec = leaf_mask_kw[shape]
+            required = spec.required
 
-            # missing required columns
-            missing_cols = spec.required - cols
-            if missing_cols:
-                raise ValueError(
-                    f"Shape '{shape}' missing required columns: {missing_cols}"
-                )
+            # Case 1: Single set of required parameters
+            if isinstance(required, set):
+                # missing required columns
+                missing_cols = required - cols
+                if missing_cols:
+                    errors.append(
+                        f"Shape '{shape}' missing required columns: {missing_cols}"
+                    )
+                    continue
 
-            # NaN check in required columns for rows of this shape
-            nan_mask = group[list(spec.required)].isna().any(axis=1)
-            if nan_mask.any():
-                bad_rows = group.index[nan_mask].tolist()
-                raise ValueError(
-                    f"Shape '{shape}' has NaNs in required columns "
-                    f"for rows: {bad_rows}"
-                )
+                # NaN check in required columns for rows of this shape
+                nan_mask = group[list(required)].isna().any(axis=1)
+                if nan_mask.any():
+                    bad_rows = group.index[nan_mask].tolist()
+                    errors.append(
+                        f"Shape '{shape}' has NaNs in required columns "
+                        f"for rows: {bad_rows}"
+                    )
+
+            # Case 2: Multiple options for required parameters
+            elif isinstance(required, list):
+                # missing required columns
+                required_sets = [rset for rset in required if rset <= cols]
+
+                if not required_sets:
+                    errors.append(
+                        f"Shape '{shape}' missing required columns. "
+                        f"Needs on of: {required}"
+                    )
+                    continue
+
+                # NaN check in required columns for rows of this shape
+                bad_rows = []
+                for idx, row in group.iterrows():
+                    if not any(
+                        not row[list(rset)].isna().any() for rset in required_sets
+                    ):
+                        bad_rows.append(idx)
+                if bad_rows:
+                    errors.append(
+                        f"Shape '{shape}' has NaNs in required columns "
+                        f"for rows: {bad_rows}"
+                    )
+
+            if errors:
+                raise ValueError("Geometry validation failed:\n" + "\n".join(errors))
 
     def _cull_outside_canvas(
         self,
@@ -1247,7 +1283,7 @@ class LeafTopology:
         leaf_table: pd.DataFrame,
         groupby: str,
         shuffle: bool = True,
-        group_order: str = None,
+        group_order: str | None = None,
         seed: int | None = None,
     ) -> pd.DataFrame:
         """
@@ -1260,8 +1296,9 @@ class LeafTopology:
                 Column containing the groups.
             shuffle (bool):
                 If true shuffle leaf index within group. Defaults to true.
-            group_order (str):
+            group_order (str | None):
                 Order of groups: "ascending", or "descending", or random (None).
+                Defaults to None.
             seed (int | None):
                 Set value for generating a random seed for reproducibility.
                 If None a different random seed will be set at each execution.
@@ -1310,7 +1347,7 @@ class LeafTopology:
             table (pd.DataFrame):
                 Input leaf table.
             seed (int, optional):
-                Random seed for reproducibility.
+                Random seed for reproducibility. Default to None.
 
         Returns:
             pd.DataFrame:
