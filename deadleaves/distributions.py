@@ -209,16 +209,19 @@ class PowerLaw(BaseDistribution):
     @property
     def arg_constraints(self) -> dict:
         return {
-            "k": constraints.positive,
+            "k": constraints.real,
             "low": constraints.positive,
             "high": constraints.greater_than(self.low),
         }
 
     def __init__(self, low: float, high: float, k: float = 3) -> None:
         self.low, self.high, self.k = broadcast_all(low, high, k)
-        self.scale_factor: torch.Tensor = self.low ** (1 - self.k) - self.high ** (
-            1 - self.k
-        )
+        if k == 1:
+            self.scale_factor: torch.Tensor = torch.log(self.high) - torch.log(self.low)
+        else:
+            self.scale_factor: torch.Tensor = self.low ** (1 - self.k) - self.high ** (
+                1 - self.k
+            )
         """Scales probabilities for values between low and high to interval [0,1]."""
         self._validate_args()
 
@@ -236,26 +239,43 @@ class PowerLaw(BaseDistribution):
         return constraints.interval(self.low, self.high)
 
     def pdf(self, x: torch.Tensor) -> torch.Tensor:
-        d = torch.where(
-            self.support.check(x),
-            (self.k - 1) / (self.scale_factor * (x**self.k)),
-            0,
-        )
+        if self.k == 1:
+            d = torch.where(
+                self.support.check(x),
+                1 / (self.scale_factor * (x**self.k)),
+                0,
+            )
+        else:
+            d = torch.where(
+                self.support.check(x),
+                (self.k - 1) / (self.scale_factor * (x**self.k)),
+                0,
+            )
         return d
 
     def cdf(self, x: torch.Tensor) -> torch.Tensor:
         if not torch.is_floating_point(x):
             x = x.float()
         p = torch.where(x <= self.low, 0, 1)
-        p = torch.where(
-            self.support.check(x),
-            (self.low ** (1 - self.k) - x ** (1 - self.k)) / self.scale_factor,
-            p,
-        )
+        if self.k == 1:
+            p = torch.where(
+                self.support.check(x),
+                (torch.log(x) - torch.log(self.low)) / self.scale_factor,
+                p,
+            )
+        else:
+            p = torch.where(
+                self.support.check(x),
+                (self.low ** (1 - self.k) - x ** (1 - self.k)) / self.scale_factor,
+                p,
+            )
         return p
 
     def icdf(self, p: torch.Tensor) -> torch.Tensor:
-        x = (self.low ** (1 - self.k) - p * self.scale_factor) ** (1 / (1 - self.k))
+        if self.k == 1:
+            x = torch.exp(p * self.scale_factor)
+        else:
+            x = (self.low ** (1 - self.k) - p * self.scale_factor) ** (1 / (1 - self.k))
         return x
 
 

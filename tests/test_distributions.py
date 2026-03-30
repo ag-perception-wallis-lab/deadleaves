@@ -16,6 +16,12 @@ test_parameters_PowerLaw = [
     (100.0, 1000.0, 3.0),  # large
     (1.0, 10.0, 2.3),  # non-integer k
     (1.0, 10.0, 1.1),  # near invalid k
+    (1.0, 10.0, 1.0),  # edge case k=1
+    (1.0, 10.0, 0.5),  # small k
+    (1.0, 10.0, 0.0),  # edge case k=0
+    (1.0, 10.0, -0.5),  # small negative k
+    (1.0, 10.0, -1),  # edge case k=-1
+    (1.0, 10.0, -3),  # large negative k
 ]
 
 
@@ -56,7 +62,6 @@ def test_PowerLaw(low, high, k):
 test_invalid_parameters_PowerLaw = [
     (-1, 2, 3),  # negative lower bound
     (2, 1, 3),  # upper bound smaller than lower bound
-    (1, 2, -1),  # negative exponent
 ]
 
 
