@@ -31,7 +31,7 @@ The Dead Leaves Model [@Matheron1968] is a stochastic image generation model.
 The model creates images by sampling objects from a predefined family of distributions.
 Each object ("leaf") is typically a simple shape, such as a circle or ellipse, and its properties (e.g. position, size, orientation, color) are randomly drawn from these distributions.
 This sampling process allows precise control over image statistics, which makes it possible to vary or fix specific leaf properties as desired.
-As a consequence, Dead Leaves Models are widely adopted in the study of image statistics [@Ruderman1997;@Lee2001;@Zylberberg2012;@Madhusudana2022], visual function [@Morimoto2021;@Maiello2017;@Groen2012;@Taylor2015;@Wallis2012], image quality in digital cameras [@Cao2010;@Artmann2015;@Jenkin2024;@CPIQ2023] and, most recently, as training data for machine learning algorithms [@Baradad2021;@Achddou2022].
+As a consequence, Dead Leaves Models are widely adopted in the study of image statistics [@Ruderman1997;@Lee2001;@Zylberberg2012;@Madhusudana2022], visual function [@Morimoto2021;@Maiello2017;@Groen2012;@Taylor2015;@Wallis2012] and, most recently, as training data for machine learning algorithms [@Baradad2021;@Achddou2022].
 
 Leaves are drawn sequentially onto a two-dimensional canvas from front to back, so later leaves can be partially or fully occluded by earlier ones.
 This layering reproduces key statistical properties of natural scenes, including occlusion structure, heavy-tailed distributions of contrasts and edges, scale invariance, and higher-order spatial correlations [@Ruderman1997;@Lee2001].
@@ -58,7 +58,7 @@ Users can plug in various distributions for the different model parameters to cr
 
 Variations of the Dead Leaves Model have been used for decades to generate images for vision research and computer vision [@Ruderman1997;@Kaping2007;@Taylor2015;@Baradad2021].
 The model provides a relatively simple way to create complex, cluttered stimuli that match the statistics of natural images or other distributions.
-Despite its widespread use, there is no standard implementation for generating dead leaves images, and only a few projects have made code publicly available [@Baradad2021;@Badal2024].
+Despite its widespread use, there is no standard implementation for generating dead leaves images, and only a few projects have made code publicly available [@Baradad2021].
 Most researchers therefore implement their own generative code, which is time-consuming, prone to errors, and complicates comparisons across studies [cf. @Schmittwilken2023].
 Moreover, reproducing existing stimuli is often difficult because the specifications used to generate dead leaves images are often too coarse to fully capture their complexity and stochasticity.
 
@@ -116,7 +116,7 @@ Dead Leaves Models have recently been used to generate synthetic images with ful
 
 One application is in training computer vision models on synthetic data that bypasses costly real‑image collection. Dead leaves images have been used for tasks such as disparity estimation [@Madhusudana2022], learning visual representations that emphasize shape and occlusion cues [@Baradad2021], and image restoration including denoising and deblurring [@Achddou2022].
 
-Beyond training neural networks, dead leaves images have also been used as a benchmark for evaluating image quality, for example in assessing texture reproduction on digital cameras [@Cao2010;@McElvain2010;@Kirk2014;@CPIQ2023;@Jenkin2024].
+Beyond training neural networks, dead leaves images have also been used as a benchmark for evaluating image quality, for example in assessing texture reproduction on digital cameras [@Cao2010].
 
 Overall, these applications illustrate that Dead Leaves Models provide a flexible tool for generating semantically neutral yet statistically structured images, bridging the gap between highly simplified synthetic stimuli and the complexity of natural scenes.
 
