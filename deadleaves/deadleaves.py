@@ -13,6 +13,7 @@ from torchvision.transforms.functional import pil_to_tensor
 
 from .distributions import get_dist_kw, DistSpec
 from .leaf_masks import get_leaf_mask_kw, LeafMaskSpec
+from .acceleration.quadtree import CoverageQuadTree, leaf_aabb
 from .utils import choose_compute_backend, bounding_box
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -304,30 +305,64 @@ class LeafGeometryGenerator:
         """
         Generate a dead leaves segmentation from the model.
 
+        Uses a quadtree to track which canvas regions still contain uncovered
+        pixels.  Fully covered subtrees are pruned from future queries, so
+        mask evaluation is restricted to the sparse frontier of remaining gaps.
+
         Returns:
             tuple[pd.DataFrame, torch.Tensor]:
                 Dataframe listing the parameters of all generated leaves, along
                 with an segmentation map assigning each image location to a leaf.
         """
+        H, W = self.image_shape
         leaves_params = []
-        segmentation_map = torch.zeros(
-            *self.image_shape, device=self.device, dtype=torch.int
-        )
+        segmentation_map = torch.zeros(H, W, device=self.device, dtype=torch.int)
         leaf_idx = 1
 
-        while torch.any((segmentation_map == 0) & (self.position_mask == 1)):
+        qtree = CoverageQuadTree(self.image_shape, self.position_mask, segmentation_map)
+
+        while qtree.has_live_nodes:
             params = self._sample_parameters()
-            try:
-                leaf_mask = self.generate_leaf_mask((self.X, self.Y), params)
-            except ValueError:
-                continue
-            mask = leaf_mask & (segmentation_map == 0)
-            if (mask.sum() > 0) & self.position_mask[
+
+            # Position mask gate
+            if not self.position_mask[
                 params["y_pos"].to(torch.int), params["x_pos"].to(torch.int)
             ]:
-                segmentation_map[mask] = leaf_idx
+                continue
+
+            # Compute AABB, clip to canvas, query live tiles
+            y_min, x_min, y_max, x_max = leaf_aabb(params, self.leaf_shape)
+            y_min = max(y_min, 0)
+            x_min = max(x_min, 0)
+            y_max = min(y_max, H)
+            x_max = min(x_max, W)
+            if y_min >= y_max or x_min >= x_max:
+                continue
+
+            live_tiles = qtree.query_live_tiles(y_min, x_min, y_max, x_max)
+            if not live_tiles:
+                continue
+
+            # Evaluate mask on the AABB sub-grid only
+            sub_X = self.X[y_min:y_max, x_min:x_max]
+            sub_Y = self.Y[y_min:y_max, x_min:x_max]
+            try:
+                leaf_mask = self.generate_leaf_mask((sub_X, sub_Y), params)
+            except ValueError:
+                continue
+
+            sub_seg = segmentation_map[y_min:y_max, x_min:x_max]
+            mask = leaf_mask & (sub_seg == 0)
+            if mask.sum() > 0:
+                sub_seg[mask] = leaf_idx
                 leaves_params.append(params)
+
+                # Update tiles that might now be fully covered
+                for tile in live_tiles:
+                    qtree.update_tile(tile)
+
                 leaf_idx += 1
+
             if (self.n_sample is not None) and leaf_idx >= self.n_sample:
                 break
 
