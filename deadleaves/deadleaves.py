@@ -13,7 +13,7 @@ from torchvision.transforms.functional import pil_to_tensor
 
 from .distributions import get_dist_kw, DistSpec
 from .leaf_masks import get_leaf_mask_kw, LeafMaskSpec
-from .acceleration.quadtree import CoverageQuadTree, leaf_aabb
+from .acceleration.quadtree import CoverageQuadTree
 from .utils import choose_compute_backend, bounding_box
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -100,6 +100,7 @@ class LeafGeometryGenerator:
         if position_mask is not None:
             self._resolve_position_mask(position_mask)
         self._unpack_parameters()
+        self._resolved_deps = self._resolve_dependencies()
 
     def _resolve_dependencies(self) -> list[str]:
         """
@@ -195,6 +196,8 @@ class LeafGeometryGenerator:
         """
         with self.device:
             samples = {}
+            # TODO (later): Potentially think if we can use a flag if we need to resolve dependencies
+            # saves a few seconds
             params = self._resolve_dependencies()
             for param in params:
                 dist = self.distributions[param]
@@ -331,7 +334,7 @@ class LeafGeometryGenerator:
                 continue
 
             # Compute AABB, clip to canvas, query live tiles
-            y_min, x_min, y_max, x_max = leaf_aabb(params, self.leaf_shape)
+            y_min, x_min, y_max, x_max = leaf_mask_kw[self.leaf_shape].bbox(params)  # pyright: ignore[reportCallIssue]
             y_min = max(y_min, 0)
             x_min = max(x_min, 0)
             y_max = min(y_max, H)
