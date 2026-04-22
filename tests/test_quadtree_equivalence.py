@@ -23,6 +23,10 @@ import numpy as np
 from scipy import stats
 
 from deadleaves import LeafGeometryGenerator
+from deadleaves.leaf_masks import get_leaf_mask_kw
+
+
+LEAF_MASK_KW = get_leaf_mask_kw()
 
 
 # Reference implementation
@@ -118,8 +122,6 @@ def test_deterministic_equivalence(shape, seed):
 @pytest.mark.parametrize("seed", range(5))
 def test_aabb_contains_all_mask_pixels(shape, seed):
     """The AABB must contain every pixel where the mask is True."""
-    from deadleaves.acceleration.quadtree import leaf_aabb
-
     params = SHAPE_CONFIGS[shape]
 
     torch.manual_seed(seed)
@@ -136,7 +138,7 @@ def test_aabb_contains_all_mask_pixels(shape, seed):
         if not mask.any():
             continue
 
-        y_min, x_min, y_max, x_max = leaf_aabb(leaf_params, shape)
+        y_min, x_min, y_max, x_max = LEAF_MASK_KW[shape].bbox(leaf_params)  # pyright: ignore[reportCallIssue]
         y_min_c = max(y_min, 0)
         x_min_c = max(x_min, 0)
         y_max_c = min(y_max, H)

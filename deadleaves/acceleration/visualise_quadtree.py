@@ -25,7 +25,8 @@ from pathlib import Path
 
 import torch
 
-from .quadtree import CoverageQuadTree, leaf_aabb, Node
+
+from .quadtree import CoverageQuadTree, Node
 
 __all__ = ["record_and_visualise"]
 
@@ -78,6 +79,9 @@ def record_and_visualise(
         ``model.generate_segmentation()``.
     """
     import pandas as pd
+    from deadleaves.leaf_masks import get_leaf_mask_kw
+
+    leaf_mask_kw = get_leaf_mask_kw()
 
     H, W = model.image_shape
     segmentation_map = torch.zeros(H, W, device=model.device, dtype=torch.int)
@@ -111,7 +115,7 @@ def record_and_visualise(
         ]:
             continue
 
-        y_min, x_min, y_max, x_max = leaf_aabb(params, model.leaf_shape)
+        y_min, x_min, y_max, x_max = leaf_mask_kw[model.leaf_shape](params)  # pyright: ignore[reportCallIssue]
         y_min = max(y_min, 0)
         x_min = max(x_min, 0)
         y_max = min(y_max, H)
