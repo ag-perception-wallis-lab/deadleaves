@@ -100,7 +100,6 @@ class LeafGeometryGenerator:
         if position_mask is not None:
             self._resolve_position_mask(position_mask)
         self._unpack_parameters()
-        self._resolved_deps = self._resolve_dependencies()
 
     def _resolve_dependencies(self) -> list[str]:
         """
@@ -198,8 +197,7 @@ class LeafGeometryGenerator:
             samples = {}
             # TODO (later): Potentially think if we can use a flag if we need to resolve dependencies
             # saves a few seconds
-            params = self._resolve_dependencies()
-            for param in params:
+            for param in self._resolve_dependencies():
                 dist = self.distributions[param]
                 if dist is None:
                     dist_dict = self.shape_param_distributions[param]
@@ -922,7 +920,6 @@ class ImageRenderer:
                 Dead leaves image tensor.
         """
         with self.device:
-            image = torch.zeros(self.image_shape + (3,), device=self.device)
             colors = torch.tensor(
                 self.leaf_table[["color_R", "color_G", "color_B"]].to_numpy(),
                 dtype=torch.float32,
@@ -930,17 +927,28 @@ class ImageRenderer:
             )
             if self.texture_space == ("H", "S", "V"):
                 colors = torch.tensor(rgb_to_hsv(colors.cpu()), device=self.device)
+
             texture = self._generate_leafwise_texture()
-            for leaf_idx in self.leaf_table.leaf_idx:
-                image[self.segmentation_map == leaf_idx] = torch.clip(
-                    colors[leaf_idx - 1] + texture[self.segmentation_map == leaf_idx],
-                    0,
-                    1,
-                )
+
+            # Build a colour lookup table: row 0 = background, rows 1..N = leaves.
+            leaf_indices = torch.tensor(
+                self.leaf_table["leaf_idx"].values, dtype=torch.long
+            )
+            max_idx = int(leaf_indices.max().item())
+            lut = torch.zeros(max_idx + 1, 3, device=self.device)
+
+            # Map each leaf's colour into its leaf_idx row.
+            # leaf_table row i has leaf_idx = leaf_indices[i], colour = colors[i].
+            lut[leaf_indices] = colors
+
+            # Single gather: paint the entire image at once
+            seg = self.segmentation_map.to(dtype=torch.long, device=self.device)
+            image = torch.clamp(lut[seg] + texture, 0, 1)
+
             if self.texture_space == ("H", "S", "V"):
                 image = torch.tensor(hsv_to_rgb(image.cpu()), device=self.device)
             if self.background_color is not None:
-                image[self.segmentation_map == 0] = self.background_color
+                image[seg == 0] = self.background_color
             self.image = image
             return image
 
