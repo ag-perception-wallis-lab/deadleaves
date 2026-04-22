@@ -920,14 +920,11 @@ class ImageRenderer:
                 Dead leaves image tensor.
         """
         with self.device:
-            colors = torch.tensor(
-                self.leaf_table[["color_R", "color_G", "color_B"]].to_numpy(),
-                dtype=torch.float32,
-                device=self.device,
-            )
+            colors = self.leaf_table[["color_R", "color_G", "color_B"]].to_numpy()
             if self.texture_space == ("H", "S", "V"):
-                colors = torch.tensor(rgb_to_hsv(colors.cpu()), device=self.device)
+                colors = rgb_to_hsv(colors)
 
+            colors = torch.tensor(colors, device=self.device)
             texture = self._generate_leafwise_texture()
 
             # Build a colour lookup table: row 0 = background, rows 1..N = leaves.
