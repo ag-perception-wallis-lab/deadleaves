@@ -21,7 +21,7 @@ class Node:
     status of their four children.
 
     Attributes:
-        y0, x0, y1, x1:  half-open pixel region [y0, y1) × [x0, x1).
+        y0, x0, y1, x1:  half-open pixel region [y0, y1) x [x0, x1).
         alive:           True while at least one uncovered pixel exists in
                          this node's region.
         children:        None for leaf nodes, else a list of four Nodes.
@@ -80,9 +80,12 @@ class CoverageQuadTree:
         min_tile: int = 16,
     ) -> None:
         H, W = image_shape
-        self._seg = segmentation_map
-        self._pos = position_mask
-        self._min_tile = min_tile
+        self._seg: torch.Tensor = segmentation_map
+        "Segmentation map"
+        self._pos: torch.Tensor = position_mask
+        "Position mask"
+        self._min_tile: int = min_tile
+        "Minimum tile edge length."
 
         # Pad conceptual extent to a power-of-two square so the recursive
         # split is clean. Nodes that overhang the actual canvas are born
@@ -90,14 +93,23 @@ class CoverageQuadTree:
         extent = 1
         while extent < max(H, W):
             extent *= 2
-        self._H = H
-        self._W = W
+        self._H: int = H
+        "Height of canvas"
+        self._W: int = W
+        "Width of canvas"
 
-        self._root = self._build(0, 0, extent, extent)
+        self._root: Node = self._build(0, 0, extent, extent)
+        "Root node of Quadtree"
 
     # -- construction ----------------------------------------------------------
 
     def _build(self, y0: int, x0: int, y1: int, x1: int) -> Node:
+        """Build node for given canvas region
+
+        Args:
+            y0, x0, y1, x1:
+                Half-open pixel region [y0, y1) x [x0, x1).
+        """
         node = Node(y0, x0, y1, x1)
 
         # Completely outside actual canvas → dead
@@ -171,6 +183,20 @@ class CoverageQuadTree:
         x_max: int,
         out: list[Node],
     ) -> None:
+        """Recursively collect all leaf nodes that overlap a query rectangle.
+
+        Starting from ``node``, this method traverses the tree and appends
+        all *alive* leaf nodes whose bounding boxes overlap the given
+        axis-aligned query region to ``out``.
+
+        Args:
+            node (Node):
+                The current node to test and recurse into.
+            y_min, x_min, y_max, x_max:
+                Boundaries of query rectangle.
+            out (list[Node]):
+                List that is populated in-place with all matching leaf nodes.
+        """
         if not node.alive:
             return
         if not node.overlaps(y_min, x_min, y_max, x_max):
