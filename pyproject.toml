@@ -45,6 +45,7 @@ docs = [
     "sphinx-gallery",
     "sphinx-togglebutton",
     "sphinx_copybutton",
+    "toml",
 ]
 dev = [{ include-group = "docs" }, { include-group = "test" }]
 
