@@ -332,7 +332,9 @@ class LeafGeometryGenerator:
                 continue
 
             # Compute AABB, clip to canvas, query live tiles
-            y_min, x_min, y_max, x_max = leaf_mask_kw[self.leaf_shape].bbox(params)  # pyright: ignore[reportCallIssue]
+            y_min, x_min, y_max, x_max = leaf_mask_kw[self.leaf_shape].bbox(
+                params
+            )  # pyright: ignore[reportCallIssue]
             y_min = max(y_min, 0)
             x_min = max(x_min, 0)
             y_max = min(y_max, H)
@@ -701,6 +703,7 @@ class ImageRenderer:
         if segmentation_map is None:
             self._generate_segmentation_map()
         self._infer_texture_space()
+        self._infer_color_space()
 
     def _resolve_image_shape(
         self, image_shape: tuple[int, int] | None, segmentation_map: torch.Tensor | None
@@ -742,6 +745,19 @@ class ImageRenderer:
             if col.startswith("texture_") and col.endswith("_dist")
         )
         self.texture_space = color_spaces.get(tuple(keys), None)
+
+    def _infer_color_space(self) -> None:
+        """Infer which color space the color parameters are defined in."""
+        keys = sorted(
+            col.removeprefix("color_").split("_")[0]
+            for col in self.leaf_table.columns
+            if col.startswith("color_")
+        )
+        if keys == ["B", "G", "R"]:
+            self.color_space = color_spaces[("B", "G", "R")]
+        else:
+            keys = [key for key in keys if key not in ["R", "G", "B"]]
+            self.color_space = color_spaces.get(tuple(keys), None)
 
     def _get_texture_param_columns(self, channel: str) -> list[str]:
         """
@@ -920,9 +936,16 @@ class ImageRenderer:
                 Dead leaves image tensor.
         """
         with self.device:
-            colors = self.leaf_table[["color_R", "color_G", "color_B"]].to_numpy()
-            if self.texture_space == ("H", "S", "V"):
-                colors = rgb_to_hsv(colors)
+            # Select color values and transform color space if needed.
+            if (self.color_space == ("H", "S", "V")) and (
+                self.texture_space == ("H", "S", "V")
+            ):
+                colors = self.leaf_table[["color_H", "color_S", "color_V"]].to_numpy()
+            else:
+                colors = self.leaf_table[["color_R", "color_G", "color_B"]].to_numpy()
+                if self.texture_space == ("H", "S", "V"):
+                    colors = colors.clip(0, 1)
+                    colors = rgb_to_hsv(colors)
 
             colors = torch.tensor(colors, device=self.device)
             texture = self._generate_leafwise_texture()
