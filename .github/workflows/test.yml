@@ -16,10 +16,10 @@ jobs:
                 python_version: ['3.12', '3.13']
         steps:
             # Checkout repository
-            - uses: actions/checkout@v6
+            - uses: actions/checkout@v4
             # Install uv with python version
             - name: Install the latest version of uv and set the python version
-              uses: astral-sh/setup-uv@v8
+              uses: astral-sh/setup-uv@v6
               with:
                 enable-cache: true
                 python-version: ${{ matrix.python_version }}
