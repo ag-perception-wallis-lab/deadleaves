@@ -8,12 +8,24 @@
 
 import sys
 import os
+from pathlib import Path
 import warnings
+import toml
+
+sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, str(Path(__file__).parent))
+
+from dead_leaves_scraper import dead_leaves_scraper
+
+pyproject_path = Path(__file__).resolve().parents[1] / "pyproject.toml"
+
+with open(pyproject_path, "r") as f:
+    data = toml.load(f)
 
 project = "Dead Leaves"
 author = "Swantje Mahncke, Lynn Schmittwilken"
 copyright = f"2025, {author}"
-release = "0.1"
+release = ".".join(data["project"]["version"].split(".")[:2])
 
 root_doc = "index"
 
@@ -55,12 +67,11 @@ warnings.filterwarnings(
 latex_engine = "lualatex"
 
 # Sphinx Gallery
-sys.path.insert(0, os.path.dirname(__file__))
 
 sphinx_gallery_conf = {
     "examples_dirs": "../examples/gallery",  # path to example scripts
     "gallery_dirs": "gallery",  # path to where to save gallery generated output
-    "image_scrapers": ("dead_leaves_scraper.dead_leaves_scraper"),
+    "image_scrapers": (dead_leaves_scraper),
     "within_subsection_order": "FileNameSortKey",
     "download_all_examples": False,
 }
