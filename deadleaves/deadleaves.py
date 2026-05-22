@@ -13,6 +13,7 @@ from torchvision.transforms.functional import pil_to_tensor
 
 from .distributions import get_dist_kw, DistSpec
 from .leaf_masks import get_leaf_mask_kw, LeafMaskSpec
+from .acceleration.quadtree import CoverageQuadTree
 from .utils import choose_compute_backend, bounding_box
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -194,8 +195,9 @@ class LeafGeometryGenerator:
         """
         with self.device:
             samples = {}
-            params = self._resolve_dependencies()
-            for param in params:
+            # TODO (later): Potentially think if we can use a flag if we need to resolve dependencies
+            # saves a few seconds
+            for param in self._resolve_dependencies():
                 dist = self.distributions[param]
                 if dist is None:
                     dist_dict = self.shape_param_distributions[param]
@@ -304,30 +306,64 @@ class LeafGeometryGenerator:
         """
         Generate a dead leaves segmentation from the model.
 
+        Uses a quadtree to track which canvas regions still contain uncovered
+        pixels.  Fully covered subtrees are pruned from future queries, so
+        mask evaluation is restricted to the sparse frontier of remaining gaps.
+
         Returns:
             tuple[pd.DataFrame, torch.Tensor]:
                 Dataframe listing the parameters of all generated leaves, along
                 with an segmentation map assigning each image location to a leaf.
         """
+        H, W = self.image_shape
         leaves_params = []
-        segmentation_map = torch.zeros(
-            *self.image_shape, device=self.device, dtype=torch.int
-        )
+        segmentation_map = torch.zeros(H, W, device=self.device, dtype=torch.int)
         leaf_idx = 1
 
-        while torch.any((segmentation_map == 0) & (self.position_mask == 1)):
+        qtree = CoverageQuadTree(self.image_shape, self.position_mask, segmentation_map)
+
+        while qtree.has_live_nodes:
             params = self._sample_parameters()
-            try:
-                leaf_mask = self.generate_leaf_mask((self.X, self.Y), params)
-            except ValueError:
-                continue
-            mask = leaf_mask & (segmentation_map == 0)
-            if (mask.sum() > 0) & self.position_mask[
+
+            # Position mask gate
+            if not self.position_mask[
                 params["y_pos"].to(torch.int), params["x_pos"].to(torch.int)
             ]:
-                segmentation_map[mask] = leaf_idx
+                continue
+
+            # Compute AABB, clip to canvas, query live tiles
+            y_min, x_min, y_max, x_max = leaf_mask_kw[self.leaf_shape].bbox(params)  # pyright: ignore[reportCallIssue]
+            y_min = max(y_min, 0)
+            x_min = max(x_min, 0)
+            y_max = min(y_max, H)
+            x_max = min(x_max, W)
+            if y_min >= y_max or x_min >= x_max:
+                continue
+
+            live_tiles = qtree.query_live_tiles(y_min, x_min, y_max, x_max)
+            if not live_tiles:
+                continue
+
+            # Evaluate mask on the AABB sub-grid only
+            sub_X = self.X[y_min:y_max, x_min:x_max]
+            sub_Y = self.Y[y_min:y_max, x_min:x_max]
+            try:
+                leaf_mask = self.generate_leaf_mask((sub_X, sub_Y), params)
+            except ValueError:
+                continue
+
+            sub_seg = segmentation_map[y_min:y_max, x_min:x_max]
+            mask = leaf_mask & (sub_seg == 0)
+            if mask.sum() > 0:
+                sub_seg[mask] = leaf_idx
                 leaves_params.append(params)
+
+                # Update tiles that might now be fully covered
+                for tile in live_tiles:
+                    qtree.update_tile(tile)
+
                 leaf_idx += 1
+
             if (self.n_sample is not None) and leaf_idx >= self.n_sample:
                 break
 
@@ -884,25 +920,32 @@ class ImageRenderer:
                 Dead leaves image tensor.
         """
         with self.device:
-            image = torch.zeros(self.image_shape + (3,), device=self.device)
-            colors = torch.tensor(
-                self.leaf_table[["color_R", "color_G", "color_B"]].to_numpy(),
-                dtype=torch.float32,
-                device=self.device,
-            )
+            colors = self.leaf_table[["color_R", "color_G", "color_B"]].to_numpy()
             if self.texture_space == ("H", "S", "V"):
-                colors = torch.tensor(rgb_to_hsv(colors.cpu()), device=self.device)
+                colors = rgb_to_hsv(colors)
+
+            colors = torch.tensor(colors, device=self.device)
             texture = self._generate_leafwise_texture()
-            for leaf_idx in self.leaf_table.leaf_idx:
-                image[self.segmentation_map == leaf_idx] = torch.clip(
-                    colors[leaf_idx - 1] + texture[self.segmentation_map == leaf_idx],
-                    0,
-                    1,
-                )
+
+            # Build a colour lookup table: row 0 = background, rows 1..N = leaves.
+            leaf_indices = torch.tensor(
+                self.leaf_table["leaf_idx"].values, dtype=torch.long
+            )
+            max_idx = int(leaf_indices.max().item())
+            lut = torch.zeros(max_idx + 1, 3, device=self.device)
+
+            # Map each leaf's colour into its leaf_idx row.
+            # leaf_table row i has leaf_idx = leaf_indices[i], colour = colors[i].
+            lut[leaf_indices] = colors
+
+            # Single gather: paint the entire image at once
+            seg = self.segmentation_map.to(dtype=torch.long, device=self.device)
+            image = torch.clamp(lut[seg] + texture, 0, 1)
+
             if self.texture_space == ("H", "S", "V"):
                 image = torch.tensor(hsv_to_rgb(image.cpu()), device=self.device)
             if self.background_color is not None:
-                image[self.segmentation_map == 0] = self.background_color
+                image[seg == 0] = self.background_color
             self.image = image
             return image
 
