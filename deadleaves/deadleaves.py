@@ -944,7 +944,12 @@ class ImageRenderer:
             else:
                 colors = self.leaf_table[["color_R", "color_G", "color_B"]].to_numpy()
                 if self.texture_space == ("H", "S", "V"):
-                    colors = colors.clip(0, 1)
+                    if (colors < 0).any() or (colors > 1).any():
+                        warnings.warn(
+                            "Leaf color values out of range [0,1] detected. "
+                            "Values will be clipped to the [0,1] range."
+                        )
+                        colors = colors.clip(0, 1)
                     colors = rgb_to_hsv(colors)
 
             colors = torch.tensor(colors, device=self.device)
