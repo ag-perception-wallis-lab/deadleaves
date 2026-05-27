@@ -1,6 +1,6 @@
 [project]
 name = "deadleaves"
-version = "0.3.0"
+version = "0.4.0"
 authors = [
     { name = "Lynn Schmittwilken", email = "lynn.schmittwilken@tu-darmstadt.de" },
     { name = "Swantje Mahncke", email = "swantje.mahncke@tu-darmstadt.de" },
@@ -45,6 +45,7 @@ docs = [
     "sphinx-gallery",
     "sphinx-togglebutton",
     "sphinx_copybutton",
+    "toml",
 ]
 dev = [{ include-group = "docs" }, { include-group = "test" }]
 
