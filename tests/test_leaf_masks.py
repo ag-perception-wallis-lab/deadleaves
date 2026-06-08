@@ -559,7 +559,7 @@ def test_polygon_pandas():
     assert mask[5, 5]
 
 
-test_invalid_args_polygon = [(0.0, 1.0), (1.0, 0.0), (1.0, 1.5)]
+test_invalid_args_polygon = [(0.0, 1.0), (1.0, 0.0), (1.0, 1.5), (1.0, 2.0)]
 
 
 @pytest.mark.parametrize("area, n_vertices", test_invalid_args_polygon)
