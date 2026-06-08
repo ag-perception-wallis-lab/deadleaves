@@ -947,7 +947,8 @@ class ImageRenderer:
                     if (colors < 0).any() or (colors > 1).any():
                         warnings.warn(
                             "Leaf color values out of range [0,1] detected. "
-                            "Values will be clipped to the [0,1] range."
+                            "Values will be clipped to the [0,1] range "
+                            "before color space change."
                         )
                         colors = colors.clip(0, 1)
                     colors = rgb_to_hsv(colors)
