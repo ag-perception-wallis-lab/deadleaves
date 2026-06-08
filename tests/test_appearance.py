@@ -34,3 +34,4 @@ def test_HSVtransformation(color_value, texture_value, color_space):
 
     image = ImageRenderer(color_model.leaf_table, segmentation_map).render_image()
     assert (image >= 0.0).all()
+    assert (image <= 1.0).all()
