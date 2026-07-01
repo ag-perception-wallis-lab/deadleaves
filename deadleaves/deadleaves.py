@@ -952,7 +952,7 @@ class ImageRenderer:
                         colors = colors.clip(0, 1)
                     colors = rgb_to_hsv(colors)
 
-            colors = torch.tensor(colors, device=self.device)
+            colors = torch.tensor(colors, device=self.device, dtype=torch.float)
             texture = self._generate_leafwise_texture()
 
             # Build a colour lookup table: row 0 = background, rows 1..N = leaves.
@@ -960,7 +960,7 @@ class ImageRenderer:
                 self.leaf_table["leaf_idx"].values, dtype=torch.long
             )
             max_idx = int(leaf_indices.max().item())
-            lut = torch.zeros(max_idx + 1, 3, device=self.device)
+            lut = torch.zeros(max_idx + 1, 3, device=self.device, dtype=torch.float)
 
             # Map each leaf's colour into its leaf_idx row.
             # leaf_table row i has leaf_idx = leaf_indices[i], colour = colors[i].
