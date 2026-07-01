@@ -332,9 +332,12 @@ class LeafGeometryGenerator:
                 continue
 
             # Compute AABB, clip to canvas, query live tiles
-            y_min, x_min, y_max, x_max = leaf_mask_kw[self.leaf_shape].bbox(
-                params
-            )  # pyright: ignore[reportCallIssue]
+            try:
+                y_min, x_min, y_max, x_max = leaf_mask_kw[self.leaf_shape].bbox(
+                    params
+                )  # pyright: ignore[reportCallIssue]
+            except ValueError:
+                continue
             y_min = max(y_min, 0)
             x_min = max(x_min, 0)
             y_max = min(y_max, H)
