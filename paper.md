@@ -134,7 +134,7 @@ The `deadleaves` package provides a user-friendly, well-documented framework for
 # AI usage disclosure
 
 ChatGPT 5 was used to assist in improving code, documentation, and typesetting, and for generating test cases for package components.
-No AI content was used directly. 
+No AI content was used directly.
 All suggestions were manually adapted to ensure correctness and fit the intended context.
 
 # Acknowledgements
