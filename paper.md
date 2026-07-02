@@ -36,7 +36,7 @@ As a consequence, Dead Leaves Models are widely adopted in the study of image st
 Leaves are drawn sequentially onto a two-dimensional canvas from front to back, so later leaves can be partially or fully occluded by earlier ones.
 This layering reproduces key statistical properties of natural scenes, including occlusion structure, heavy-tailed distributions of contrasts and edges, scale invariance, and higher-order spatial correlations [@Ruderman1997;@Lee2001].
 For these reasons, the model serves as an effective null model for studying natural image statistics and early visual processing.
-Yet, there is no publicly available software yet, which allows users to generate dead leaves images in a standardized way.
+Yet no publicly available software exists that allows users to generate dead leaves images in a standardized way.
 This is where our package comes in.
 
 `deadleaves` is an open-source Python package which can be used to create dead leaves images in a standardized, yet flexible way.
