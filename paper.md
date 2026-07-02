@@ -42,12 +42,12 @@ This is where our package comes in.
 `deadleaves` is an open-source Python package which can be used to create dead leaves images in a standardized, yet flexible way.
 Core functionalities are:
 
-- generating dead leaves images with properties (e.g. sizes, orientations, colors) drawn from a wide range of distributions (e.g. uniform, normal, Poisson, power-law, constant) or directly from an image.
-- picking from various leaf shapes (circles, ellipsoids, rectangles, regular polygons).
-- sampling in different color spaces (RGB, HSV, grayscale).
-- applying different noise or image textures, either to the entire image or per-leaf.
-- varying the image area covered by leaves, either by adjusting leaf count (controlling density) or by applying spatial masks to restrict coverage to selected regions.
-- creating arbitrarily complex leaf configurations by adding dependencies between leaf features (e.g. space-dependent color gradients).
+- generating dead leaves images with properties (e.g. sizes, orientations, colors) drawn from a wide range of distributions (e.g. uniform, normal, Poisson, power-law, constant) or directly from an image
+- picking from various leaf shapes (circles, ellipsoids, rectangles, regular polygons)
+- sampling in different color spaces (RGB, HSV, grayscale)
+- applying different noise or image textures, either to the entire image or per-leaf
+- varying the image area covered by leaves, either by adjusting leaf count (controlling density) or by applying spatial masks to restrict coverage to selected regions
+- creating arbitrarily complex leaf configurations by adding dependencies between leaf features (e.g. space-dependent color gradients)
 
 Users can plug in various distributions for the different model parameters to create a variety of images (\autoref{fig:deadleaves}).
 
