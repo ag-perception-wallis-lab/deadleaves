@@ -113,7 +113,7 @@ Overall, these applications illustrate that Dead Leaves Models provide a flexibl
 
 # Software design
 
-`deadleaves` is an object-oriented framework for generating dead leaves images, organized into four components: (1) leaf geometry sampling, (2) leaf appearance  sampling, (3) rendering, and (4) post hoc scene manipulation.
+`deadleaves` is an object-oriented framework for generating dead leaves images, organized into four components: (1) leaf geometry sampling, (2) leaf appearance sampling, (3) rendering, and (4) post hoc scene manipulation.
 
 The geometric structure in the Dead Leaves Image is generated iteratively by sampling leaf positions and shapes and assigning empty pixels to each leaf effectively layering leaves from front to back until a stopping criterion is met.
 This stage produces a `leaf_table` (pandas DataFrame of sampled geometric leaf parameters) and a `segmentation_map` labeling each pixel.
