@@ -104,7 +104,7 @@ Across these applications, Dead Leaves Models function as semantically neutral, 
 
 ## Synthetic data for computer vision
 
-Dead Leaves Models have recently been used to generate synthetic images with fully controlled statistical and generative structure, providing training and evaluation data for computer vision tasks and models without costly real‑image collection. 
+Dead Leaves Models have recently been used to generate synthetic images with fully controlled statistical and generative structure, providing training and evaluation data for computer vision tasks and models without costly real‑image collection.
 Tasks such as disparity estimation [@Madhusudana2022], learning visual representations that emphasize shape and occlusion cues [@Baradad2021], and image restoration including denoising and deblurring [@Achddou2022] were trained on Dead Leaves Images.
 Dead leaves images have also been used as a benchmark for evaluating image quality, for example in assessing texture reproduction on digital cameras [@Cao2010;@McElvain2010;@Kirk2014;@CPIQ2023;@Jenkin2024].
 
