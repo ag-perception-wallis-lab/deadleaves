@@ -76,7 +76,7 @@ A central advantage of Dead Leaves Models is that they allow the synthesis of im
 Here, we group prior work into three main areas according to the methodological role dead leaves images play.
 
 
-## 1. Study of (natural) image statistics
+## Study of (natural) image statistics
 Many studies have used Dead Leaves Models to study and explain statistical regularities commonly observed in natural images by treating them as an analytically tractable model of occlusion-dominated scene structure.
 A central question is whether the statistical regularities of natural images arise primarily from generic properties of scene composition, rather than from semantic image content.
 
@@ -90,7 +90,7 @@ Finally, several studies have formalized the relationship between the generative
 Analytical derivations link model parameters directly to feature distributions [@Pitkow2010], and complementary work has established a rigorous mathematical foundation using tools from stochastic geometry and probability theory [@Alvarez1999; @Gousseau2003; @Bordenave2006; @Gousseau2007].
 
 
-## 2. Visual psychophysics
+## Visual psychophysics
 
 In visual psychophysics, dead leaves images are primarily used as controlled stimuli that preserve selected statistical properties of natural scenes while minimizing semantic content.
 This allows researchers to study perceptual sensitivity to specific image statistics and specific visual features in isolation.
@@ -102,7 +102,7 @@ Spatially localized or object-level blur has been introduced to study blur detec
 Across these applications, Dead Leaves Models function as semantically neutral, yet statistically structured stimuli that enable precise manipulation of image properties (such as size, contrast, color, and texture) relevant to human visual perception.
 
 
-## 3. Synthetic data for computer vision
+## Synthetic data for computer vision
 
 Dead Leaves Models have recently been used to generate synthetic images with fully controlled statistical and generative structure, providing training and evaluation data for computer vision tasks and models without costly real‑image collection. 
 Tasks such as disparity estimation [@Madhusudana2022], learning visual representations that emphasize shape and occlusion cues [@Baradad2021], and image restoration including denoising and deblurring [@Achddou2022] were trained on Dead Leaves Images.
