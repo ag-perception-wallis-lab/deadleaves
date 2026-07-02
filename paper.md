@@ -111,7 +111,7 @@ Dead leaves images have also been used as a benchmark for evaluating image quali
 Overall, these applications illustrate that Dead Leaves Models provide a flexible tool for generating semantically neutral yet statistically structured images, bridging the gap between highly simplified synthetic stimuli and the complexity of natural scenes.
 
 
-# Software Design
+# Software design
 
 `deadleaves` is an object-oriented framework for generating dead leaves images, organized into four components: (1) leaf geometry sampling, (2) leaf appearance  sampling, (3) rendering, and (4) post hoc scene manipulation.
 
@@ -127,7 +127,7 @@ Because sampling and rendering are decoupled, leaf parameters can be modified af
 The modular design makes it straightforward to extend the framework with new leaf shapes, color models, sampling distributions, or rendering methods (e.g., transparency-aware compositing) without changing the core pipeline. Additional features such as transparency or blur can be added independently of the existing components.
 
 
-# Research Impact Statement
+# Research impact statement
 
 The `deadleaves` package provides a user-friendly, well-documented framework for generating a wide range of dead leaves images, including many stimuli which have been used in prior work. Since the Dead leaves Model has been a standard tool in research for decades, we expect the package to support further research in visual neuroscience and machine learning. In addition, we think that it allows for new applications in e.g. neurophysiology or aesthetics research.
 
