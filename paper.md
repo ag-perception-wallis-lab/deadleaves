@@ -57,7 +57,7 @@ Users can plug in various distributions for the different model parameters to cr
 
 Variations of the Dead Leaves Model have been used for decades to generate images for vision research and computer vision [@Ruderman1997;@Kaping2007;@Taylor2015;@Baradad2021].
 However, there is no standard implementation, and only a few public codebases exist [@Baradad2021;@Badal2024].
-Most researchers therefore implement their own generative code, which is time-consuming, prone to errors, and complicates comparisons across studies in particular if the used models are insufficiently documented [cf. @Schmittwilken2023].
+Most researchers therefore implement their own generative code, which is time-consuming and error-prone and complicates comparisons across studies, in particular if the models used are insufficiently documented [cf. @Schmittwilken2023].
 
 These issues have practical consequences.
 Small differences in implementation affect the resulting image statistics [@Achddou2022], which are the primary scientific objective in many dead leaves studies.
