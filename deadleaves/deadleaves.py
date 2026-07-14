@@ -947,7 +947,8 @@ class ImageRenderer:
                     if (colors < 0).any() or (colors > 1).any():
                         warnings.warn(
                             "Leaf color values out of range [0,1] detected. "
-                            "Values will be clipped to the [0,1] range."
+                            "Values will be clipped to the [0,1] range "
+                            "before color space change."
                         )
                         colors = colors.clip(0, 1)
                     colors = rgb_to_hsv(colors)
@@ -968,7 +969,14 @@ class ImageRenderer:
 
             # Single gather: paint the entire image at once
             seg = self.segmentation_map.to(dtype=torch.long, device=self.device)
-            image = torch.clamp(lut[seg] + texture, 0, 1)
+            image = lut[seg] + texture
+            if (image < 0).any() or (image > 1).any():
+                n_clipped = ((image < 0) | (image > 1)).sum().item()
+                warnings.warn(
+                    f"{n_clipped} pixel values out of range [0,1] detected. "
+                    "Values will be clipped to the [0,1] range before rendering."
+                )
+                image = torch.clamp(image, 0, 1)
 
             if self.texture_space == ("H", "S", "V"):
                 image = torch.tensor(hsv_to_rgb(image.cpu()), device=self.device)
