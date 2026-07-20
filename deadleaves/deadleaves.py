@@ -332,9 +332,12 @@ class LeafGeometryGenerator:
                 continue
 
             # Compute AABB, clip to canvas, query live tiles
-            y_min, x_min, y_max, x_max = leaf_mask_kw[self.leaf_shape].bbox(
-                params
-            )  # pyright: ignore[reportCallIssue]
+            try:
+                y_min, x_min, y_max, x_max = leaf_mask_kw[self.leaf_shape].bbox(
+                    params
+                )  # pyright: ignore[reportCallIssue]
+            except ValueError:
+                continue
             y_min = max(y_min, 0)
             x_min = max(x_min, 0)
             y_max = min(y_max, H)
@@ -947,12 +950,13 @@ class ImageRenderer:
                     if (colors < 0).any() or (colors > 1).any():
                         warnings.warn(
                             "Leaf color values out of range [0,1] detected. "
-                            "Values will be clipped to the [0,1] range."
+                            "Values will be clipped to the [0,1] range "
+                            "before color space change."
                         )
                         colors = colors.clip(0, 1)
                     colors = rgb_to_hsv(colors)
 
-            colors = torch.tensor(colors, device=self.device)
+            colors = torch.tensor(colors, device=self.device, dtype=torch.float)
             texture = self._generate_leafwise_texture()
 
             # Build a colour lookup table: row 0 = background, rows 1..N = leaves.
@@ -960,7 +964,7 @@ class ImageRenderer:
                 self.leaf_table["leaf_idx"].values, dtype=torch.long
             )
             max_idx = int(leaf_indices.max().item())
-            lut = torch.zeros(max_idx + 1, 3, device=self.device)
+            lut = torch.zeros(max_idx + 1, 3, device=self.device, dtype=torch.float)
 
             # Map each leaf's colour into its leaf_idx row.
             # leaf_table row i has leaf_idx = leaf_indices[i], colour = colors[i].
@@ -968,7 +972,14 @@ class ImageRenderer:
 
             # Single gather: paint the entire image at once
             seg = self.segmentation_map.to(dtype=torch.long, device=self.device)
-            image = torch.clamp(lut[seg] + texture, 0, 1)
+            image = lut[seg] + texture
+            if (image < 0).any() or (image > 1).any():
+                n_clipped = ((image < 0) | (image > 1)).sum().item()
+                warnings.warn(
+                    f"{n_clipped} pixel values out of range [0,1] detected. "
+                    "Values will be clipped to the [0,1] range before rendering."
+                )
+                image = torch.clamp(image, 0, 1)
 
             if self.texture_space == ("H", "S", "V"):
                 image = torch.tensor(hsv_to_rgb(image.cpu()), device=self.device)

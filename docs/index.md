@@ -59,7 +59,7 @@
 
 Core features are
 ```{include} ../README.md
-:start-line: 16
+:start-line: 17
 :end-line: 24
 ```
 

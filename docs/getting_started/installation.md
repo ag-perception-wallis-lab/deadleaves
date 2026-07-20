@@ -65,7 +65,7 @@ and to install the development dependencies.
 
 ## Dependencies
 
-We recommend using a Python version `3.12` or newer.
+The package requires using a Python version `3.12` or newer.
 The dependencies should be automatically installed (at least using `pip`). `deadleaves`s required dependencies are: 
 
 - [PyTorch](https://pytorch.org/)
