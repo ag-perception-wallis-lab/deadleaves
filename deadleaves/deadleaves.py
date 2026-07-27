@@ -1111,7 +1111,7 @@ class ImageRenderer:
                     "Either an image must be provided or the image needs to be "
                     "rendered via the render_image method first."
                 )
-        plt.imsave(save_to, image.cpu().numpy())
+        plt.imsave(save_to, image.cpu().numpy(), vmin=0, vmax=1)
 
     def animate(
         self, fps: int = 10, save_to: Path | None = None
