@@ -1,5 +1,5 @@
 ---
-title: '`deadleaves`: Creating cluttered visual stimuli in Python'
+title: 'deadleaves: Creating cluttered visual stimuli in Python'
 tags:
   - Python package
   - vision science
@@ -29,25 +29,25 @@ bibliography: paper.bib
 
 The Dead Leaves Model [@Matheron1968] is a stochastic image generation model.
 The model creates images by sampling objects from a predefined family of distributions.
-Each object ("leaf") is typically a simple shape, such as a circle or ellipse, and its properties (e.g. position, size, orientation, color) are randomly drawn from these distributions.
+Each object ("leaf") is typically a simple shape, such as a circle or ellipse, and its properties (e.g., position, size, orientation, color) are randomly drawn from these distributions.
 This sampling process allows precise control over image statistics, which makes it possible to vary or fix specific leaf properties as desired.
-As a consequence, Dead Leaves Models are widely adopted in the study of image statistics [@Ruderman1997;@Lee2001;@Zylberberg2012;@Madhusudana2022], visual function [@Morimoto2021;@Maiello2017;@Groen2012;@Taylor2015;@Wallis2012], image quality in digital cameras [@Cao2010;@Artmann2015;@Jenkin2024;@CPIQ2023] and, most recently, as training data for machine learning algorithms [@Baradad2021;@Achddou2022].
+As a consequence, Dead Leaves Models are widely adopted in the study of image statistics [@Ruderman1997;@Lee2001;@Zylberberg2012;@Madhusudana2022], visual function [@Morimoto2021;@Maiello2017;@Groen2012;@Taylor2015;@Wallis2012], image quality in digital cameras [@Cao2010;@Artmann2015;@Jenkin2024;@CPIQ2023] and, most recently, as training data for machine learning algorithms [@Baradad2021;@Achddou2023].
 
 Leaves are drawn sequentially onto a two-dimensional canvas from front to back, so later leaves can be partially or fully occluded by earlier ones.
 This layering reproduces key statistical properties of natural scenes, including occlusion structure, heavy-tailed distributions of contrasts and edges, scale invariance, and higher-order spatial correlations [@Ruderman1997;@Lee2001].
 For these reasons, the model serves as an effective null model for studying natural image statistics and early visual processing.
-Yet no publicly available software exists that allows users to generate dead leaves images in a standardized way.
+Yet no publicly available, general-purpose software exists that allows users to generate dead leaves images in a standardized way.
 This is where our package comes in.
 
 `deadleaves` is an open-source Python package which can be used to create dead leaves images in a standardized, yet flexible way.
 Core functionalities are:
 
-- generating dead leaves images with properties (e.g. sizes, orientations, colors) drawn from a wide range of distributions (e.g. uniform, normal, Poisson, power-law, constant) or directly from an image
+- generating dead leaves images with properties (e.g., sizes, orientations, colors) drawn from a wide range of distributions (e.g., uniform, normal, Poisson, power-law, constant) or directly from an image
 - picking from various leaf shapes (circles, ellipsoids, rectangles, regular polygons)
 - sampling in different color spaces (RGB, HSV, grayscale)
 - applying different noise or image textures, either to the entire image or per-leaf
 - varying the image area covered by leaves, either by adjusting leaf count (controlling density) or by applying spatial masks to restrict coverage to selected regions
-- creating arbitrarily complex leaf configurations by adding dependencies between leaf features (e.g. space-dependent color gradients)
+- creating arbitrarily complex leaf configurations by adding dependencies between leaf features (e.g., space-dependent color gradients)
 
 Users can plug in various distributions for the different model parameters to create a variety of images (\autoref{fig:deadleaves}).
 
@@ -56,11 +56,11 @@ Users can plug in various distributions for the different model parameters to cr
 # Statement of need
 
 Variations of the Dead Leaves Model have been used for decades to generate images for vision research and computer vision [@Ruderman1997;@Kaping2007;@Taylor2015;@Baradad2021].
-However, there is no standard implementation, and only a few public codebases exist [@Baradad2021;@Badal2024].
+While a few public project-specific codebases exist [@Baradad2021;@Badal2024], there is no general-purpose software available.
 Most researchers therefore implement their own generative code, which is time-consuming and error-prone and complicates comparisons across studies, in particular if the models used are insufficiently documented [cf. @Schmittwilken2023].
 
 These issues have practical consequences.
-Small differences in implementation affect the resulting image statistics [@Achddou2022], which are the primary scientific objective in many dead leaves studies.
+Small differences in implementation affect the resulting image statistics [@Achddou2023], which are the primary scientific objective in many dead leaves studies.
 Combined with the stochastic nature of the model, this can make it challenging for researchers to reliably generate stimuli and precisely describe their statistical properties.
 In short, current practices create barriers to reproducibility and consistent use of dead leaves images.
 
@@ -105,7 +105,7 @@ Across these applications, Dead Leaves Models function as semantically neutral, 
 ## Synthetic data for computer vision
 
 Dead Leaves Models have recently been used to generate synthetic images with fully controlled statistical and generative structure, providing training and evaluation data for computer vision tasks and models without costly real‑image collection.
-Tasks such as disparity estimation\ [@Madhusudana2022], learning visual representations that emphasize shape and occlusion cues\ [@Baradad2021], and image restoration including denoising and deblurring [@Achddou2022] were trained on Dead Leaves Images.
+Tasks such as disparity estimation\ [@Madhusudana2022], learning visual representations that emphasize shape and occlusion cues\ [@Baradad2021], and image restoration including denoising and deblurring [@Achddou2023] were trained on Dead Leaves Images.
 Dead leaves images have also been used as a benchmark for evaluating image quality, for example in assessing texture reproduction on digital cameras [@Cao2010;@McElvain2010;@Kirk2014;@CPIQ2023;@Jenkin2024].
 
 Overall, these applications illustrate that Dead Leaves Models provide a flexible tool for generating semantically neutral yet statistically structured images, bridging the gap between highly simplified synthetic stimuli and the complexity of natural scenes.
@@ -122,20 +122,19 @@ Leaf appearance is assigned by sampling color parameters and, optionally, textur
 
 The rendering class maps the leaf parameters to pixels using the `segmentation_map` (generated if needed), and colors the canvas pixels according to the stored appearance parameters, optionally adding leaf-specific or global noise or texture. The resulting image has pixel-accurate boundaries with sharp edges. This can be particularly useful for segmentation tasks, where blur-based rendering can make object boundaries less defined.
 
-Because sampling and rendering are decoupled, leaf parameters can be modified after the initial sampling step and the scene can be re-rendered without regenerating the full geometry. This enables operations such as adding motion, or composing scenes from different distributions, e.g. by placing a proto-object onto a leaf background (see examples in \autoref{fig:deadleaves}). A dedicated class supports these workflows by allowing merging of scenes and adjusting leaf ordering.
+Because sampling and rendering are decoupled, leaf parameters can be modified after the initial sampling step and the scene can be re-rendered without regenerating the full geometry. This enables operations such as adding motion, or composing scenes from different distributions, e.g., by placing a proto-object onto a leaf background (see examples in \autoref{fig:deadleaves}). A dedicated class supports these workflows by allowing merging of scenes and adjusting leaf ordering.
 
 The modular design makes it straightforward to extend the framework with new leaf shapes, color models, sampling distributions, or rendering methods (e.g., transparency-aware compositing) without changing the core pipeline. Additional features such as transparency or blur can be added independently of the existing components.
 
 
 # Research impact statement
 
-The `deadleaves` package provides a user-friendly, well-documented framework for generating a wide range of dead leaves images, including many stimuli which have been used in prior work. Since the Dead Leaves Model has been a standard tool in research for decades, we expect the package to support further research in visual neuroscience and machine learning. In addition, we think that it allows for new applications in e.g. neurophysiology or aesthetics research.
+The `deadleaves` package provides a user-friendly, well-documented framework for generating a wide range of dead leaves images, including many stimuli which have been used in prior work. Since the Dead Leaves Model has been a standard tool in research for decades, we expect the package to support further research in visual neuroscience and machine learning. In addition, we think that it allows for new applications in e.g., neurophysiology or aesthetics research.
 
 # AI usage disclosure
 
 ChatGPT 5 was used to assist in improving code, documentation, and typesetting, and for generating test cases for package components.
-No AI content was used directly.
-All suggestions were manually adapted to ensure correctness and fit the intended context.
+All generated outputs were reviewed, modified as necessary, and verified by the authors, who take full responsibility for the final content.
 
 # Acknowledgements
 
