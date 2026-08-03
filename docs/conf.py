@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import warnings
 import toml
+from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(__file__))
 sys.path.insert(0, str(Path(__file__).parent))
@@ -24,7 +25,7 @@ with open(pyproject_path, "r") as f:
 
 project = "Dead Leaves"
 author = "Swantje Mahncke, Lynn Schmittwilken"
-copyright = f"2025, {author}"
+copyright = f"{datetime.now().year}, {author}"
 release = ".".join(data["project"]["version"].split(".")[:2])
 
 root_doc = "index"
