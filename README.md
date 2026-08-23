@@ -8,6 +8,7 @@ An open-source Python package for creating dead leaves images in a systematic, y
 [![Py versions](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![PyPI version](https://img.shields.io/pypi/v/deadleaves.svg)](https://pypi.org/project/deadleaves/)
 [![Documentation Status](https://readthedocs.org/projects/deadleaves/badge/?version=latest)](https://deadleaves.readthedocs.io/en/latest/?badge=latest)
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.10531/status.svg)](https://doi.org/10.21105/joss.10531)
 
 <p align=center>
 <img src=docs/_static/logo_dead_leaves.png width=300>
@@ -24,6 +25,28 @@ An open-source Python package for creating dead leaves images in a systematic, y
 - creating arbitrarily complex leaf configurations by adding dependencies between leaf features (e.g. space-dependent color gradients).
 
 ![](docs/_static/figures/examples.png)
+
+## Citing deadleaves
+
+If you use `deadleaves` for scientific work, please cite the [paper](https://joss.theoj.org/papers/10.21105/joss.10531) as:
+
+> Mahncke, S., Wallis, T. S. A., & Schmittwilken, L. (2026). deadleaves: Creating cluttered visual stimuli in Python. Journal of Open Source Software, 11(123), https://doi.org/10.21105/joss.10531
+
+Use this BibTeX entry for referencing:
+
+```
+@article{Mahncke2026, 
+    doi = {10.21105/joss.10531}, 
+    url = {https://doi.org/10.21105/joss.10531}, 
+    year = {2026}, 
+    publisher = {The Open Journal}, 
+    volume = {11}, 
+    number = {123}, 
+    author = {Mahncke, Swantje and Wallis, Thomas S. A. and Schmittwilken, Lynn}, 
+    title = {deadleaves: Creating cluttered visual stimuli in Python}, 
+    journal = {Journal of Open Source Software}
+} 
+```
 
 ## Installation
 

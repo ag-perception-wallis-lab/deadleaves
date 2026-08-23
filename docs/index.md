@@ -59,8 +59,8 @@
 
 Core features are
 ```{include} ../README.md
-:start-line: 17
-:end-line: 24
+:start-line: 18
+:end-line: 25
 ```
 
 ---
@@ -108,6 +108,28 @@ Look up functions and their specific parameters
 Ask a question, report a bug, request a feature, or contribute. 
 ::: 
 ::::
+
+---
+
+If you use `deadleaves` for scientific work, please cite the [paper](https://joss.theoj.org/papers/10.21105/joss.10531) as:
+
+> Mahncke, S., Wallis, T. S. A., & Schmittwilken, L. (2026). deadleaves: Creating cluttered visual stimuli in Python. Journal of Open Source Software, 11(123), 6, [https://doi.org/10.21105/joss.10531](https://doi.org/10.21105/joss.10531)
+
+Use this BibTeX entry for referencing:
+
+```bibtex
+@article{Mahncke2026, 
+    doi = {10.21105/joss.10531}, 
+    url = {https://doi.org/10.21105/joss.10531}, 
+    year = {2026}, 
+    publisher = {The Open Journal}, 
+    volume = {11}, 
+    number = {123}, 
+    author = {Mahncke, Swantje and Wallis, Thomas S. A. and Schmittwilken, Lynn}, 
+    title = {deadleaves: Creating cluttered visual stimuli in Python}, 
+    journal = {Journal of Open Source Software}
+} 
+```
 
 ```{toctree}
 :hidden:
