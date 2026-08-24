@@ -411,7 +411,7 @@ def polygon(
             * p["area"]
             / (p["n_vertices"] * torch.sin(2 * torch.pi / p["n_vertices"]))
         )
-        angles = torch.linspace(0.0, 2 * torch.pi, int(p["n_vertices"]))
+        angles = torch.linspace(0.0, 2 * torch.pi, int(p["n_vertices"]) + 1)[:-1]
         cos_angles = torch.cos(angles)
         sin_angles = torch.sin(angles)
         vertices = torch.stack(
