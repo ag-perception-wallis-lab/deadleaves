@@ -128,7 +128,7 @@ def circular(
 
 
 def circular_aabb(
-    params: dict[str, torch.Tensor] | pd.Series
+    params: dict[str, torch.Tensor] | pd.Series,
 ) -> tuple[int, int, int, int]:
     """Axis-aligned bounding box for a circle.
 
@@ -217,7 +217,7 @@ def rectangular(
 
 
 def rectangular_aabb(
-    params: dict[str, torch.Tensor] | pd.Series
+    params: dict[str, torch.Tensor] | pd.Series,
 ) -> tuple[int, int, int, int]:
     """Axis-aligned bounding box for a rectangle.
 
@@ -317,7 +317,7 @@ def ellipsoid(
 
 
 def ellipsoid_aabb(
-    params: dict[str, torch.Tensor] | pd.Series
+    params: dict[str, torch.Tensor] | pd.Series,
 ) -> tuple[int, int, int, int]:
     """Axis-aligned bounding box for a ellipsoid.
 
@@ -443,7 +443,7 @@ def polygon(
 
 
 def polygon_aabb(
-    params: dict[str, torch.Tensor] | pd.Series
+    params: dict[str, torch.Tensor] | pd.Series,
 ) -> tuple[int, int, int, int]:
     """Axis-aligned bounding box for a polygon.
 
