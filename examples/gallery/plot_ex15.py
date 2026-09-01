@@ -2,7 +2,7 @@
 Gray Mondrian
 ===========================
 
-Inspired by MaxEvoy and Paradiso (2001)
+Inspired by MacEvoy and Paradiso (2001)
 """
 
 from deadleaves import LeafGeometryGenerator, LeafAppearanceSampler, ImageRenderer
